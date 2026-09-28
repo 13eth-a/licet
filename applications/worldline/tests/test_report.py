@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from functools import partial
 from http.server import HTTPServer
-from importlib.resources import files
+from importlib.resources import files  # nosemgrep: python.lang.compatibility.python37.python37-compatibility-importlib2 -- this app targets modern Python only; py3.7 compat is not a goal
 from pathlib import Path
 from threading import Thread
 from urllib.request import Request, urlopen

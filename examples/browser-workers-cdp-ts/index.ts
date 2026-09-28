@@ -135,7 +135,7 @@ type Cdp = {
 
 async function connect(endpoint: string): Promise<Cdp> {
   // A Worker has no `new WebSocket(url)`. You upgrade an outbound `fetch`
-  // instead — and `fetch` will not take a ws:// URL, so swap the scheme and
+  // instead — and `fetch` will not take a ws:// URL, so swap the scheme and  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket -- prose explaining a URL-scheme workaround, not a live ws:// connection
   // ask for the upgrade by header.
   const response = await fetch(
     endpoint.replace(/^ws:/, "http:").replace(/^wss:/, "https:"),

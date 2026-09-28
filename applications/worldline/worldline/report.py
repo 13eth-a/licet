@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from importlib.resources import files
+from importlib.resources import files  # nosemgrep: python.lang.compatibility.python37.python37-compatibility-importlib2 -- this app targets modern Python only; py3.7 compat is not a goal
 from pathlib import Path
 
 from .models import RunResult
