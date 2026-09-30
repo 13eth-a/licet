@@ -17,6 +17,10 @@ Municipal permitting runs on legacy software. Contractors and residents face fra
 
 ## Latest walkthroughs and connected UI
 
+[![Watch the latest Licet walkthrough](docs/walkthroughs/20260930/01-connected-home.png)](docs/walkthroughs/20260930/licet-browser-demo.mp4)
+
+**[Watch the recording — 3 minutes 9 seconds](docs/walkthroughs/20260930/licet-browser-demo.mp4)** · Silent screen recording
+
 - [September 30 walkthrough](docs/walkthroughs/20260930/licet-browser-demo.mp4): connected Licet UI → live Accela sandbox → observed safe stop → clearly labeled offline booking replay.
 - [Full September 30 recording](docs/walkthroughs/20260930/licet-browser-full.mp4).
 - [All walkthrough materials](docs/walkthroughs/README.md), including the September 29 recording and selected screenshots.

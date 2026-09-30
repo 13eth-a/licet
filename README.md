@@ -1,5 +1,17 @@
 # Solari Cookbook
 
+## Licet demo
+
+Licet is an AI agent for municipal permitting, built for the Solari Hiring Challenge.
+
+[![Watch the Licet walkthrough](applications/licet/docs/walkthroughs/20260930/01-connected-home.png)](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)
+
+**[Watch the recording — 3 minutes 9 seconds](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)** · [Full recording](applications/licet/docs/walkthroughs/20260930/licet-browser-full.mp4) · [Project README](applications/licet/README.md)
+
+The silent walkthrough follows the connected UI into the live Accela sandbox, then shows a clearly labeled offline booking replay. The live run makes no booking; the replay uses an injected slot and simulated browser I/O.
+
+---
+
 Short, runnable examples for [Solari](https://getsolari.com) — cloud browsers,
 sandboxes, and desktops behind one API key.
 
