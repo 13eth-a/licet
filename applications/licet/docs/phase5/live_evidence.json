@@ -1,0 +1,389 @@
+{
+  "goal": {
+    "objective": "Get permit BLD26-00469 ready for its next inspection; schedule the Rough inspection.",
+    "permit_id": "BLD26-00469",
+    "lookup_text": "permit BLD26-00469",
+    "constraints": [],
+    "success_conditions": [
+      "permit_verified",
+      "next_inspection_identified",
+      "inspection_scheduled"
+    ],
+    "prohibited_actions": [
+      "application_submission",
+      "payment",
+      "signature"
+    ],
+    "autonomous": true,
+    "inspection_type": "Rough",
+    "operation": "schedule",
+    "existing_inspection_id": null,
+    "date_instruction": null,
+    "date_window_start": null,
+    "date_window_end": null,
+    "preferred_date": null,
+    "clarification": null,
+    "vague": false
+  },
+  "execute": false,
+  "reference": "2026-09-22",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "BLOCKED",
+      "error": "EXTERNAL_DEPENDENCY",
+      "reason": "{'kind': 'action_outcome_unknown', 'message': 'Action was dispatched but its outcome could not be verified; do not replay it without reconciling portal state.', 'retryable': False, 'needs_cooldown': False, 'needs_reauth': False}",
+      "semantic_steps": 1,
+      "useful_steps": 0,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": false,
+          "uncertain": false,
+          "message": "{'kind': 'action_outcome_unknown', 'message': 'Action was dispatched but its outcome could not be verified; do not replay it without reconciling portal state.', 'retryable': False, 'needs_cooldown': False, 'needs_reauth': False}",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "progress": false,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified",
+            "permit_verified"
+          ]
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "status": "BLOCKED",
+      "error": "EXTERNAL_DEPENDENCY",
+      "reason": "section unavailable: inspections",
+      "semantic_steps": 4,
+      "useful_steps": 3,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 2 independently verified the permit",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "read overview",
+          "before": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 3 interpreted structured state",
+          "before": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "after": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "READ_INSPECTIONS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": false,
+          "uncertain": false,
+          "message": "section unavailable: inspections",
+          "before": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "status": "BLOCKED",
+      "error": "EXTERNAL_DEPENDENCY",
+      "reason": "section unavailable: inspections",
+      "semantic_steps": 4,
+      "useful_steps": 3,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 2 independently verified the permit",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "read overview",
+          "before": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 3 interpreted structured state",
+          "before": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "after": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "READ_INSPECTIONS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": false,
+          "uncertain": false,
+          "message": "section unavailable: inspections",
+          "before": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        }
+      ]
+    },
+    {
+      "attempt": 4,
+      "status": "BLOCKED",
+      "error": "EXTERNAL_DEPENDENCY",
+      "reason": "section unavailable: inspections",
+      "semantic_steps": 4,
+      "useful_steps": 3,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 2 independently verified the permit",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "read overview",
+          "before": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "Phase 3 interpreted structured state",
+          "before": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "after": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "READ_INSPECTIONS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": false,
+          "uncertain": false,
+          "message": "section unavailable: inspections",
+          "before": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+          "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        }
+      ]
+    }
+  ],
+  "status": "BLOCKED",
+  "error": "EXTERNAL_DEPENDENCY",
+  "reason": "section unavailable: inspections",
+  "remaining_goal": [
+    "inspection_scheduled",
+    "next_inspection_identified"
+  ],
+  "completed_steps": [
+    "r0-0",
+    "r1-0",
+    "r2-0"
+  ],
+  "failed_steps": [
+    "r3-0"
+  ],
+  "approval_token": null,
+  "trace": [
+    {
+      "step": "r0-0",
+      "action": "FIND_PERMIT",
+      "reason": "Obtain the missing prerequisite or verify the requested outcome",
+      "success": true,
+      "uncertain": false,
+      "message": "Phase 2 independently verified the permit",
+      "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+      "after": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+      "progress": true,
+      "policy_checked": false,
+      "mutation_key": null,
+      "remaining_goal": [
+        "inspection_scheduled",
+        "next_inspection_identified"
+      ]
+    },
+    {
+      "step": "r1-0",
+      "action": "READ_PERMIT_STATE",
+      "reason": "Obtain the missing prerequisite or verify the requested outcome",
+      "success": true,
+      "uncertain": false,
+      "message": "read overview",
+      "before": "cc6996e8e35e2bd96c0ed93e16155394bc974ca88a5795282ce34d738e50088b",
+      "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+      "progress": true,
+      "policy_checked": false,
+      "mutation_key": null,
+      "remaining_goal": [
+        "inspection_scheduled",
+        "next_inspection_identified"
+      ]
+    },
+    {
+      "step": "r2-0",
+      "action": "DETERMINE_BLOCKERS",
+      "reason": "Obtain the missing prerequisite or verify the requested outcome",
+      "success": true,
+      "uncertain": false,
+      "message": "Phase 3 interpreted structured state",
+      "before": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+      "after": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+      "progress": true,
+      "policy_checked": false,
+      "mutation_key": null,
+      "remaining_goal": [
+        "inspection_scheduled",
+        "next_inspection_identified"
+      ]
+    },
+    {
+      "step": "r3-0",
+      "action": "READ_INSPECTIONS",
+      "reason": "Obtain the missing prerequisite or verify the requested outcome",
+      "success": false,
+      "uncertain": false,
+      "message": "section unavailable: inspections",
+      "before": "42860ca3e9fa5744cc664b86812826f381b12442b3f16dcf11ed92eeedea6d7a",
+      "after": "5033f3de8f37ef9d3bfa442aadd01b58737762ca6bd1457e8c395430144a614f",
+      "progress": true,
+      "policy_checked": false,
+      "mutation_key": null,
+      "remaining_goal": [
+        "inspection_scheduled",
+        "next_inspection_identified"
+      ]
+    }
+  ],
+  "metrics": {
+    "semantic_steps": 4,
+    "useful_steps": 3,
+    "plan_revisions": 3,
+    "model_fallbacks": 0,
+    "mutations_attempted": 0,
+    "mutations_verified": 0,
+    "efficiency": 0.75
+  }
+}

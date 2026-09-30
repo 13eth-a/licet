@@ -1,0 +1,142 @@
+{
+  "scope": "Secondary assistant review of ten core answers; no model API experiment",
+  "reviews": [
+    {
+      "case_id": "S01",
+      "verdict": "ACCEPT",
+      "answer_digest": "0c4d75a6d728417ac5d4ec23bc2be18cd21be1ce54bcc746248dd4a170ed25df",
+      "ground_truth_digest": "ac659f7e044c51767ac47704a54c558b3dc019401c02d788c631c65f8a57bf1f",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Distinguishes issued status, inspection corrections and an unpaid fee whose scheduling effect is unproven.",
+      "evidence_ids": [
+        "status",
+        "inspections",
+        "fees"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "S02-submitted",
+      "verdict": "ACCEPT",
+      "answer_digest": "0d0bd37b95d7c2affad37923a5b7f9483d469aa6e4cb3e9ed05200960e75ce72",
+      "ground_truth_digest": "b9eda6ffbbfbb802a2b6f8b939b75b169b164c16cd41c2d3be47bcc33c489e92",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Retains Submitted without inferring issuance.",
+      "evidence_ids": [
+        "status"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "S04-completed-no-result",
+      "verdict": "ACCEPT",
+      "answer_digest": "a0694539a4b11976479d03c81e25d5fc897effb17192f4ad7e9fa97ec34ebd6a",
+      "ground_truth_digest": "577542ac0a0375a1e4c1a27c28cd92914ef24cc00de66862158d3f484ca51cda",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Completed is not treated as Passed when outcome is absent.",
+      "evidence_ids": [
+        "inspections"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "S05-negative-wording",
+      "verdict": "ACCEPT",
+      "answer_digest": "146983b8ad8d5e51ce65c6db75158e01d94a5821bc43607dbddc2cf87ff97bf4",
+      "ground_truth_digest": "a4f335fd56f1259fb31a26147e1123b014ed0e18f999c5b2e837f825e14878bf",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Distinguishes pending from Not Approved; next steps remain conditional.",
+      "evidence_ids": [
+        "inspections"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "S03-expired-event",
+      "verdict": "ACCEPT",
+      "answer_digest": "466fce0acf3a9897f3da2544276e16f07d03754183b05073c1e6b0d116716a72",
+      "ground_truth_digest": "5105fb379f6470f30758789dfb7bd8fa7f14cd5d9a40c0411dcb718d035237bf",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Preserves issued overview versus expiration history conflict.",
+      "evidence_ids": [
+        "status",
+        "history",
+        "contradictions"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "H01-later-pass-same-scope",
+      "verdict": "ACCEPT",
+      "answer_digest": "08a2e6365b142f2b14534c65c98b96ba9d236b1c0c9dd855f20533d1866e935f",
+      "ground_truth_digest": "d2baf2d996d7d46afc7a7304448f629ff454c25eb2d89ef73d614817c43ca8ac",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Later same-scope pass removes obsolete failure; incomplete coverage limits the answer.",
+      "evidence_ids": [
+        "inspections",
+        "coverage"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "H02-scheduled-followup",
+      "verdict": "ACCEPT",
+      "answer_digest": "1cb2bbf959c68cb229516bdf3d545f2fa22227fc76e049367757d1d2dfe7b212",
+      "ground_truth_digest": "df60116e368b42b1f4d034c4f4d9023f980b6270fe486169a4c246907075951f",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Scheduled follow-up does not prove resolution or justify duplicate booking.",
+      "evidence_ids": [
+        "inspections",
+        "fees"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "H04-different-unit",
+      "verdict": "ACCEPT",
+      "answer_digest": "28aabf853c294e8e968bfe2da05e7c0e371c54f4a8618349d6ad7f5b0c058e90",
+      "ground_truth_digest": "85b9f648082ec0d40997f6003cf7d838934b4b8335b7c6662c5146c9bffbf3e6",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Different-unit pass does not clear failed scope; explicit unit labels would improve readability.",
+      "evidence_ids": [
+        "inspections"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "H05-unknown-ordering",
+      "verdict": "ACCEPT",
+      "answer_digest": "6009bd42394b5d227e8b1726a1723f0a9e24092cfb366e8770e623c487a4e0cb",
+      "ground_truth_digest": "cd16cf9ed4564e8aaa576659ad257016ae4e07da17f9cc76c3b67c0e42c72330",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Missing or tied ordering evidence does not justify asserting the latest outcome.",
+      "evidence_ids": [
+        "inspections",
+        "coverage"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    },
+    {
+      "case_id": "H03-cancelled-followup",
+      "verdict": "ACCEPT",
+      "answer_digest": "e5e4163f4aa9f8840b838886160dd7654d52ba1ae52562985203a425a45eaa93",
+      "ground_truth_digest": "0cdb3510542b92ae788b1b331d63d5c5d931e664a5f0f63168173a26e18457cb",
+      "reviewer": "Astra (assistant review; no model API)",
+      "rationale": "Cancellation does not imply passing or erase the earlier failure.",
+      "evidence_ids": [
+        "inspections"
+      ],
+      "expectation_met_after_review": true,
+      "hard_grade_promoted": false
+    }
+  ]
+}

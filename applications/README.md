@@ -40,3 +40,4 @@ variable it reads and nothing else.
 | Application | Language | What it does |
 | --- | --- | --- |
 | [worldline](worldline) | Python | Snapshot-branch competing plans, verify their artifacts, and replay only the winner |
+| [licet](licet) | Python + TypeScript | Navigate Accela permitting workflows with verified state, policy checks, a connected UI, and an offline booking replay |

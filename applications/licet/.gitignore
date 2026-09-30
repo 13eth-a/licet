@@ -1,0 +1,31 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Run artifacts: every probe dumps raw portal HTML, screenshots and JSONL run
+# logs here. ~200 MB and growing, and the captured pages contain the test
+# account's email address, so none of it belongs in history. Regenerate any
+# artifact with the script named in docs/.
+logs/
+
+# Local agent/tooling metadata (a project id, not project code)
+.freebuff/
+
+# Keep additional local credential files out of the cookbook.
+.env.*
+!.env.example
+node_modules/
+
+# Preserve reviewed evidence and the UI lockfile despite cookbook defaults.
+!docs/phase9/screenshots/
+!docs/phase9/demo/screenshots/
+!ui/package-lock.json

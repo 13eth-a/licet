@@ -1,0 +1,6 @@
+{
+  "scope": "Heuristic scan of reachable Git blobs for OpenAI/Solari key shapes and private-key headers; not exhaustive secret detection",
+  "blobs_scanned": 414,
+  "credential_shape_findings": [],
+  "tracked_env_history_paths": []
+}

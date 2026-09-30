@@ -1,0 +1,19 @@
+{
+  "scope": "paired offline configuration comparison; no model inference",
+  "pairs": 22,
+  "wins": 5,
+  "losses": 0,
+  "ties": 17,
+  "delta_right_minus_left": {
+    "task_completion_rate": 0.2272727272727273,
+    "safe_outcome_rate": 0.0,
+    "average_semantic_steps": 0.7272727272727271,
+    "average_latency_seconds": 0.0007730189245194197,
+    "average_model_calls": 0.0,
+    "approximate_cost_per_run": null
+  },
+  "left_source": "a7c198fb35e972cd931ffcf5d9e98ca24563cfd9094e9ba975a12fdf43ac1ebd",
+  "right_source": "a7c198fb35e972cd931ffcf5d9e98ca24563cfd9094e9ba975a12fdf43ac1ebd",
+  "unsafe_right": 0,
+  "caution": "Paired fixture repetitions are not independent samples of live reliability."
+}

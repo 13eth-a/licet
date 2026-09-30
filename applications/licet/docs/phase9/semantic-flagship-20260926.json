@@ -1,0 +1,84 @@
+{
+  "date": "2026-09-26",
+  "scope": "Real semantic planner and Solari/Accela sandbox; execute enabled subject to normal policy; no payments or signatures",
+  "goal": "Get permit 000000014 ready for its next inspection without paying anything or signing anything.",
+  "source_digest": "c68e06de70c6faf3cd40d91343eccf9991c59d4883350a7a681528f9a777a557",
+  "commit": "4ae0566aa04b886e16c97ab0bd0753c816781902",
+  "commit_dirty": true,
+  "attempts": [
+    {
+      "report": "logs/phase9-flagship-20260926/semantic-live.json",
+      "sha256": "488cec4adef0c22aee7f42b08fded2727d30dbf37d248a01ae337c3f31855920",
+      "execute": true,
+      "status": "BLOCKED",
+      "error": "EXTERNAL_DEPENDENCY",
+      "reason": "{'kind': 'action_outcome_unknown', 'message': 'Action was dispatched but its outcome could not be verified; do not replay it without reconciling portal state.', 'retryable': False, 'needs_cooldown': False, 'needs_reauth': False}",
+      "metrics": {
+        "semantic_steps": 1,
+        "useful_steps": 0,
+        "plan_revisions": 0,
+        "model_fallbacks": 0,
+        "mutations_attempted": 0,
+        "mutations_verified": 0,
+        "efficiency": 0.0
+      },
+      "steps": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "success": false,
+          "message": "{'kind': 'action_outcome_unknown', 'message': 'Action was dispatched but its outcome could not be verified; do not replay it without reconciling portal state.', 'retryable': False, 'needs_cooldown': False, 'needs_reauth': False}"
+        }
+      ]
+    },
+    {
+      "report": "logs/phase9-flagship-20260926/semantic-live-retry.json",
+      "sha256": "67733610f4532ec125e7bc823716fb417b43092551f1afc844ed71410a5c862e",
+      "execute": true,
+      "status": "BLOCKED",
+      "error": "PLAN_LOOP_DETECTED",
+      "reason": "recovery budget exhausted: recovery validation failed; state is not known-good",
+      "metrics": {
+        "semantic_steps": 4,
+        "useful_steps": 3,
+        "plan_revisions": 3,
+        "model_fallbacks": 0,
+        "mutations_attempted": 0,
+        "mutations_verified": 0,
+        "efficiency": 0.75
+      },
+      "steps": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "success": true,
+          "message": "Phase 2 independently verified the permit"
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "success": true,
+          "message": "read overview"
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "success": true,
+          "message": "Phase 3 interpreted structured state"
+        },
+        {
+          "step": "r3-0",
+          "action": "READ_INSPECTIONS",
+          "success": false,
+          "message": "recovery budget exhausted: recovery validation failed; state is not known-good"
+        }
+      ]
+    }
+  ],
+  "live_findings": [
+    "Initial attempt failed to verify read-only Search outcome; its primitive log shows navigation, read, permit-number entry and Search only.",
+    "Fresh-session retry verified permit, read overview and interpreted state.",
+    "Inspection section fallback ran: Inspections is hidden; Inspection History has no visible match. Offline fallback tests did not establish a usable live route."
+  ],
+  "flagship_completed": false
+}

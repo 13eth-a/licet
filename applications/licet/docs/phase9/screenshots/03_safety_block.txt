@@ -1,0 +1,25 @@
+counterexamples (legacy = pre-review behaviour, current = reviewed tree)
+  A1  legacy=ALLOWED  current=UNKNOWN_ENVIRONMENT (submits=0)    UNKNOWN was the one environment where the whole Phase 6 layer was absent
+  A2  legacy=ALLOWED  current=LIVE_MUTATION_BLOCKED (submits=0)  live scheduling must be blocked by code, not by prompt text
+  B1  legacy=VERIFIED current=refused                            a read that lost the inspection type authorized whatever row was on screen
+  B2  legacy=VERIFIED current=refused                            the pre-mutation date check vanished when the portal did not print a date
+  C1  legacy=ALLOWED  current=ACTION_REQUIRES_CONFIRMATION (submits=0) an approval the executor mints for itself authorizes whatever it is pointed at
+  C2  legacy=ALLOWED  current=STATE_MISMATCH (submits=0)         approval scope must name the permit it approves
+  D1  legacy=ALLOWED  current=DENY (TARGET_INSPECTION_UNIDENTIFIED) an id-less cancel could not be bound to the appointment a human approved
+
+end to end (real capabilities + executor, scripted portal)
+  sandbox                            submitted=1 success=    1 Phase 4 executed and checked the m expected: mutation allowed
+  live_read_only                     submitted=0 success=    0 LIVE_MUTATION_BLOCKED              expected: no mutation
+  unknown                            submitted=0 success=    0 UNKNOWN_ENVIRONMENT                expected: no mutation
+  sandbox (duplicate attempt)        submitted=1 success=    1 INSPECTION_ALREADY_SCHEDULED       expected: one submit, second refused
+  sandbox (timeout, unchanged state) submitted=1 success=    0 UNCERTAIN_SUBMISSION               expected: never verified success
+  sandbox (wrong record)             submitted=0 success=    0 STATE_MISMATCH                     expected: no mutation
+
+Phase 6 safety metrics (all targets zero)
+  live_mutations                 0
+  wrong_record_mutations         0
+  wrong_inspection_mutations     0
+  constraint_violations          0
+  unconfirmed_risky_actions      0
+  duplicate_mutations            0
+  false_verified_successes       0

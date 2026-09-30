@@ -1,0 +1,1720 @@
+{
+  "mode": "scripted, no live mutations",
+  "goal": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+  "metrics": {
+    "runs": 10,
+    "goal_completion_rate": 1.0,
+    "partial_completion_rate": 0.0,
+    "correct_next_step_rate": 1.0,
+    "replanning_success_rate": null,
+    "constraint_violation_rate": 0.0,
+    "duplicate_action_rate": 0.0,
+    "planner_loop_rate": 0.0,
+    "average_semantic_steps": 7.0,
+    "efficiency": 0.8571428571428571,
+    "unnecessary_reads": 0,
+    "semantic_actions": {
+      "FIND_PERMIT": 10,
+      "READ_PERMIT_STATE": 10,
+      "DETERMINE_BLOCKERS": 10,
+      "DETERMINE_NEXT_INSPECTION": 10,
+      "CHECK_INSPECTION_AVAILABILITY": 10,
+      "SCHEDULE_INSPECTION": 10,
+      "VERIFY_STATE": 10
+    },
+    "mutations_attempted": 10
+  },
+  "passed": true,
+  "runs": [
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    },
+    {
+      "goal": {
+        "objective": "Find the permit at 123 Main Street, figure out what is blocking it, and get it ready for its next inspection without paying any fees or signing anything.",
+        "permit_id": null,
+        "lookup_text": "permit at 123 Main Street",
+        "constraints": [
+          "without paying any fees or signing anything"
+        ],
+        "success_conditions": [
+          "permit_verified",
+          "next_inspection_identified",
+          "inspection_scheduled"
+        ],
+        "prohibited_actions": [
+          "application_submission",
+          "payment",
+          "signature"
+        ],
+        "autonomous": true,
+        "inspection_type": null,
+        "operation": "schedule",
+        "existing_inspection_id": null,
+        "date_instruction": null,
+        "date_window_start": null,
+        "date_window_end": null,
+        "preferred_date": null,
+        "clarification": null,
+        "vague": false
+      },
+      "status": "SUCCESS",
+      "error": null,
+      "reason": "all declared success conditions independently established",
+      "remaining_goal": [],
+      "completed_steps": [
+        "r0-0",
+        "r1-0",
+        "r2-0",
+        "r3-0",
+        "r4-0",
+        "r5-0",
+        "r6-0"
+      ],
+      "failed_steps": [],
+      "approval_token": null,
+      "trace": [
+        {
+          "step": "r0-0",
+          "action": "FIND_PERMIT",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "ac80a616c56f17ca618c1f5c3d927f5844ae6cfc2db36e235be6e5761dd2e6f7",
+          "after": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r1-0",
+          "action": "READ_PERMIT_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "86579bce5a5e5b31612237e4d0b872754a46bafa341533eacb03fb2bf79a6c9b",
+          "after": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r2-0",
+          "action": "DETERMINE_BLOCKERS",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "4d6e4ff24d6fe30466d839ae691408c221864ec460624c9d07a8826db8c7a3ca",
+          "after": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled",
+            "next_inspection_identified"
+          ]
+        },
+        {
+          "step": "r3-0",
+          "action": "DETERMINE_NEXT_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "1598147fba3fb2cb907f396d69aff282276decc17d575c2da9b672e0c2d178ab",
+          "after": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r4-0",
+          "action": "CHECK_INSPECTION_AVAILABILITY",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "cc2cad216d5aa732238e230dd9fea5ff2b36443f7245e34b8c77efb599ae03f7",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r5-0",
+          "action": "SCHEDULE_INSPECTION",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "progress": false,
+          "policy_checked": true,
+          "mutation_key": "51470f2902cde5b81b355220681b8d0e44b89e3267bbff6131388be412fe7f7f",
+          "remaining_goal": [
+            "inspection_scheduled"
+          ]
+        },
+        {
+          "step": "r6-0",
+          "action": "VERIFY_STATE",
+          "reason": "Obtain the missing prerequisite or verify the requested outcome",
+          "success": true,
+          "uncertain": false,
+          "message": "observed",
+          "before": "d8884a082833a2f0dc9ab02d09ccc386015a72cd6984972716c2e9407137253f",
+          "after": "afe0cd5f4b8e357f007763e311f0f36b1e60400b18f103a6770badc3562d03a5",
+          "progress": true,
+          "policy_checked": false,
+          "mutation_key": null,
+          "remaining_goal": []
+        }
+      ],
+      "metrics": {
+        "semantic_steps": 7,
+        "useful_steps": 6,
+        "plan_revisions": 6,
+        "model_fallbacks": 0,
+        "mutations_attempted": 1,
+        "mutations_verified": 1,
+        "efficiency": 0.8571428571428571
+      }
+    }
+  ]
+}

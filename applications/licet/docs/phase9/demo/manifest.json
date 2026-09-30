@@ -1,0 +1,23 @@
+{
+  "video": {
+    "duration_seconds": 180,
+    "width": 1920,
+    "height": 1080,
+    "audio": false,
+    "class": "captioned evidence walkthrough; not fresh live footage"
+  },
+  "files": {
+    "narration.md": "9361e6deb15259570ef437918bd2857037501af2c0c0b39160403b83c815c84d",
+    "licet-demo-evidence-draft.mp4": "8fb179d8e04b2c4fc824fc392d4ceab80ca7132a577eebf58ad54d069ef7b0c9",
+    "README.md": "55caebc2a2dec46875814f45483a8daec0d9b99848b83838cc7614ce683678dd",
+    "screenshots/10-architecture.png": "cbf3c8fb4f3fa8868952c0c06c7ac35a657e72befd73835c62b8f4db9318be31",
+    "screenshots/08-safety.png": "b61627e0eb951246f1e01b8b0cc1c0fb1b714cdc981aed80814933ef833c357d",
+    "screenshots/01-title.png": "4b8eecc9d5b3bde9b68d8ed97066e855c3b81b0af88fdeb0950539a5ae0beeaf",
+    "screenshots/04-inspections.png": "ec3aaac41c854ea973aa5f0d2391f2a4c89bf30662d0d5d2e0bae649dae6550e",
+    "screenshots/09-recovery.png": "67dec54035431a9b2021d438779dd6aa026c4b8b7d68414bcb7c3d82ec9065c4",
+    "screenshots/06-result.png": "27f56910000ac3b0ba54e92dea688260b3a315f0e5a84df6d621d7ffbf2851c0",
+    "screenshots/07-controlled.png": "2f568d247c98f0c20f008c175c6b91d1475463c41df2dbea615631bb73cfde3c",
+    "screenshots/02-goal.png": "9b7cdfca9a9a8cf73b0d6d33f5bf1f1b33bffd085dee53fe907cf9455858fc54",
+    "screenshots/11-benchmark.png": "02202e8463a7a051751fda7a7dcd345774175345b88b17a08f25727b93043827"
+  }
+}

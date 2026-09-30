@@ -1,0 +1,73 @@
+{
+  "scope": "Fresh live sandbox semantic planner, plan-only; no model API calls; all mutations held for approval",
+  "date": "2026-09-25",
+  "goal": {
+    "objective": "Get permit 000000014 ready for its next inspection without paying anything or signing anything.",
+    "permit_id": "000000014",
+    "lookup_text": "permit 000000014",
+    "constraints": [
+      "without paying anything or signing anything"
+    ],
+    "success_conditions": [
+      "permit_verified",
+      "next_inspection_identified",
+      "inspection_scheduled"
+    ],
+    "prohibited_actions": [
+      "application_submission",
+      "payment",
+      "signature"
+    ],
+    "autonomous": true,
+    "inspection_type": null,
+    "operation": "schedule",
+    "existing_inspection_id": null,
+    "date_instruction": null,
+    "date_window_start": null,
+    "date_window_end": null,
+    "preferred_date": null,
+    "clarification": null,
+    "vague": false
+  },
+  "execute": false,
+  "status": "BLOCKED",
+  "error": "PLAN_LOOP_DETECTED",
+  "reason": "recovery budget exhausted: recovery validation failed; state is not known-good",
+  "metrics": {
+    "semantic_steps": 4,
+    "useful_steps": 3,
+    "plan_revisions": 3,
+    "model_fallbacks": 0,
+    "mutations_attempted": 0,
+    "mutations_verified": 0,
+    "efficiency": 0.75
+  },
+  "steps": [
+    {
+      "step": "r0-0",
+      "action": "FIND_PERMIT",
+      "success": true,
+      "message": "Phase 2 independently verified the permit"
+    },
+    {
+      "step": "r1-0",
+      "action": "READ_PERMIT_STATE",
+      "success": true,
+      "message": "read overview"
+    },
+    {
+      "step": "r2-0",
+      "action": "DETERMINE_BLOCKERS",
+      "success": true,
+      "message": "Phase 3 interpreted structured state"
+    },
+    {
+      "step": "r3-0",
+      "action": "READ_INSPECTIONS",
+      "success": false,
+      "message": "recovery budget exhausted: recovery validation failed; state is not known-good"
+    }
+  ],
+  "raw_report_sha256": "44ae0fe76c2f6a23fb797d3788ce152b75e107c0694d16bdde82c90ecbc71e82",
+  "raw_report": "logs/phase9-astra/live-plan-only.json"
+}

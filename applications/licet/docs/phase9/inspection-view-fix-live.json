@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-26",
+  "scope": "Live Accela sandbox; semantic planner; execute enabled under ordinary policy; no payments/signatures",
+  "report": "logs/phase9-inspection-fix/semantic-live.json",
+  "sha256": "49b8e12aaec9fefc18707b8fec08e0eb51eedbdb75a4610ebf4b833e9da12f5f",
+  "status": "BLOCKED",
+  "error": "NO_SAFE_ACTIONS",
+  "reason": "required inspection state is incomplete",
+  "metrics": {
+    "semantic_steps": 6,
+    "useful_steps": 6,
+    "plan_revisions": 6,
+    "model_fallbacks": 0,
+    "mutations_attempted": 0,
+    "mutations_verified": 0,
+    "efficiency": 1.0
+  },
+  "steps": [
+    {
+      "step": "r0-0",
+      "action": "FIND_PERMIT",
+      "success": true,
+      "message": "Phase 2 independently verified the permit"
+    },
+    {
+      "step": "r1-0",
+      "action": "READ_PERMIT_STATE",
+      "success": true,
+      "message": "read overview"
+    },
+    {
+      "step": "r2-0",
+      "action": "DETERMINE_BLOCKERS",
+      "success": true,
+      "message": "Phase 3 interpreted structured state"
+    },
+    {
+      "step": "r3-0",
+      "action": "READ_INSPECTIONS",
+      "success": true,
+      "message": "read inspections"
+    },
+    {
+      "step": "r4-0",
+      "action": "DETERMINE_BLOCKERS",
+      "success": true,
+      "message": "Phase 3 interpreted structured state"
+    },
+    {
+      "step": "r5-0",
+      "action": "DETERMINE_NEXT_INSPECTION",
+      "success": true,
+      "message": "required inspection state is incomplete"
+    }
+  ],
+  "inspection_read_fixed": true,
+  "booking_verified": false
+}

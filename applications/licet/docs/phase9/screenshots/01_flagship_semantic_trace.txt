@@ -1,0 +1,41 @@
+goal: Get permit 000000014 ready for its next inspection without paying anything or signing anything.
+autonomous=True permit=000000014 operation=schedule type=None prohibited=['application_submission', 'payment', 'signature']
+login: authenticated  (run log: logs/phase9-acceptance/phase5-live-20260927T010721936289Z-2fdcea31/phase5-live-20260927T010721936289Z-2fdcea31.jsonl)
+attempt 1: status=PARTIAL_SUCCESS error=NO_SAFE_ACTIONS steps=7
+
+=== semantic trace ===
+        r0-0 ok  FIND_PERMIT                    progress=True remaining=['inspection_scheduled', 'next_inspection_identified'] (Phase 2 independently verified the permit)
+        r1-0 ok  READ_PERMIT_STATE              progress=True remaining=['inspection_scheduled', 'next_inspection_identified'] (read overview)
+        r2-0 ok  DETERMINE_BLOCKERS             progress=True remaining=['inspection_scheduled', 'next_inspection_identified'] (Phase 3 interpreted structured state)
+        r3-0 ok  READ_INSPECTIONS               progress=True remaining=['inspection_scheduled', 'next_inspection_identified'] (read inspections)
+        r4-0 ok  DETERMINE_BLOCKERS             progress=True remaining=['inspection_scheduled', 'next_inspection_identified'] (Phase 3 interpreted structured state)
+        r5-0 ok  DETERMINE_NEXT_INSPECTION      progress=True remaining=['inspection_scheduled'] (one evidence-supported target; policy and pre-action verification still required)
+        r6-0 ok  CHECK_INSPECTION_AVAILABILITY  progress=True remaining=['inspection_scheduled'] (observed eligibility, availability and action prerequisites)
+
+=== plan-only acceptance ===
+Goal: Prepare permit for its required inspection
+✓ Permit verified: 000000014
+✓ Required inspection identified: Brycer Inspection History
+✓ Inspection calendar opened
+✓ Calendar identity verified
+✓ Availability checked
+
+BLOCKER
+No active inspection dates were available in the observed calendar window (Sep 2026, Oct 2026, Nov 2026).
+
+UNRESOLVED
+Cost: not disclosed
+Signature requirement: not disclosed
+
+RESULT
+PARTIAL_SUCCESS / NO_SAFE_ACTIONS
+Mutations: 0
+
+=== outcome ===
+  status=PARTIAL_SUCCESS error=NO_SAFE_ACTIONS
+  reason=No active inspection dates were available in the observed calendar window (Sep 2026, Oct 2026, Nov 2026).
+  remaining_goal=['inspection_scheduled']
+  metrics={'semantic_steps': 7, 'useful_steps': 7, 'plan_revisions': 7, 'model_fallbacks': 0, 'mutations_attempted': 0, 'mutations_verified': 0, 'efficiency': 1.0}
+  mutations_attempted=0
+
+report: logs/phase9-acceptance/screenshot-run.json

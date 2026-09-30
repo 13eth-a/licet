@@ -1,0 +1,57 @@
+Licet — architecture
+
+User goal
+   |
+   v
+Goal parser  ->  bounded planner  ->  deterministic policy + constraints
+                                            |
+                                   allowed  |  deny / confirmation / unknown
+                                            v                         |
+                              semantic capability                    v
+                        (permit lookup + identity      explain or safe stop
+                         structured state + reasoning
+                         inspection action + verification)
+                                            |
+                                            v
+                              guarded browser dispatcher
+                                            |
+                                            v
+                              Solari browser client
+                                            |
+                                            v
+                              Accela Citizen Access
+                                            |
+                                            v
+                              independent state re-read
+                                  |                     |
+                              verified            recoverable read failure
+                                  |                     |
+                                  v                     v
+                          result to user      bounded recovery / replan
+                                                        |
+                                                  fresh validated state
+                                                        |
+                                                        v
+                                                     planner
+
+
+Recovery loop
+
+                     +--------------+
+                     |   Planner    |
+                     +------+-------+
+                            |
+                         Policy
+                            |
+                        Execute
+                            |
+                         Verify
+                      /         \
+                 success       failure
+                      |           |
+                  update       recovery
+                   state          |
+                      \           |
+                       +--- replan-+
+
+An uncertain mutation never replays: it stops and reconciles by re-reading.
