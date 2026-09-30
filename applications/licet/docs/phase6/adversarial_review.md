@@ -1,6 +1,6 @@
-# Phase 6 adversarial safety review — DeepSeek V4.1 Flash
+# Phase 6 adversarial safety review — adversarial review
 
-Reviewed 2026-09-23 against the working tree after Luna's policy engine. Scope,
+Reviewed 2026-09-23 against the working tree after the implementation’s policy engine. Scope,
 per the Phase 6 assignment: assume the planner, the model behind it, or any
 future caller is buggy or hostile, and find every route that could
 
@@ -22,12 +22,12 @@ was fixed; each fix is locked by regressions in
 replayable with `scripts/phase6_adversarial_replay.py`
 (`docs/phase6/adversarial_evidence.json`).
 
-This review was then extended in response to GPT-6 Astra's independent
+This review was then extended in response to the architecture review’s independent
 architecture review: its probe reproduced several of the findings above plus
 four more (primitive-layer environment and intent handling, approval binding and
 copy-resistance, `_matches` identity, vocabulary parity), and every one of those
 is now closed or named as a residual — see
-`docs/phase6/astra_review_response.md`. Astra's own replay exits 0.
+`docs/phase6/architecture_review_response.md`. the architecture review’s own replay exits 0.
 
 **Read the metrics as measured over these counterexamples, not as a global
 safety proof.** Both replays are finite, local and deterministic; a new mutation
@@ -127,9 +127,9 @@ proposal produces a different proposal and therefore a different approval.
 
 | ID | Counterexample | Why it is unsafe | Resolution |
 |---|---|---|---|
-| D1 | `CANCEL_INSPECTION` with no `inspection_id` (the Phase 5 path: `parse_goal` never extracts one and `select_inspection_action` builds an id-less action) → **allowed**. | Cancel/reschedule act on one existing appointment. Without its id, the approval scope, the identity check and the post-action verification all key on nothing, so the operation binds to whichever matching row the portal rendered. | `TARGET_INSPECTION_UNIDENTIFIED`: targeted mutations must name the appointment. Fixing the upstream parser/selector to establish the id is Luna/GLM's follow-up; the boundary now refuses rather than guessing. |
+| D1 | `CANCEL_INSPECTION` with no `inspection_id` (the Phase 5 path: `parse_goal` never extracts one and `select_inspection_action` builds an id-less action) → **allowed**. | Cancel/reschedule act on one existing appointment. Without its id, the approval scope, the identity check and the post-action verification all key on nothing, so the operation binds to whichever matching row the portal rendered. | `TARGET_INSPECTION_UNIDENTIFIED`: targeted mutations must name the appointment. Fixing the upstream parser/selector to establish the id is implementation/the portal integration’s follow-up; the boundary now refuses rather than guessing. |
 | D2 | A direct adapter call (`AccelaInspectionPortal.submit_inspection_action_async`) on a positively live host. | The only class that touches the DOM relied entirely on a caller upstream having gated it. | The adapter itself refuses a live host. |
-| D3 | The primitive layer: `guard.authorize("schedule_inspection", state)` with `state.current_url` on a live portal → **ALLOW** (scheduling is AUTOMATIC in the Phase 0 catalogue and the guard had no environment input). | The dispatcher is what clicks. A Level-0 agent run (`licet/agent/planner.py`, `scripts/ni_agent_run.py --allow-non-sandbox`) could advance the scheduling wizard on a live host with no Phase 6 decision anywhere. | The guard applies the Phase 6 core rule to **every** `changes_state` action: live *and* unknown are blocked, approval included (`tests/test_phase6_adversarial.py::test_the_primitive_layer_refuses_every_mutation_outside_a_sandbox`, parametrized over 8 actions × 3 environments). This is where Astra's architecture review landed, and it is why the dispatcher now records the URL it actually read (`AgentState.current_url`): without that, every adapter call looked like an unknown environment and the rule could not be applied on the real route. |
+| D3 | The primitive layer: `guard.authorize("schedule_inspection", state)` with `state.current_url` on a live portal → **ALLOW** (scheduling is AUTOMATIC in the Phase 0 catalogue and the guard had no environment input). | The dispatcher is what clicks. A Level-0 agent run (`licet/agent/planner.py`, `scripts/ni_agent_run.py --allow-non-sandbox`) could advance the scheduling wizard on a live host with no Phase 6 decision anywhere. | The guard applies the Phase 6 core rule to **every** `changes_state` action: live *and* unknown are blocked, approval included (`tests/test_phase6_adversarial.py::test_the_primitive_layer_refuses_every_mutation_outside_a_sandbox`, parametrized over 8 actions × 3 environments). This is where the architecture review’s architecture review landed, and it is why the dispatcher now records the URL it actually read (`AgentState.current_url`): without that, every adapter call looked like an unknown environment and the rule could not be applied on the real route. |
 
 ## Verified-safe paths (attacked, no change needed)
 
@@ -138,7 +138,7 @@ proposal produces a different proposal and therefore a different approval.
   `InspectionActionExecutor`, which always holds a policy engine; the adapter and
   the primitive guard are additional checks, not alternatives, and the guard's
   rule is the same one the engine applies (positively identified sandbox, or no
-  mutation). Astra's review probed each of those layers separately and all three
+  mutation). the architecture review’s review probed each of those layers separately and all three
   refuse a live and an unknown environment.
 - **Duplicate suppression.** An already-scheduled or in-flight inspection is
   refused before submission; the same `MutationLedger` fingerprint can never be
@@ -173,7 +173,7 @@ proposal produces a different proposal and therefore a different approval.
 
 ## Deliberately not changed (residual risk, named)
 
-- **The capability factory is not handed the user instruction (owner: Luna).**
+- **The capability factory is not handed the user instruction (owner: implementation).**
   `UserConstraints.from_text` now *does* have a production caller —
   `guard.run_constraints(state)` parses the goal (plus explicit constraint lines)
   and the guard refuses any state-changing action they contradict — but the
@@ -182,37 +182,37 @@ proposal produces a different proposal and therefore a different approval.
   itself. Threading the instruction into `build_live_capabilities` is recorded
   rather than half-wired; `test_phase6_constraints_and_the_run_goal_agree` keeps
   the two readings in agreement until then.
-- **Cross-process idempotency (owner: Luna).** `MutationLedger` is run-local. A
+- **Cross-process idempotency (owner: implementation).** `MutationLedger` is run-local. A
   process that dies between the submit and the re-read is protected only by the
   portal's own read gate on the next run. Phase 4 and Phase 5 both recorded this;
   it is unchanged and now also documented here.
-- **Approval expiry versus a slow human (owner: Astra/product).** The approval is
+- **Approval expiry versus a slow human (owner: architecture review/product).** The approval is
   issued when the run pauses and expires after ten minutes, so a slow approval
   refuses the mutation (safe direction) with a `CONFIRMATION_REQUIRED` result and
   a `PRECONDITION_NOT_MET` stop rather than silently proceeding. Whether a long
   pause should re-issue against the *same* proposal is a product decision.- **The Phase 5 cancel/reschedule target is still not established upstream
-(owner: GLM/Luna).** The boundary now refuses an id-less targeted mutation, but
+(owner: portal integration/implementation).** The boundary now refuses an id-less targeted mutation, but
   the real fix is `parse_goal`/`select_inspection_action` resolving the existing
   appointment from the record's inspection history, with the id shown to the
   human in the approval prompt. Until then, text-parsed cancellations stop.
-  *Update (GLM, 2026-09-23): the portal-data half is closed —
+  *Update (portal integration, 2026-09-23): the portal-data half is closed —
   `accela.parse_inspection_row_controls` reads the per-row cancel/reschedule
   controls (the only appointment identity the citizen portal renders) and the
   Phase 4 adapter binds the id on an unambiguous read
   (`docs/phase6/portal_boundary_map.md` §2,
-  `tests/test_phase6_portal_boundary.py`). Luna's half remains: thread the
+  `tests/test_phase6_portal_boundary.py`). the implementation’s half remains: thread the
   bound id from `world.verified_inspection` into `parse_goal`/selection on the
   Phase 5 path.*
 - **The primitive layer's approval is page-scoped, not argument-scoped (owner:
-  Luna).** `AgentState.is_approved` now invalidates a grant when the URL, record
+  implementation).** `AgentState.is_approved` now invalidates a grant when the URL, record
   or flow step moved since it was requested, but it binds action + page context
   rather than the exact control that will be clicked. The semantic route's
   approval is argument-scoped (`ConfirmationRequest.matches`); the click route's
   is not, and cannot be without the dispatcher naming the control it will use.
-- **The payment and attestation screens are unmapped (owner: GLM).** The
-  primitive vocabulary is derived from the flows GLM has mapped; the guard's
+- **The payment and attestation screens are unmapped (owner: portal integration).** The
+  primitive vocabulary is derived from the flows portal integration has mapped; the guard's
   answer for an unmapped control is therefore "unclassified, therefore blocked",
-  which is safe but not an audit of those flows. *Update (GLM, 2026-09-23):
+  which is safe but not an audit of those flows. *Update (portal integration, 2026-09-23):
   audited in `docs/phase6/portal_boundary_map.md` and mapped as data in
   `licet/browser/accela.py:MUTATION_BOUNDARIES`. The attestation control is
   mapped and PROHIBITED; payment and upload remain UNMAPPED on this sandbox
@@ -262,15 +262,15 @@ the live/approval/constraint routes; and two Phase 4 pins for the approval
 
 ## Handoff
 
-- **Luna**: thread the user instruction into `UserConstraints` at the capability
+- **implementation**: thread the user instruction into `UserConstraints` at the capability
   construction point; decide cross-process idempotency; extend the approval to
   carry `amount` for fee actions when a payment path exists (the field is already
   scoped in `ConfirmationRequest` and unused by the executor today).
-- **GLM**: establish the existing appointment (id + rendered label + date) for
+- **portal integration**: establish the existing appointment (id + rendered label + date) for
   cancel/reschedule in `parse_goal`/selection, and audit the remaining Accela
   entry points — the review found the adapter gated but no review of the payment
   and attestation screens exists because those flows are unmapped.
-- **Astra**: re-check the two invariants this review rests on — (1) every mutation
+- **architecture review**: re-check the two invariants this review rests on — (1) every mutation
   entry point holds a policy engine, (2) the approval object is created only where
   human consent is authenticated — and confirm the UNKNOWN-at-the-primitive-layer
   residual is acceptable for the Phase 6 exit condition.

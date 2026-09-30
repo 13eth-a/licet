@@ -1,11 +1,11 @@
-# Phase 5 portal-state review — GLM 5.3 Flash
+# Phase 5 portal-state review — portal integration
 
-Reviewed 2026-09-22 against the working tree after Luna's Phase 5 planner and
-DeepSeek's planner attack. Scope, per the Phase 5 assignment: **cases where a
+Reviewed 2026-09-22 against the working tree after the implementation’s Phase 5 planner and
+the adversarial review’s planner attack. Scope, per the Phase 5 assignment: **cases where a
 planner failure is actually state extraction** — confusing Accela rendering
 producing a bad `PermitState` that a correct planner then faithfully blocks on,
 loops on, or acts on. The distinction the phase depends on:
-`bad PermitState → good planner makes bad decision` is not an Astra problem.
+`bad PermitState → good planner makes bad decision` is not an architecture review problem.
 
 Method: drive the **real** adapter (`licet/phase3/accela_extract.py`), real
 `understand()`, and the real Phase 5 completion gate (`reasoning_is_sound`)
@@ -16,7 +16,7 @@ fix; each is locked by a regression in `tests/test_phase3_adversarial.py`
 
 ## Headline
 
-The deterministic rule engine **can** emit `blocking_answer=True` — DeepSeek's
+The deterministic rule engine **can** emit `blocking_answer=True` — the adversarial review’s
 Phase 5 handoff recorded it as "unproducible by the shipped rule engine," which
 is now stale. Four live classes produce it: unknown attempt ordering (two
 paths), a completed attempt with no recorded result, and unavailable/parse-failed
@@ -80,7 +80,7 @@ premise actually missing, not assert a fact-free "order unknown."
 
 ## blocks_answer handoff (closed)
 
-`docs/phase5/adversarial_review.md` handed this to GLM as "enforced but
+`docs/phase5/adversarial_review.md` handed this to portal integration as "enforced but
 unproducible by the deterministic rule engine … the model-level interpreter is
 the only emitter." Re-verified: the rule engine emits `blocks_answer=True` in
 four classes today (unknown attempt ordering via the unresolved-conflict and
@@ -107,7 +107,7 @@ producible from real portal data end to end. Locked by
   seam is consistent in both directions. Its `_adapter_rows` literal-shape
   fallback is untouched.
 - **Vague-goal `SUCCESS` capping, free-text constraint enforcement,
-  cross-process idempotency.** Unchanged; they remain Luna/Astra residuals in
+  cross-process idempotency.** Unchanged; they remain implementation/architecture review residuals in
   the adversarial review.
 
 ## Evidence
@@ -136,20 +136,20 @@ counterexamples (legacy = pre-review extraction reproduced verbatim in the repla
 
 ## Handoff
 
-- **Astra**: the completion gate is fed by extraction; when a live run reports
+- **architecture review**: the completion gate is fed by extraction; when a live run reports
   `PLAN_LOOP_DETECTED` on repeated reads with unchanged `partial` answers,
   check the trace's `remaining_goal` against what the page actually rendered
   before blaming plan selection — H02 was exactly that signature. The four
   `blocks_answer` producers are the deterministic classes a model reasoner
   must reproduce, not narrow.
-- **Luna**: `PermitState.inspections` dates are ISO from extraction now; the
+- **implementation**: `PermitState.inspections` dates are ISO from extraction now; the
   `select_inspection_action` date checks and Phase 5 `established()` date math
   can rely on it. If a proposal's date window ever needs to accept raw portal
   text, widen it at the adapter, not in `established()`.
-- **Solar**: the fixture set gains real-shape cases H02/H06/H01/H03/H04;
+- **fixture generation**: the fixture set gains real-shape cases H02/H06/H01/H03/H04;
   per-municipality captures with different status-column conventions or fee
   headers remain the recall path — an unknown label degrades to
   uncertainty/partial, never a fabricated value.
-- **DeepSeek**: the blocks_answer handoff is closed (section above); the
+- **adversarial review**: the blocks_answer handoff is closed (section above); the
   attack surface that remains model-only is the *wording-level* matchers
   (`_NEGATED_*` regexes) against agency phrasings not yet captured.

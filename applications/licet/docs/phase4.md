@@ -50,7 +50,7 @@ limitation with a live `VERIFIED_SUCCESS`.
 - Conservative Phase 3 bridge: conflicting, ambiguous, low-confidence, or prerequisite-blocked reasoning cannot become an action.
 - End-to-end entry point: `licet.phase4.coordinator.run_inspection_workflow` assembles the whole path — verified Phase 3 reasoning → action selection → policy → executor → independently verified portal state — and names the stage that stopped it (`selection`, `validation`, `execution`) so a refusal that never touched a browser is never mistaken for a portal outcome.
 - Phase 4 metrics + audit persistence: `licet.phase4.metrics.Phase4Metrics` counts throughput and the zero-target invariants (duplicate submissions, wrong-record/wrong-inspection mutations, constraint violations, unverified successes), which it re-checks against the executor's own audit rather than asserting. `Phase4ActionRunner` records them and writes each `MutationAudit` to the run log via `RunLogger.log_event`, so the mutation trail survives the process.
-- Mutation safety (DeepSeek review, `docs/phase4/mutation_safety_review.md`): idempotency covers an in-flight `Requested`/`Pending` request, the observed stable record key is enforced before any mutation, an exact requested weekday is never substituted, omitted required inputs fail closed, a same-date reschedule is refused rather than reported verified, and one action writes exactly one audit record.
+- Mutation safety (adversarial review, `docs/phase4/mutation_safety_review.md`): idempotency covers an in-flight `Requested`/`Pending` request, the observed stable record key is enforced before any mutation, an exact requested weekday is never substituted, omitted required inputs fail closed, a same-date reschedule is refused rather than reported verified, and one action writes exactly one audit record.
 
 ## Tests
 
@@ -68,7 +68,7 @@ grid-gated type selection, day-gated calendar clicks, intent-carrying Continue
 steps, disabled-Continue semantics, and the UNVERIFIED outcome when the portal
 prints no confirmation and the re-read shows nothing scheduled.
 
-`tests/test_phase4_mutation_safety.py` adds 17 DeepSeek review cases for the
+`tests/test_phase4_mutation_safety.py` adds 17 adversarial review cases for the
 four zero-targets (wrong permit/inspection, duplicate submission, constraint
 violation, unverified success) plus the single-audit guarantee and the
 adapter's stable-record-key gate.

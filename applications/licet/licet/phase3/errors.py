@@ -33,7 +33,7 @@ class Phase3ErrorCode(str, Enum):
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
 
     # A substantive status word maps to no agency-supported label; the raw
-    # value is preserved, never substring-guessed (Astra review P1 #2).
+    # value is preserved, never substring-guessed (architecture review review P1 #2).
     UNSUPPORTED_STATUS = "UNSUPPORTED_STATUS"
 
     # Evidence belongs to a different record key; rejected at merge.

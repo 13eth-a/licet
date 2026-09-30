@@ -1,4 +1,4 @@
-# Phase 4 — Astra action-selection handoff
+# Phase 4 — architecture review action-selection handoff
 
 Completed 2026-09-21. Assigned scope: which inspection and operation the verified
 Phase 3 evidence supports. Implementation: `licet/phase4/selection.py`; exact
@@ -21,7 +21,7 @@ model-provider, authorization, date-choice, or mutation calls.
 - [x] Test hard action-selection cases without invoking a browser.
 
 Policy, calendars, forms, submission, retries, audit persistence and final
-verification belong to Luna/GLM/DeepSeek's assigned portions. No live scheduling
+verification belong to implementation/portal integration/the adversarial review’s assigned portions. No live scheduling
 was performed. These checks establish selection behavior, not the Phase 4 exit
 condition or a production wrong-mutation rate of zero.
 
@@ -119,7 +119,7 @@ current complete history, one portal option and an explicit scheduling candidate
 select that portal option. Do not transform the physical correction recommendation
 itself into a browser action.
 
-## Integration notes for Luna
+## Integration notes for implementation
 
 Use `action_from_selection(selection)` to bind the selected action to its
 record/snapshot/evidence metadata. Validate that context is still current, check

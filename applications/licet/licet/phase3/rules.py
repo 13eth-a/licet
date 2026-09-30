@@ -1,7 +1,7 @@
 """Deterministic Phase 3 findings.
 
 Rules only promote facts when the portal supplies the required evidence. In
-particular (Astra review P1 #1/#5, contract "What counts as a blocker"):
+particular (architecture review review P1 #1/#5, contract "What counts as a blocker"):
 
 - an unpaid fee is a money fact; it is a gate only with explicit gate evidence
   (fee gate text or an explicit payment-required condition), never from the
@@ -65,9 +65,9 @@ def _sort_key(blocker: Blocker) -> tuple[int, int]:
 
 # --- condition activity ----------------------------------------------------
 # Agency labels are matched exactly after harmless normalization, and an
-# unrecognized label stays unknown (Astra review P1 #2, applied to conditions).
+# unrecognized label stays unknown (architecture review review P1 #2, applied to conditions).
 # Substring matching here previously promoted "Hold released" to a confirmed
-# gate and "No warning" to an observed problem (DeepSeek review A1).
+# gate and "No warning" to an observed problem (adversarial review A1).
 _ACTIVE_CONDITION_LABELS = {
     "active", "open", "outstanding", "in force", "in effect", "in place",
     "not satisfied", "unsatisfied", "unresolved", "violation", "warning",
@@ -246,7 +246,7 @@ def _attempt_order(failed, passed) -> str:
 def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
     result = DeterministicFindings(contradictions=list(state.contradictions))
     # Explicit expiration is a portal fact; a configured date alone is not an
-    # expired state (Astra case S02).
+    # expired state (architecture review case S02).
     if state.status_normalized == "EXPIRED":
         result.blockers.append(
             Blocker("expired_permit", "Portal reports the permit as expired", "Overview",
@@ -286,7 +286,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
         if not inspection.failed:
             # A passed result with a correction-required comment on the same
             # attempt is unresolved conflicting evidence, not a pass to report
-            # or a failure to invent (Astra case F04).
+            # or a failure to invent (architecture review case F04).
             if inspection.passed and comment_requests_correction(inspection.comments):
                 result.contradictions.append(
                     f"{inspection.type}: result is {inspection.raw_result!r} but the "
@@ -300,7 +300,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     inspection.evidence_ids + inspection.comment_evidence_ids, _RANK["failed_inspection"])
         )
         same_type = [x for x in state.inspections if x.type.lower() == inspection.type.lower()]
-        # Latest-attempt honesty (Astra case H05): same-type fail+pass attempts
+        # Latest-attempt honesty (architecture review case H05): same-type fail+pass attempts
         # leave "which outcome is current" unresolved only when ordering is NOT
         # establishable — a missing date on either attempt, or a date tie.
         # Differing known dates DO establish order (H01); known dates equal
@@ -345,7 +345,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                                 "likely", ["correction completion"],
                                 inspection.evidence_ids + inspection.comment_evidence_ids)
         )
-        # A bare failure is not authority to schedule (Astra case H02): if a
+        # A bare failure is not authority to schedule (architecture review case H02): if a
         # same-type attempt is already scheduled, reinspection is arranged.
         if any(x.lifecycle_normalized == "SCHEDULED" for x in same_type):
             result.uncertainties.append(
@@ -367,7 +367,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     .72, False, "possible", ["correction completion"], inspection.evidence_ids,
                 )
             )
-    # A completed attempt with no recorded outcome (Astra case S04): the
+    # A completed attempt with no recorded outcome (architecture review case S04): the
     # lifecycle is a fact, the result is unknown — never guessed either way,
     # and the unknown outcome can change any current-outcome answer.
     for inspection in state.inspections:
@@ -426,8 +426,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
             # A zeroed balance is not an outstanding amount (review A10).
             continue
         # Explicit gate evidence only: the portal words the gate on the fee row
-        # or in a condition (Astra case B02). Words like "balance due" describe
-        # money; they do not gate a stage (Astra case B01).
+        # or in a condition (architecture review case B02). Words like "balance due" describe
+        # money; they do not gate a stage (architecture review case B01).
         gate = _payment_gate_evidence(fee, state)
         classification = "confirmed_gate" if gate else "potential_impediment"
         stage = gate[1] if gate else None
@@ -490,7 +490,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
             )
     for section, coverage in state.coverage.items():
         # Coverage states are knowledge limitations, never permit defects
-        # (Astra case U02): they become uncertainties, not blockers.
+        # (architecture review case U02): they become uncertainties, not blockers.
         if coverage.status in {CoverageStatus.UNAVAILABLE, CoverageStatus.PARSE_FAILED}:
             result.uncertainties.append(
                 Uncertainty(
@@ -503,7 +503,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 )
             )
     # A pass resolves a prior failure only when the same scope is explicit
-    # (Astra cases H01/H04) AND the pass is established as later (review A4).
+    # (architecture review cases H01/H04) AND the pass is established as later (review A4).
     # With unknown ordering the failure stays open; with an *earlier* pass the
     # failure is the latest established outcome and must stay a blocker.
     for failed in (x for x in state.inspections if x.failed):
@@ -542,7 +542,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
             # later) with only the *scope* unknown — or ordering itself may be
             # unknown. Name the actual missing premise instead of asserting a
             # fact-free "same scope": with dates now reliably extracted, the
-            # wording must not contradict the evidence it cites (GLM review H07).
+            # wording must not contradict the evidence it cites (portal integration review H07).
             if failed.scope is None and matching_pass.scope is None and order == "later":
                 premise = ("both attempts' scopes are not shown, so whether the pass "
                            "addresses the failed attempt is not established")

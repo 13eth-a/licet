@@ -10,7 +10,7 @@ for automatic record selection yet.** The current implementation can select and
 verify a record that contradicts the user's explicit record number.
 
 This review adds an isolated probe script and evidence file. It does not rewrite
-`lookup.py` or `lookup_runner.py`, which are being developed by other models.
+`lookup.py` or `lookup_runner.py`, which are developed separately.
 Source SHA-256 hashes are recorded in the evidence; the sources did not change
 during the probe run.
 

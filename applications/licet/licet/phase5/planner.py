@@ -359,7 +359,7 @@ class GoalPlanner:
                 run.approval_token, grant = None, None
             before = run.world.fingerprint()
             pair = digest([action.value, before])
-            # The loop key is the *settled* page identity (DeepSeek handoff):
+            # The loop key is the *settled* page identity (adversarial review handoff):
             # active_section is written by the Phase 3 retrieval runner from
             # the settled flow step, never by a live render token, and a
             # postback wizard's step change updates it even though the URL

@@ -155,7 +155,7 @@ for deterministic tests. The CLI never auto-approves a pause.
 
 ## Adversarial review
 
-DeepSeek's planner attack is recorded in `docs/phase5/adversarial_review.md`
+the adversarial review’s planner attack is recorded in `docs/phase5/adversarial_review.md`
 with counterexample evidence in `docs/phase5/adversarial_evidence.json`. The
 headline finding: the completion predicate was weaker than the execution
 predicate, so a stale, self-contradicting, unfinished or off-question
@@ -172,7 +172,7 @@ run issued it. Replay:
 
 ## Portal-state review
 
-GLM's Phase 5 assignment — planner failures that are actually **state
+the portal integration’s Phase 5 assignment — planner failures that are actually **state
 extraction** — is recorded in `docs/phase5/portal_state_review.md` with
 replay evidence in `docs/phase5/portal_state_evidence.json`. Headline: ACA's
 `MM/DD/YYYY` dates reached Phase 3's ISO-only attempt-ordering raw, so an

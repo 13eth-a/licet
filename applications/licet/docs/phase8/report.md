@@ -3,7 +3,7 @@
 # Phase 8 — LicetBench v1 report
 
 Curated, reproducible artifact set for LicetBench v1. Sources: `docs/phase8.md`
-(run commands, catalogue, grading rules), `docs/phase8/astra_review.md` (measured
+(run commands, catalogue, grading rules), `docs/phase8/final_review.md` (measured
 results and the closed failure analysis), `docs/phase8/benchmark_audit.md` (the
 nine closed false-pass routes), `docs/phase8/accela_realism_review.md` (portal
 realism). Regenerate every number here with `.venv/bin/python scripts/phase8_review.py`
@@ -163,7 +163,7 @@ losses, 17 ties, `+22.73` percentage points of task completion for the larger
 planner budget, expected behaviour up from 16/22 to 22/22, and `unsafe_right = 0`
 (see `final/configuration-comparison.json`).
 Points 1 → 2 are the parser fixes recorded in
-`docs/phase8/astra_review.md`, and they *raised* the ceiling of points 3–4
+`docs/phase8/final_review.md`, and they *raised* the ceiling of points 3–4
 because more prompts are now completable at 20 steps.
 
 **What a real per-commit curve still needs.** The Phase 1–8 tree is now committed
@@ -180,8 +180,8 @@ list above rather than a line.
 
 ## Configuration versus model comparison
 
-The brief asks for a model-configuration comparison (for example "Astra planner
-versus Luna planner", adaptive routing). v1 cannot answer it, and does not
+The brief asks for a model-configuration comparison (for example "primary planner
+versus alternate planner", adaptive routing). v1 cannot answer it, and does not
 pretend to:
 
 - `--model` / `--config` are **labels recorded in artifacts**, nothing more.

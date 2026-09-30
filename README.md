@@ -1,151 +1,192 @@
-# Solari Cookbook
+# Licet
 
-## Licet demo
+**Licet is an autonomous browser agent for municipal permitting systems.** Give it an outcome — such as "get this permit ready for its next inspection" — and it finds the relevant record, understands its current state, decides what needs to happen next, and carries out permitted actions through the existing government portal, stopping safely when the environment will not allow a legitimate action.
 
-Licet is an AI agent for municipal permitting, built for the Solari Hiring Challenge.
+## The Problem
 
-[![Watch the Licet walkthrough](applications/licet/docs/walkthroughs/20260930/01-connected-home.png)](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)
+Municipal permitting runs on legacy software. Contractors and residents face fragmented portals, repetitive administrative steps, and no unified automation API. Accela Citizen Access — the target here — exposes search, record detail, scheduling, and payments as a stateful, postback-rendered UI, so automation means operating the software as a browser user would.
 
-**[Watch the recording — 3 minutes 9 seconds](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)** · [Full recording](applications/licet/docs/walkthroughs/20260930/licet-browser-full.mp4) · [Project README](applications/licet/README.md)
+## What Licet Does
 
-The silent walkthrough follows the connected UI into the live Accela sandbox, then shows a clearly labeled offline booking replay. The live run makes no booking; the replay uses an injected slot and simulated browser I/O.
+- Finds and verifies permit records using identity evidence; ambiguous or mismatched records are never selected.
+- Extracts structured permit, inspection, fee, and history observations, preserving provenance and uncertainty.
+- Uses a bounded goal planner to determine the next supported action and to replan after failures.
+- Routes every browser operation through a single dispatcher and a deterministic policy boundary.
+- Verifies state-changing inspection actions by independently re-reading the portal; a successful click is not success.
+- Stops with an explanation when the environment, evidence, required information, or permissions are insufficient.
 
----
+## Latest walkthroughs and connected UI
 
-Short, runnable examples for [Solari](https://getsolari.com) — cloud browsers,
-sandboxes, and desktops behind one API key.
+[![Watch the latest Licet walkthrough](applications/licet/docs/walkthroughs/20260930/01-connected-home.png)](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)
 
-Every example in this repo is a complete program you can run in under a minute.
-They are deliberately small: one idea each, no framework, no scaffolding to read
-past. Copy one into your project and change the parts you care about.
+**[Watch the recording — 3 minutes 9 seconds](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4)** · Silent screen recording
 
-## Examples
+- [September 30 walkthrough](applications/licet/docs/walkthroughs/20260930/licet-browser-demo.mp4): connected Licet UI → live Accela sandbox → observed safe stop → clearly labeled offline booking replay.
+- [Full September 30 recording](applications/licet/docs/walkthroughs/20260930/licet-browser-full.mp4).
+- [All walkthrough materials](applications/licet/docs/walkthroughs/README.md), including the September 29 recording and selected screenshots.
+- [Connected UI setup](applications/licet/ui/README.md): run the private local bridge and React workspace using your own credentials.
 
-### Cloud browser
+The latest filmed live run found no selectable dates from September 2026 through October 2027 and submitted no changes. The separate replay injects one slot into captured historical markup and reaches `VERIFIED_SUCCESS` using simulated browser I/O. It is not a live booking.
 
-| Example | Language | What it shows |
-| --- | --- | --- |
-| [browser-quickstart-ts](examples/browser-quickstart-ts) | TypeScript | Launch a browser, open a page, read it |
-| [browser-quickstart-py](examples/browser-quickstart-py) | Python | Launch a browser, open a page, read it |
-| [browser-stealth-proxy-ts](examples/browser-stealth-proxy-ts) | TypeScript | Stealth mode + residential proxy egress |
-| [browser-profiles-ts](examples/browser-profiles-ts) | TypeScript | Log in once, reuse the session forever |
-| [browser-login-handoff-ts](examples/browser-login-handoff-ts) | TypeScript | Hand the live session to a human to sign in, then save it |
-| [browser-session-recording-py](examples/browser-session-recording-py) | Python | Record a session, download the replay |
-| [browser-page-assertions-py](examples/browser-page-assertions-py) | Python | Reject a wrong page even when navigation and screenshots succeed |
-| [browser-workers-cdp-ts](examples/browser-workers-cdp-ts) | TypeScript | Drive a browser from a Cloudflare Worker, over raw CDP |
-| [browser-playwright-runner-ts](examples/browser-playwright-runner-ts) | TypeScript | Run your existing Playwright suite on Solari, no local Chromium |
-| [eu-consent-evidence-ts](examples/eu-consent-evidence-ts) | TypeScript | Pre-consent tracker evidence via raw CDP |
+This cookbook import preserves the complete current source, tests, benchmark data, documentation, and prepared demo materials. See the [transfer manifest](applications/licet/TRANSFER.md) for scope and exclusions.
 
-### Sandbox
+## Demo
 
-| Example | Language | What it shows |
-| --- | --- | --- |
-| [sandbox-quickstart-ts](examples/sandbox-quickstart-ts) | TypeScript | Run a command, write and read files |
-| [sandbox-quickstart-rb](examples/sandbox-quickstart-rb) | Ruby | Same, with no SDK and no gems — stdlib only |
-| [sandbox-code-interpreter-py](examples/sandbox-code-interpreter-py) | Python | Stateful Python kernel for agent loops |
-| [sandbox-snapshot-fork-py](examples/sandbox-snapshot-fork-py) | Python | Seed a snapshot, fork clones, and verify each restored the exact file digest |
-| [sandbox-port-preview-ts](examples/sandbox-port-preview-ts) | TypeScript | Expose a server in the VM on a public URL |
-| [sandbox-scan-untrusted-code-ts](examples/sandbox-scan-untrusted-code-ts) | TypeScript | Run untrusted code and capture what it did (audit hook) |
+The full three-minute script — exact commands, on-screen content, captions, and the "never say" list — is in [`docs/phase9/demo-script.md`](applications/licet/docs/phase9/demo-script.md).
 
-### Multi-product
+**Portal-real flagship (Accela test sandbox).** The semantic planner run verifies permit `000000014`, reads its state, identifies the required inspection (`Brycer Inspection History`), enumerates the complete 18-type catalog, opens the scheduling calendar with verified record identity, determines there are **no active dates** in Sep–Nov 2026, and stops with **`PARTIAL_SUCCESS / NO_SAFE_ACTIONS` and zero mutations.** This ran **5/5 fresh sessions** on 2026-09-26; see the [5-run acceptance](applications/licet/docs/phase9/flagship-acceptance-5run-20260926.md).
 
-One key spans all three, so an example can use more than one at once.
+> **The honest framing:** In the observed Sep–Nov 2026 calendar window, Licet found no active appointment dates and refused to manufacture availability. The separate capacity survey found no citizen-reachable capacity for account-owned records in the surveyed configuration. Autonomy does not mean completion at all costs.
 
-| Example | Language | What it shows |
-| --- | --- | --- |
-| [form-delivery-check-ts](examples/form-delivery-check-ts) | TypeScript | Submit a form in a browser, verify the lead landed in a sandbox |
-| [security-posture-review-ts](examples/security-posture-review-ts) | TypeScript | Browser and sandbox running concurrently on one key |
+**Why no booking.** The 2026-09-26 read-only survey found seeded inspection capacity on records the test account cannot own, but **no capacity-bearing inspection type reachable through the citizen scheduling workflow for an account-owned record** ([capacity findings](applications/licet/docs/phase9/sandbox-capacity-findings.md)). That is dated environment evidence, not a guarantee that availability can never change. The booking-mutation machinery is demonstrated separately, with **simulated portal I/O** — never labeled live.
 
-### Desktop
+**Safety and recovery** are shown from deterministic policy tests and the controlled Phase 7 acceptance suite. Evidence scope is mapped claim-by-claim in the [claims audit](applications/licet/docs/phase9/claims-audit.md).
 
-| Example | Language | What it shows |
-| --- | --- | --- |
-| [desktop-computer-use-py](examples/desktop-computer-use-py) | Python | Screenshot, click, and type on a Linux GUI |
+> **Evidence boundary:** all portal-real evidence is from Accela's `aca-test.accela.com` host, which Licet classifies as `SANDBOX` — **not production**. No production municipal session exists, and no real booking has been made. The complete schedule → independent re-read → `VERIFIED_SUCCESS` sequence is proven with fake I/O only. The example address `123 Main Street` is not one of the sandbox's known records.
 
-## Applications
+### Run locally
 
-Bigger programs built on Solari — a CLI or a UI, its own modules, solving a whole
-problem rather than showing one call. See [applications/](applications).
-
-## Running an example
-
-Each directory is self-contained.
+From the repository root, enter the application directory first. Run the remaining commands in this README from there.
 
 ```bash
-git clone https://github.com/solari-sdk/solari-cookbook.git
-cd solari-cookbook/examples/browser-quickstart-ts
-
-npm install                          # or: pip install -r requirements.txt
-export SOLARI_API_KEY=slr_live_...   # grab one at console.getsolari.com
-npm start                            # or: python main.py
+cd applications/licet
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-release.txt
+python -m pip install --no-deps -e ".[dev]"
+cp .env.example .env
+# Fill in OPENAI_API_KEY and the Solari/Accela sandbox credentials for live runs.
+python -m pytest -q
 ```
 
-One `slr_live_` key works across browsers, sandboxes, and desktops, and every
-product bills to the same balance.
+The offline tests and LicetBench need no API keys. Keep real credentials in `.env`; it is ignored by Git. See [`.env.example`](applications/licet/.env.example). The pinned dependency snapshot was validated with Python 3.11 on macOS; it is not a cross-platform hash lock.
 
-## Which product do I want?
+To reproduce the flagship run:
 
-- **Cloud browser** — you need a *web page*: scraping, testing, filling forms,
-  anything Playwright or Puppeteer would do locally. Adds stealth, managed
-  proxies, captcha solving, profiles, and session recording.
-- **Sandbox** — you need to *run code*: an LLM's Python, an untrusted build, a
-  data job. A headless microVM that boots from a snapshot in about a second.
-- **Desktop** — you need a *screen*: computer-use agents, GUI apps, anything
-  that has to be clicked. A sandbox plus X11 and a live VNC stream.
+```bash
+.venv/bin/python scripts/ni_phase5_acceptance.py \
+  "Get permit 000000014 ready for its next inspection without paying anything or signing anything."
+```
 
-## Gotchas the examples encode
+### Run LicetBench
 
-Things that cost you an afternoon if you meet them cold:
+```bash
+# Frozen 50-task offline core; writes JSON/CSV under ignored logs/licetbench/.
+python -m licetbench run --no-regression-log
 
-- **TypeScript: `browser.close()` is enough to exit (as of `@solarisdk/browser`
-  0.1.3).** The client keeps a loopback proxy open for connection retries; before
-  0.1.3 that listener held Node's event loop open, so you had to
-  `await solari.close()` or the script printed its output and then hung forever.
-  0.1.3 unrefs the listener — `browser.close()` alone now exits. Calling
-  `solari.close()` is still fine and releases the client's pool immediately.
-- **A profile does not seed the browser on its own.** `launch({ profileId })` puts the
-  stored state on `session.storageState` and stops there. Pass it to
-  `newContext({ storageState })` or every run starts anonymous while looking logged in.
-  `addCookies()` is not a substitute: it restores the cookies and drops localStorage.
-  Building your own context also drops the pool's timezone pin, so a profile +
-  proxy flow must pass `timezoneId: browser.proxy?.timezoneId` through as well.
-- **The TypeScript SDK cannot run on an edge runtime.** It bundles a
-  Playwright fork that wants Node and raw TCP sockets, so Workers, Deno
-  Deploy and friends are out. Skip it: every session exposes a CDP endpoint,
-  and any runtime that can hold an outbound WebSocket can drive the browser
-  directly. See [browser-workers-cdp-ts](examples/browser-workers-cdp-ts).
-- **`contexts()` is empty unless you asked for a proxy.** The pool only creates
-  a context up front when a session requests one, so `browser.contexts()[0]` is
-  `undefined` on a plain `launch()` and a non-null assertion on it will throw at
-  `newPage()`. Fall back to `newContext()`. A context you make yourself also
-  skips the pool's timezone pin, which matters only when a proxy is attached.
-- **The Playwright wire protocol is version-gated; CDP is not.** `connectOptions`
-  and `chromium.connect()` speak the wire protocol, and the browser server
-  rejects clients whose version differs from the one it runs with a 428, matched
-  on Playwright's own User-Agent. Our pin moves. Connecting over the session's
-  CDP endpoint has no version gate, so a suite that connects that way survives an
-  upgrade on either side. See
-  [browser-playwright-runner-ts](examples/browser-playwright-runner-ts).
-- **Recording is per session, not per account.** Pass `recording: true` when you
-  create the session; without it the replay endpoint 404s forever. The upload is
-  async after release, so poll for ~30s before giving up.
-- **Sandbox commands are not shell-interpreted.** `run("ls -la")` looks for a
-  binary named `ls -la`. Put argv in `args`, or run `sh -c` explicitly.
-- **`kill()`, not `close()`, ends a VM.** `close()` drops your local control
-  channel; the VM keeps running until its idle timeout.
-- **`timeoutMs` is a rolling idle window**, not a hard deadline — it resets on
-  every use.
+# Real user wording through the production parser/resolver/planner.
+python -m licetbench run --suite prompts --no-regression-log
 
-## Links
+# Browse tasks or run a category.
+python -m licetbench list
+python -m licetbench run --category Safety --no-regression-log
+```
 
-- Docs — [docs.getsolari.com](https://docs.getsolari.com)
-- Console — [console.getsolari.com](https://console.getsolari.com)
-- Changelog — [changelog.getsolari.com](https://changelog.getsolari.com)
-- Questions — [hello@getsolari.com](mailto:hello@getsolari.com)
+LicetBench uses deterministic fixtures; it makes no model calls and contacts no portal.
 
-## Contributing
+## Architecture
 
-New examples are welcome. Keep them small, make them run end-to-end against the
-real API, and put anything surprising in a comment right where it bites.
+```text
+User goal
+   ↓
+Goal parser → bounded planner
+   ↓
+Permit discovery → record identity verification
+   ↓
+Structured state extraction → blocker / next-step reasoning
+   ↓
+Deterministic policy check
+   ↓
+Browser executor (Solari) → Accela Citizen Access
+   ↓
+Independent state re-read → verified result or explicit safe stop
+                 ↑                         │
+                 └──── bounded recovery / replan ────┘
+```
 
-MIT licensed.
+The browser layer is separate from planning. The model proposes semantic work; the dispatcher and policy enforce what can reach the browser. Recovery is bounded, validates refreshed state, and never blindly retries an uncertain mutation. Technical detail: [`docs/architecture.md`](applications/licet/docs/architecture.md), [`docs/phase5.md`](applications/licet/docs/phase5.md), [`docs/phase7/completion.md`](applications/licet/docs/phase7/completion.md).
+
+Two entry points: `scripts/ni_agent_run.py` runs the legacy model/tool loop; `scripts/ni_phase5_acceptance.py` runs the semantic planner through `licet/eval/phase5_live.py` with real Solari-backed capabilities, defaulting to plan-only.
+
+## Safety Model
+
+Every mutation passes deterministic checks before execution:
+
+- Policy denies all mutations outside `Environment.SANDBOX`; unknown environments fail closed. The agent runner defaults to the Accela test host and refuses others unless its explicit `--allow-non-sandbox` override is supplied (do not use it for a demo).
+- Permit and inspection identity, eligibility, user constraints, and required inputs are checked before mutation.
+- Payments and other consequential operations require scoped explicit approval; a user's no-payment constraint cannot be overridden by portal text. Legal attestations are prohibited.
+- Duplicate and uncertain mutations are quarantined for reconciliation rather than replayed.
+- A mutation is not reported as success until the resulting portal state is independently observed.
+
+See [`docs/phase6.md`](applications/licet/docs/phase6.md), the [acceptance matrix](applications/licet/docs/phase9/acceptance-matrix.md), and [`docs/phase6/portal_boundary_map.md`](applications/licet/docs/phase6/portal_boundary_map.md).
+
+## LicetBench
+
+LicetBench v1 is an offline, deterministic evaluation. Final official core run (2026-09-26): 50 tasks × 5 repeats = **250 runs**.
+
+| Metric | Result |
+|---|---:|
+| Expected behavior met | **250 / 250 (100%)** |
+| Completed (`SUCCESS` label) | 145 / 250 (58.0%) |
+| Safe outcomes | 100% |
+| Final-state verification | 100% |
+| Unsafe failures | **0** |
+| Wrong-record mutations / constraint violations / duplicate mutations | 0 / 0 / 0 |
+| Mutation submissions verified | 40 / 40 (100%) |
+| Recovery success | 20 / 20 (100%) |
+
+| Category | Runs | Completed | Safe failures | Expected behavior |
+|---|---:|---:|---:|---:|
+| Permit Understanding | 50 | 50 | 0 | 50/50 |
+| Recovery | 30 | 30 | 0 | 30/30 |
+| Safety | 30 | 0 | 30 | 30/30 |
+| Permit Discovery | 50 | 25 | 25 | 50/50 |
+| Action Execution | 50 | 25 | 25 | 50/50 |
+| Goal-Based Autonomy | 40 | 15 | 0 | 40/40 |
+
+`SUCCESS` is the frozen outcome label, **not** an overall completion rate: many correct outcomes are `SAFE_FAILURE` or `PARTIAL_SUCCESS` by design (all 30 Safety runs are correct refusals). Full numbers, provenance, and the frozen-code caveat: [final LicetBench](applications/licet/docs/phase9/final-licetbench-20260926.md).
+
+> **Frozen revision:** the official benchmark run is commit-identified on the Phase 9 freeze commit with a clean tree; exact provenance (commit hash, `commit_dirty=false`, source digest) is recorded in the run artifact. The source digest differs from the earlier provisional run because `licet/` changed before the freeze. The graders are deterministic.
+
+The six-case "holdout" is a regression reserve, **not** an unseen generalization set. No model comparison has been run. See [`docs/phase8.md`](applications/licet/docs/phase8.md) and [`docs/phase8/report.md`](applications/licet/docs/phase8/report.md).
+
+## Tech Stack
+
+Python 3.11+, Pydantic, the OpenAI Python client, and the Solari browser SDK.
+
+- `licet/lookup*.py` — permit query parsing, ranking, ambiguity handling, browser lookup.
+- `licet/phase3/` — evidence-backed permit state, blocker rules, targeted retrieval, rendering.
+- `licet/phase4/` — inspection selection, policy, execution, idempotency, post-action verification.
+- `licet/phase5/` — semantic goals, bounded planning, constraints, replanning.
+- `licet/safety/` — environment/risk decisions, scoped approval, provenance, mutation ledgers.
+- `licet/phase7/` — failure classification, validated recovery, checkpoints, reconciliation.
+- `licet/browser/` — Accela-specific page knowledge, Solari integration, guarded dispatcher.
+- `licetbench/` — offline benchmark catalog, deterministic graders, report generation.
+
+**Model strategy.** The model sits behind `licet/agent/model.py`; stronger reasoning is used for ambiguous planning, while the browser layer is separated from reasoning and policy is deterministic. Runtime model IDs live in `.env.example` and are configuration, not extra agents.
+
+## Limitations
+
+- **One portal; booking was environment-blocked in the last survey.** The 2026-09-26 Accela Citizen Access Null Island sandbox survey found capacity only on seeded back-office records, not reachable through the citizen scheduling workflow for account-owned records. `scripts/ni_citizen_capacity_query.py` now provides a bounded read-only recheck across owned records, offered types, and active calendar windows; it has not yet been run against the portal.
+- **No production evidence.** All portal-real runs are on `aca-test.accela.com` (SANDBOX). Behavior may differ across municipalities and configurations.
+- **Verified scheduling is simulated.** The submit → independent reread → `VERIFIED_SUCCESS` path is covered with fake I/O, not a real booking.
+- **Cancel/reschedule flows are unmapped** (no scheduled inspection has ever rendered their controls); they fail closed.
+- **LicetBench is offline and deterministic**; its scores do not establish live, model, or municipal reliability.
+- **No dashboard, accounts, billing, or extra permitting workflows** are included.
+
+More detail: [`docs/known_limitations.md`](applications/licet/docs/known_limitations.md), [`docs/phase4.md`](applications/licet/docs/phase4.md), [`docs/phase5.md`](applications/licet/docs/phase5.md).
+
+## Future Work
+
+- Re-verify sandbox availability against a tenant configured with citizen-bookable capacity, then capture the first real `VERIFIED_SUCCESS` booking under the [conditional capture plan](applications/licet/docs/phase9/sandbox_verified_success_capture_plan.md).
+- Map cancel/reschedule once a scheduled inspection exists.
+- Add a second Accela agency configuration to test UI portability.
+- Run a model comparison on the prompt suite.
+
+## Phase 9 submission assets
+
+[`docs/phase9/demo-script.md`](applications/licet/docs/phase9/demo-script.md) · [claims audit](applications/licet/docs/phase9/claims-audit.md) · [final LicetBench](applications/licet/docs/phase9/final-licetbench-20260926.md) · [5-run acceptance](applications/licet/docs/phase9/flagship-acceptance-5run-20260926.md) · [capacity findings](applications/licet/docs/phase9/sandbox-capacity-findings.md) · [acceptance matrix](applications/licet/docs/phase9/acceptance-matrix.md) · [`docs/phase9.md`](applications/licet/docs/phase9.md)
+
+## Solari cookbook
+
+This repository is a fork of the Solari cookbook. The original examples and documentation remain available in [COOKBOOK.md](COOKBOOK.md).

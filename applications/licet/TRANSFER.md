@@ -1,6 +1,6 @@
 # Cookbook transfer
 
-Imported September 30, 2026 into `applications/licet` on `codex/licet-application`, based on the cookbook fork's existing main branch.
+Imported September 30, 2026 into `applications/licet` on the application import branch, based on the cookbook fork's existing main branch.
 
 ## Included
 
@@ -29,3 +29,7 @@ No source files or original local materials were deleted.
 - UI: `npm ci --offline` and `npm run build` passed from the imported directory.
 
 The live recordings show safe stops with no appointment submission. The offline replay uses one injected slot and simulated browser I/O; its verified result is not a live booking.
+
+## Documentation maintenance
+
+Subsequent edits remove development-tool attributions and rename review artifacts by function. Historical measurements and acceptance limits remain unchanged. The root README presents the application with repository-relative links.

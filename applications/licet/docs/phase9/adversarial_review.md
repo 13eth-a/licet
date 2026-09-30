@@ -1,4 +1,4 @@
-# Phase 9 — adversarial review (DeepSeek V4.1 Flash)
+# Phase 9 — adversarial review (adversarial review)
 
 Role: final red team. This pass inspects the Phase 9 submission as if it intends the
 flagship demo to fail during judging. It reads the implementation, the checked-in

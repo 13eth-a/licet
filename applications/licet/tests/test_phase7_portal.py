@@ -1,12 +1,12 @@
-"""Phase 7 portal-weirdness tests (GLM 5.3 Flash).
+"""Phase 7 portal-weirdness tests (portal integration).
 
-The checklist's GLM lane: Accela states that are not plan failures but portal
+The checklist's portal integration lane: Accela states that are not plan failures but portal
 behaviour — unexplained redirects, session expiry (redirect *and* modal),
 partial AJAX rendering, stale/empty result tables, unexpected modals, popups
 and new tabs, postback-wizard position. Every classifier here runs on plain
 text/URL observations, so all of it is offline and deterministic.
 
-The planner-integration tests pin the DeepSeek-handoff fix: the loop key is the
+The planner-integration tests pin the adversarial review-handoff fix: the loop key is the
 *settled* page identity, not a live render token and not a URL that never
 changes inside a postback wizard.
 """
@@ -46,7 +46,7 @@ HOME = "https://aca-test.accela.com/nullisland/default.aspx"
 SEARCH = accela.search_url()
 
 
-# --- classification: the Accela states the GLM lane must recognise ----------
+# --- classification: the Accela states the portal integration lane must recognise ----------
 
 
 def test_async_section_still_loading_is_flagged_not_evidence():
@@ -181,7 +181,7 @@ def test_finding_worst_first_ordering_session_beats_modal():
     assert route_recovery(state).strategy == "STOP"
 
 
-# --- settled page identity: the DeepSeek-handoff fix -------------------------
+# --- settled page identity: the adversarial review-handoff fix -------------------------
 
 
 def test_identity_is_stable_across_text_churn_and_render_tokens():
@@ -223,7 +223,7 @@ def test_identity_from_world_falls_back_to_path_not_query():
 
 
 def test_loop_detection_survives_a_live_render_token():
-    """The regression the DeepSeek handoff named: a transient string must not
+    """The regression the adversarial review handoff named: a transient string must not
     make every loop occurrence unique."""
     controller = RecoveryController(budgets=RecoveryBudgets(max_no_progress=99))
     # Legacy caller shape: raw page text as the page-state string.

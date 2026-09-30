@@ -852,7 +852,7 @@ class SolariClient:
             "popup_open": any(frame["popup"] for frame in frames),
             "notices": accela.detect_notices(visible),
         }
-        # Phase 7 (GLM): what ACA just did, as findings over the settled page,
+        # Phase 7 (portal integration): what ACA just did, as findings over the settled page,
         # plus the derived page identity (URL path + capID record identity) so
         # the recovery layer's loop key is built from settled state rather
         # than a live render token. Appended after the literal so the loading

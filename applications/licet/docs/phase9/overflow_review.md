@@ -1,10 +1,7 @@
-# Phase 9 — overflow verification (MiMo 2.6 Pro, backup lane)
+# Phase 9 — overflow verification (release verification, backup lane)
 
-**Role:** backup — overflow implementation / review. The external assignment
-sheet labels this lane "MiMo 2.5"; the correct label is **MiMo 2.6 Pro** (same
-class of correction as the Luna label note in `docs/phase9.md`). This pass is
-verification plus one targeted doc fix; it deliberately changed no product code,
-policy, planner, executor, benchmark fixture, or frozen artifact.
+**Scope:** release verification and one targeted documentation fix. This pass
+changed no product code, policy, planner, executor, benchmark fixture, or frozen artifact.
 
 **Date:** 2026-09-26 UTC. **Revision measured:** HEAD `4ae0566` plus a dirty
 working tree with other Phase 9 lanes' uncommitted edits. As with every other
@@ -117,7 +114,7 @@ legacy model/tool loop (`scripts/ni_agent_run.py`), not the semantic planner.
 No other wording changed.
 
 **O2 — legacy loop: dead-wrapper label fallback (implementation).** The fresh
-P13 run showed the same dead-but-rendered `Inspections` wrapper GLM diagnosed,
+P13 run showed the same dead-but-rendered `Inspections` wrapper portal integration diagnosed,
 but through the legacy model/tool loop (the model aimed at
 `#ctl00_PlaceHolderMain_shInspection_btnSearch`), where the Phase 3 runner's
 label fallback did not apply. `licet/agent/planner.py` now mirrors that bounded
@@ -149,7 +146,7 @@ should demonstrate it.
 
 ## 7. Still open — not achievable in this lane
 
-1. **Fresh live flagship runs** (DeepSeek F1, senior-review gate 1): need the
+1. **Fresh live flagship runs** (adversarial review F1, senior-review gate 1): need the
    sandbox credentials and a human-visible recording window; five post-freeze
    runs remain outstanding. *Update 2026-09-26:* one pre-freeze live P13 run was
    completed in this lane — the calendar was read (Sep–Nov 2026, no selectable
@@ -162,7 +159,7 @@ should demonstrate it.
    `pytest`) should be run — today it cannot pass meaningfully because
    `requirements-release.txt`, `docs/phase9.md`, and `docs/phase9/` are still
    untracked.
-4. **Credential rotation / history review**: Astra's 414-blob scan found no
+4. **Credential rotation / history review**: the architecture review’s 414-blob scan found no
    recognized key shapes; rotation remains an owner decision.
 
 No new portal or workflow was added, no live portal was contacted, and no live

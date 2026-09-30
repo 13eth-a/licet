@@ -1,4 +1,4 @@
-"""Adversarial planner review (DeepSeek V4.1 Flash) — attack the loop, then lock it.
+"""Adversarial planner review (adversarial review) — attack the loop, then lock it.
 
 Each case is a counterexample that was reproduced against the pre-review planner
 (or is a positive control proving the guard is not vacuous). The targets are the

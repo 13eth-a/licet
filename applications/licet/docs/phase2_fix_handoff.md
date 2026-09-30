@@ -27,5 +27,5 @@ redirect handling itself passes offline. Address fields not independently visibl
 on the fresh detail observation remain identity_unverified. Broader detail-section
 enrichment and live acceptance are still needed before claiming full portal coverage.
 
-The user moved this task to Astra's Phase 3 reasoning assignment after this live
+The user moved this task to the architecture review’s Phase 3 reasoning assignment after this live
 finding. No new Phase 1 browser fix or live-success claim is included in this handoff.

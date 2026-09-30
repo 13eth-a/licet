@@ -1065,7 +1065,7 @@ def test_uncertain_click_stops_remaining_calls_in_same_model_response():
 #
 # The 2026-09-26 live P13 run clicked `#ctl00_PlaceHolderMain_shInspection_btnSearch`
 # (inside the wrapper the portal renders but never shows) and got the
-# present-but-not-visible shape GLM's root cause pinned down for the Phase 3
+# present-but-not-visible shape the portal integration’s root cause pinned down for the Phase 3
 # runner. The legacy model/tool loop gets the same bounded label fallback.
 
 DEAD_SELECTOR = "#ctl00_PlaceHolderMain_shInspection_btnSearch"

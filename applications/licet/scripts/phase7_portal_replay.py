@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""Phase 7 portal-weirdness replay (GLM 5.3 Flash review).
+"""Phase 7 portal-weirdness replay (portal integration review).
 
 Re-derives the portal lane's end-to-end rows against the current tree:
 
-- the checklist's GLM scenarios (empty table that populates asynchronously,
+- the checklist's portal integration scenarios (empty table that populates asynchronously,
   session expiry as a *modal*, redirect home mid-workflow, popup, new tab,
   wizard step sharing one URL) through the real classifier/router;
-- the settled-identity loop-key audit (DeepSeek handoff): the legacy caller
+- the settled-identity loop-key audit (adversarial review handoff): the legacy caller
   shape (raw page text) versus the settled identity, on the same inputs;
 - the planner integration rows (terminal downgrade on a failed read,
   evidence-free marking on an unsettled page) through the real GoalPlanner;
@@ -129,7 +129,7 @@ def scenario_rows() -> list[dict]:
                      "unsafe": unsafe})
         check(f"scenario {name}", not unsafe, outcome)
 
-    # GLM scenario: rows empty for 2 seconds, then populate.
+    # portal integration scenario: rows empty for 2 seconds, then populate.
     pending = PortalState.from_observation(
         {"url": DETAIL, "text": "Inspections | No data available in table"}
     )
@@ -142,7 +142,7 @@ def scenario_rows() -> list[dict]:
         f" -> settled findings={len(settled.findings)}",
         bool(pending.unsettled is False or settled.findings))
 
-    # GLM scenario: session expiry as a modal over the current page.
+    # portal integration scenario: session expiry as a modal over the current page.
     modal = PortalState.from_observation(
         {"url": DETAIL, "text": "Warning: your session is about to expire. Do you want to stay logged in?"}
     )
@@ -151,7 +151,7 @@ def scenario_rows() -> list[dict]:
         f"{route.strategy} terminal={route.terminal} findings={[f.value for f in modal.findings]}",
         not (route.terminal and route.strategy == "STOP" and modal.findings == (PortalFinding.SESSION_EXPIRED_MODAL,)))
 
-    # GLM scenario: redirect home mid-workflow.
+    # portal integration scenario: redirect home mid-workflow.
     home = PortalState.from_observation({"url": HOME, "text": "welcome"})
     route = route_recovery(home)
     row("redirected to portal home mid-workflow", "re-search permit, verify, resume",

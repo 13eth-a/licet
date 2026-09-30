@@ -1,6 +1,6 @@
 """Phase 4 scripted-action fixtures and the checklist's 25 action cases.
 
-Solar Pro 4's Phase 4 portion: the mechanical fixtures, utilities and
+the Phase 4 portion: the mechanical fixtures, utilities and
 repetitive cases the executor work leans on.
 
 Two things live here:

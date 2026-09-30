@@ -130,7 +130,7 @@ def test_documents_and_requirements_accept_plain_strings_but_keep_provenance():
         next_action="Schedule final inspection",
     )
     assert permit.documents[0] == Document(name="plan.pdf")
-    # Phase 3 (Astra review P1 #3): a bare string has unknown provenance — it is
+    # Phase 3 (architecture review review P1 #3): a bare string has unknown provenance — it is
     # never silently promoted to a portal fact.
     assert permit.outstanding_requirements[0].provenance is Provenance.UNATTRIBUTED
     # an inferred next action is marked as inferred, so evals can tell it apart
@@ -142,7 +142,7 @@ def test_documents_and_requirements_accept_plain_strings_but_keep_provenance():
 def test_missing_inspections_is_the_next_inspection_answer():
     """Only explicitly REQUIRED types minus completing history are missing.
 
-    The offered catalog is not a checklist (Astra review P1 #1): a failed or
+    The offered catalog is not a checklist (architecture review review P1 #1): a failed or
     scheduled attempt also means the type is not "done".
     """
     permit = Permit(

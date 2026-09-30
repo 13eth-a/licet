@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 8 adversarial benchmark replay (DeepSeek V4.1 Flash review).
+"""Phase 8 adversarial benchmark replay (adversarial review).
 
 Re-derives every counterexample from ``docs/phase8/benchmark_audit.md`` against
 the current tree. The *legacy* column is the pre-review grading behaviour

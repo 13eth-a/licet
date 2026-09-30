@@ -160,9 +160,9 @@ class Phase3RetrievalRunner:
             merge_partial_states(state, extract_partial_state(observation))
             outcome.sections_retrieved.append(section)
             if data:
-                # Phase 7 (GLM): persist the *settled* page identity so the
+                # Phase 7 (portal integration): persist the *settled* page identity so the
                 # planner's loop key is built from where the page actually
-                # settled, never from a live render token (the DeepSeek handoff
+                # settled, never from a live render token (the adversarial review handoff
                 # residual). browser_state is excluded from the World
                 # fingerprint, so this cannot fake progress either.
                 self._record_browser_state(data)

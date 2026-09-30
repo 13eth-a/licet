@@ -1,9 +1,9 @@
-# Phase 7 adversarial recovery review — DeepSeek V4.1 Flash
+# Phase 7 adversarial recovery review — adversarial review
 
 > Implementation follow-up: see [Phase 7 completion](completion.md) for the runtime fixes and current acceptance evidence. The findings below describe the earlier review snapshot.
 
 
-Reviewed 2026-09-23 against the working tree after Luna's recovery controller.
+Reviewed 2026-09-23 against the working tree after the implementation’s recovery controller.
 Scope, per the Phase 7 assignment: assume every underlying component — the
 browser, the model, the planner, and any future caller — can fail intermittently
 or be buggy, and find every route by which the recovery system could
@@ -125,7 +125,7 @@ unrecoverable, and if it ever did, the direction is safe (stop, not retry).
 ## Deliberately not changed (residual risk, named)
 
 - **The controller is not wired into the running planner for retries (owner:
-  Luna).** `licet/phase5/planner.py` calls `classify`, `loop_observed`,
+  implementation).** `licet/phase5/planner.py` calls `classify`, `loop_observed`,
   `progress_update` and `begin_run`, but it never calls `recover()`,
   `allow_replan()` or `mutation_reconciled()`. So the budgets and strategies this
   review hardened are exercised by tests and by the replay, not yet by the live
@@ -133,7 +133,7 @@ unrecoverable, and if it ever did, the direction is safe (stop, not retry).
   it is not retried through this controller. Threading `recover()` into the
   planner's failure branch — as safe reads only — is the Phase 7 integration
   step. Until then, the strongest guarantees here are latent.
-- **`replan_required()` / `max_no_progress` is not consumed (owner: Luna).** The
+- **`replan_required()` / `max_no_progress` is not consumed (owner: implementation).** The
   trigger now exists and is traced, but the planner's no-progress stop uses its
   own `max_failures` counter. The checklist's "2 consecutive NO_PROGRESS → force
   replan" becomes real only when the planner calls `replan_required()` and
@@ -144,13 +144,13 @@ unrecoverable, and if it ever did, the direction is safe (stop, not retry).
   cycle. The loop detector is the mitigation, but it fires only on the *third*
   exact repeat, so a cycle is caught late
   (`test_an_oscillating_state_evades_the_no_progress_counter`).
-- **A transient page-state string defeats loop detection (owner: Luna/GLM).**
+- **A transient page-state string defeats loop detection (owner: implementation/portal integration).**
   The loop key is only as stable as the page state the caller supplies; a render
   timestamp or spinner label makes every occurrence unique
   (`test_a_transient_page_state_string_defeats_loop_detection`). The controller
   cannot normalise what it is not told. This is a caller contract: pass the
   settled page identity, not a live render token.
-- **Mutation reservations remain run-local (owner: Luna).** `_mutation_keys` is
+- **Mutation reservations remain run-local (owner: implementation).** `_mutation_keys` is
   cleared by `begin_run`; a process that dies mid-mutation is protected only by
   the portal's own read gate on the next run (the same cross-process residual
   Phase 6 recorded).
@@ -206,16 +206,16 @@ Phase 7 recovery metrics (unsafe targets zero)
 
 ## Handoff
 
-- **Luna**: wire `recover()` (safe reads only) into the planner's failure branch,
+- **implementation**: wire `recover()` (safe reads only) into the planner's failure branch,
   have the planner consult `replan_required()` before `allow_replan()`, and call
   `mutation_reconciled()` from the Phase 4/5 reconciliation so scenario 10's
   bounded retry is reachable end to end. Decide the cross-process mutation
   reservation.
-- **GLM**: supply a *settled* page identity for `loop_observed` — the Accela
+- **portal integration**: supply a *settled* page identity for `loop_observed` — the Accela
   sections settle asynchronously (empty table, then rows), so the caller must
   pass the loaded state, not the in-flight one. Audit which Accela states
   produce a transient `active_section`/URL.
-- **Astra**: decide whether the oscillation evasion (A→B cycles) should count as
+- **architecture review**: decide whether the oscillation evasion (A→B cycles) should count as
   progress at all for the semantic loop, and confirm the residual heuristic in
   `classify_failure` is acceptable given the fail-closed mutation signals.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 3 adversarial replay (DeepSeek review).
+"""Phase 3 adversarial replay (adversarial review).
 
 Runs the golden set and its counterexample cases (``A01``-``A11``) against the
 current tree and prints the contract metrics. ``--baseline DIR`` additionally

@@ -1,7 +1,7 @@
-# Phase 4 mutation-safety review — DeepSeek V4.1 Flash
+# Phase 4 mutation-safety review — adversarial review
 
-Reviewed 2026-09-21 against the working tree after Luna's executor/policy work
-and GLM's Accela adapter. Scope, per the Phase 4 assignment: every path through
+Reviewed 2026-09-21 against the working tree after the implementation’s executor/policy work
+and the portal integration’s Accela adapter. Scope, per the Phase 4 assignment: every path through
 this code that could **mutate the wrong record, violate a user constraint,
 duplicate an action, or falsely report success**, run against the assumption
 that the browser eventually drives a real municipal portal.
@@ -53,14 +53,14 @@ These are real gaps that are **not** fixed here, and Phase 4's zero-targets
 should be read with them in mind rather than around them.
 
 - **Free-text time/access constraints are stored, not enforced (owner:
-  Luna/GLM).** `InspectionAction.constraints` (e.g. `"AM only"`,
+  implementation/portal integration).** `InspectionAction.constraints` (e.g. `"AM only"`,
   `"leave gate code"`) reaches the audit but not the adapter's `_pick_time`,
   which deterministically takes the first rendered time range. A user who said
   "AM only" can therefore receive a PM slot. Enforcing this needs a portal
-  AM/PM vocabulary and a form-field policy — Luna's/GLM's assigned surface — so
+  AM/PM vocabulary and a form-field policy — the implementation’s/the portal integration’s assigned surface — so
   it is recorded here rather than half-built. Until then, callers must not treat
   a stated time preference as honoured.
-- **No cross-process idempotency key (owner: Luna).** If the process dies
+- **No cross-process idempotency key (owner: implementation).** If the process dies
   between the commit click and the verification re-read, a fresh run is
   protected only by the read gate (`ALREADY_SCHEDULED`) once the portal has
   materialised the request. On an eventually-consistent portal a re-run inside

@@ -1,8 +1,8 @@
-# Phase 3 reasoning contract — Astra handoff
+# Phase 3 reasoning contract — architecture review handoff
 
 Version 1, 2026-09-21. Owner: reasoning/state interpretation. This completes the
-Astra design and interpretation portion of the supplied assignment. Luna owns
-runtime schemas, deterministic rules, routing, validators, and evaluation; GLM
+architecture review design and interpretation portion of the supplied assignment. implementation owns
+runtime schemas, deterministic rules, routing, validators, and evaluation; portal integration
 owns extraction. This document defines semantic requirements, not competing
 Python schemas. The accompanying prompt is `licet/agent/phase3_reasoning_prompt.md`.
 
@@ -11,7 +11,7 @@ Python schemas. The accompanying prompt is `licet/agent/phase3_reasoning_prompt.
 Reason over a compact, structured, identity-verified permit snapshot. Never feed
 the Phase 1 execution prompt or browser tools to this reasoning stage. No raw-page
 reasoning and no action execution. Deterministic rules run before interpretation;
-Astra can qualify, connect, or reject their conclusions, but cannot invent facts.
+architecture review can qualify, connect, or reject their conclusions, but cannot invent facts.
 
 The snapshot must carry:
 
@@ -149,12 +149,12 @@ unmapped substantive status -> `UNSUPPORTED_STATUS`; missing premise ->
 `INSUFFICIENT_EVIDENCE`.
 
 Read requests are declarative (`section`, `entity_id`, `reason`, `needed_fact`,
-`stop_when`), not selectors, clicks, or URLs invented by Astra. Luna's read-only
+`stop_when`), not selectors, clicks, or URLs invented by architecture review. the implementation’s read-only
 adapter resolves them. One bounded retrieval per unchanged missing premise;
 a repeated unavailable/unchanged observation returns a partial answer. A shared
 budget applies across all sections. Do not force every permit through every tab.
 
-## Publication gates for Luna
+## Publication gates for implementation
 
 Before publishing model output, enforce in code:
 
@@ -181,7 +181,7 @@ blockers. Do not regenerate new requirements while formatting.
 ## Evaluation contract
 
 Use the worked decisions in `reasoning_cases.md` as interpretation oracles for
-Luna/Solar's golden tests and DeepSeek's adversarial review. Match atomic supported
+implementation/fixture generation's golden tests and the adversarial review’s adversarial review. Match atomic supported
 claims, not prose. Score supported gate detection separately from observed problems
 and potential impediments, so cautious language cannot conceal false positives.
 
@@ -196,4 +196,4 @@ and potential impediments, so cautious language cannot conceal false positives.
   a production hallucination rate of zero.
 
 No Phase 3 runtime existed at review time. This contract and prompt are complete;
-runtime integration and its final review remain dependent on Luna/GLM's work.
+runtime integration and its final review remain dependent on implementation/the portal integration’s work.

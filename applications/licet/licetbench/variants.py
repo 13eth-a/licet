@@ -1,4 +1,4 @@
-"""Solar Pro 4 — bulk benchmark variant generation for LicetBench v1.
+"""bulk benchmark variant generation for LicetBench v1.
 
 Phase 8 assignment (bulk test generation slot, ~15%):
 
@@ -12,7 +12,7 @@ Every variant here is deterministic data, not a model call.  Candidate
 ``BenchmarkTask`` objects that reuse a fixture are built through the same
 oracle — the task's ``expected_outcome`` is copied from the fixture that
 will grade it — so they pass the ``_oracle_mismatch`` binding the core
-catalogue uses before they can be admitted.  Until Luna wires the task
+catalogue uses before they can be admitted.  Until implementation wires the task
 prompt into the goal parser / planner, prompt-variant results remain
 ``not measured`` (see ``docs/phase8/benchmark_audit.md`` A8); the data
 exists now so that wiring is a visible, reviewable change rather than a
@@ -631,7 +631,7 @@ def build_variant_prompt_tasks(
     Each variant reuses the *exact* expected_outcome of its base task so
     the oracle binding is preserved.  Grading is still against the fixture
     oracle, not the wording, so these measure prompt-conditioned variance
-    once Luna wires the prompt into the graded path.
+    once implementation wires the prompt into the graded path.
     """
     from licetbench.catalog import build_tasks as build_core_tasks
 
@@ -748,7 +748,7 @@ def build_recovery_variant_tasks(
 
 
 def build_all_variant_tasks(*, suite: str = "variants") -> list[BenchmarkTask]:
-    """All Solar-generated candidate tasks (not part of the locked 50)."""
+    """All generated candidate tasks (not part of the locked 50)."""
     return (
         build_understanding_variant_tasks(suite=suite)
         + build_action_variant_tasks(suite=suite)

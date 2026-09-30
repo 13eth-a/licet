@@ -333,7 +333,7 @@ def test_read_loading_section_never_becomes_fact():
 
 
 def test_read_falls_back_when_the_inspections_label_is_dead_but_rendered():
-    """GLM Phase 9, live 2026-09-25: Null Island's detail page renders the
+    """portal integration Phase 9, live 2026-09-25: Null Island's detail page renders the
     'Inspections' anchor only as a hidden wrapper, so the exact-label click
     fails `not_actionable`. The read must fall back to the visible label and
     still produce a declared-empty snapshot — not an Unknown."""

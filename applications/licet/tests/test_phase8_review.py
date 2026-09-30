@@ -50,7 +50,7 @@ def test_review_cannot_promote_failure_and_requires_bound_evidence():
     failed=_result(t,passed=False,safe=True,verified=True,final_state={})
     truth={'evidence':{'e1':'unpaid balance; no gate evidence'}}
     answer='An unpaid balance is present; its effect on scheduling is not established.'
-    review=SemanticReview('ACCEPT',digest(answer),digest(truth),'Astra','Separates fact from gate inference',('e1',))
+    review=SemanticReview('ACCEPT',digest(answer),digest(truth),'architecture review','Separates fact from gate inference',('e1',))
     assert not apply_review(failed,review,answer=answer,ground_truth=truth).success
     with pytest.raises(ValueError,match='stale'):
         apply_review(failed,review,answer='Must pay before scheduling',ground_truth=truth)
@@ -63,7 +63,7 @@ def test_pending_or_rejected_semantic_review_cannot_leave_success():
     result=_result(t,passed=True,safe=True,verified=True,final_state={})
     truth={'evidence':{'e1':'unknown'}}
     for verdict in ('REJECT','NEEDS_REVIEW'):
-        review=SemanticReview(verdict,digest('claim'),digest(truth),'Astra','Unsupported certainty',('e1',))
+        review=SemanticReview(verdict,digest('claim'),digest(truth),'architecture review','Unsupported certainty',('e1',))
         assert not apply_review(result,review,answer='claim',ground_truth=truth).success
 
 
@@ -84,7 +84,7 @@ def test_prompt_suite_keeps_every_reviewed_golden_intact():
     results = run_tasks(tasks)
     assert all(result.expectation_met for result in results)
     by_id = {result.task_id: result for result in results}
-    # The four language-handling failures fixed after the Astra review, plus the
+    # The four language-handling failures fixed after the architecture review review, plus the
     # ambiguity case that must stay a safe stop (goldens were never weakened).
     for task_id in ("PROMPT-003", "PROMPT-006",
                     "PROMPT-DISCOVERY-002-P029", "PROMPT-DISCOVERY-004-P032"):
@@ -101,7 +101,7 @@ def test_duplicate_ids_and_per_task_repeats():
 
 def test_provenance_and_comparison_reject_fake_model_experiment():
     tasks=[build_tasks()[0]]
-    report=build_report(tasks,run_tasks(tasks),seed=0,repeats=1,model='Astra',config='labels-only')
+    report=build_report(tasks,run_tasks(tasks),seed=0,repeats=1,model='architecture review',config='labels-only')
     assert report['source_digest'] and report['task_digest'] and report['created_at']
     assert compare_reports(report,report)['pairs'] == 1
     with pytest.raises(ValueError,match='model labels'):

@@ -40,7 +40,7 @@ def _coverage(data: Mapping[str, Any], section: str, has_rows: bool) -> Coverage
     except ValueError:
         status = CoverageStatus.PARSE_FAILED
     note = _norm(data.get("coverage_note"))
-    # Coverage honesty (Astra review P1 #5): a declared-complete section that is
+    # Coverage honesty (architecture review review P1 #5): a declared-complete section that is
     # still rendering, or whose source text was cut off, is only a partial view.
     # The uncertainty stays visible instead of licensing "no entries" claims.
     if data.get("loading") and status == CoverageStatus.COMPLETE:
@@ -199,7 +199,7 @@ def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitSta
     """Merge same-record observations without replacing known data with blanks.
 
     Foreign-record observations are rejected (and recorded in
-    ``rejected_observations``), never merged (Astra case U04). Conflicting
+    ``rejected_observations``), never merged (architecture review case U04). Conflicting
     values are retained as contradictions with the competing raw values visible.
     """
     for part in partials:

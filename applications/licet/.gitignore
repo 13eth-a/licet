@@ -18,7 +18,7 @@ build/
 logs/
 
 # Local agent/tooling metadata (a project id, not project code)
-.freebuff/
+.local-tools/
 
 # Keep additional local credential files out of the cookbook.
 .env.*

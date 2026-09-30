@@ -1,4 +1,4 @@
-# Phase 9 — Astra senior review
+# Phase 9 — architecture review senior review
 
 Reviewed architecture, flagship demonstration and technical narrative on 2026-09-25. Completed targeted fixes found in the other Phase 9 lanes. **The review and local packaging work are complete; the full submission exit condition is not yet met.** A verified live booking, final recorded demo and reviewed release freeze remain absent.
 
@@ -19,9 +19,9 @@ Request: “Get permit 000000014 ready for its next inspection without paying an
 3. `DETERMINE_BLOCKERS`: interpreted structured state; this does not establish unseen inspection history.
 4. `READ_INSPECTIONS`: stopped after recovery validation could not establish known-good state.
 
-Final: `BLOCKED / PLAN_LOOP_DETECTED`, four semantic steps, zero attempted or verified mutations. The internal error code is recorded verbatim; the useful explanation is “inspection history could not be verified after bounded recovery.” This run did not reach the calendar and proves neither availability nor a booking. Root cause of the portal read failure is not resolved by this review. *(GLM lane follow-up, 2026-09-25: root cause since identified — the runner clicked a dead-but-rendered `Inspections` wrapper NI never shows; fixed with a read-only, provenance-guarded label fallback. See [`portal_read_root_cause.md`](portal_read_root_cause.md).)*
+Final: `BLOCKED / PLAN_LOOP_DETECTED`, four semantic steps, zero attempted or verified mutations. The internal error code is recorded verbatim; the useful explanation is “inspection history could not be verified after bounded recovery.” This run did not reach the calendar and proves neither availability nor a booking. Root cause of the portal read failure is not resolved by this review. *(portal integration lane follow-up, 2026-09-25: root cause since identified — the runner clicked a dead-but-rendered `Inspections` wrapper NI never shows; fixed with a read-only, provenance-guarded label fallback. See [`portal_read_root_cause.md`](portal_read_root_cause.md).)*
 
-[Sanitized live summary](astra-live-summary.json) binds the ignored raw report by SHA-256. Raw logs and portal captures remain under `logs/phase9-astra/` rather than in public submission assets.
+[Sanitized live summary](review-live-summary.json) binds the ignored raw report by SHA-256. Raw logs and portal captures remain under `logs/phase9-architecture review/` rather than in public submission assets.
 
 ## Repairs
 
@@ -40,14 +40,14 @@ Final: `BLOCKED / PLAN_LOOP_DETECTED`, four semantic steps, zero attempted or ve
 - Repository-wide syntax/undefined-name lint passes: `python -m ruff check --isolated --select F821,F822,F823,E9 licet licetbench scripts tests`. This is a focused correctness gate, not a claim that every style rule or full static typing passes.
 - `compileall` and `git diff --check` pass.
 - Final wheel built, installed with pinned dependencies into a fresh temporary virtual environment, then tested from `/tmp`: 50/50 core expectations and packaged prompt loading pass. `pip check` reports no broken requirements. This verifies a distributable install, not a fresh Git clone of an uncommitted release.
-- All benchmark suites rerun: core five times **250/250** expectations, flagship subset five times **50/50**, public reserve **6/6**, variants **143/143**, prompts **22/22**. Zero unsafe outcomes or grader errors. [Summary and measured source digest](astra-benchmark-summary.json). These are offline fixtures; the five flagship repetitions are not five live flagship runs.
-- History scan: 414 reachable Git blobs, no recognized OpenAI/Solari key shapes or private-key headers; no tracked `.env` history. [Scope and findings](astra-history-scan.json). This does not rule out every secret representation; no credential rotation was indicated by this scan.
+- All benchmark suites rerun: core five times **250/250** expectations, flagship subset five times **50/50**, public reserve **6/6**, variants **143/143**, prompts **22/22**. Zero unsafe outcomes or grader errors. [Summary and measured source digest](review-benchmark-summary.json). These are offline fixtures; the five flagship repetitions are not five live flagship runs.
+- History scan: 414 reachable Git blobs, no recognized OpenAI/Solari key shapes or private-key headers; no tracked `.env` history. [Scope and findings](review-history-scan.json). This does not rule out every secret representation; no credential rotation was indicated by this scan.
 
 ## Benchmark narrative correction
 
 Frozen v1 reports 145 `SUCCESS` outcomes among 250 runs. Ten of those are correct refusals in the two unrecoverable recovery fixtures, repeated five times. Therefore “145 completed user goals” is too strong. Keep the versioned goldens unchanged and say **145 frozen benchmark SUCCESS labels; 250/250 expected outcomes**, then show category outcomes and this caveat. A successful component recovery test is not equivalent to scheduling a user's inspection.
 
-The prompt suite now has 22/22 expected outcomes and 17 completions; this supersedes the earlier Astra Phase 8 snapshot with five parser failures. Normal/noisy evidence remains a separate simulated cohort and must not be merged with live or Phase 7 acceptance results.
+The prompt suite now has 22/22 expected outcomes and 17 completions; this supersedes the earlier architecture review Phase 8 snapshot with five parser failures. Normal/noisy evidence remains a separate simulated cohort and must not be merged with live or Phase 7 acceptance results.
 
 ## Recommended three-minute narrative
 

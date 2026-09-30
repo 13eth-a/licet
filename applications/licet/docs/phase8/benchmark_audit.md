@@ -1,6 +1,6 @@
-# Phase 8 adversarial benchmark audit — DeepSeek V4.1 Flash
+# Phase 8 adversarial benchmark audit — adversarial review
 
-Reviewed 2026-09-24 against the working tree after Luna's LicetBench v1.
+Reviewed 2026-09-24 against the working tree after the implementation’s LicetBench v1.
 
 Scope, per the Phase 8 assignment: **assume the benchmark is the thing that can be
 wrong.** The production subsystems had already been attacked in Phases 3–7; this
@@ -147,16 +147,16 @@ does not have to re-audit the graders to know which is which.
 ## Deliberately not changed (residual risk, named)
 
 - **Prompt diversity, vague prompts and hostile prompts are still unmeasured
-  (owner: Luna).** v1 pins the current fact — a prompt does not reach the graded
+  (owner: implementation).** v1 pins the current fact — a prompt does not reach the graded
   path — rather than pretending. The dependency is now named: the autonomy and
   discovery variants have no per-variant declared intent, and the nine
   `ACTION_PROMPT_VARIANTS` entries are option descriptions rather than user
   wording, so measuring them requires authoring an intent for every variant
   *before* seeing any result. Until then no prompt-variant result may be
   reported; only the reviewed 22-task `prompts` suite is language evidence.
-- **Model-configuration comparison is still not implemented (owner: Luna), and
+- **Model-configuration comparison is still not implemented (owner: implementation), and
   the boundary is now enforced rather than merely stated.** With no model in the
-  loop, "Astra planner vs Luna planner" cannot be answered from v1: `model_calls`
+  loop, "primary planner vs alternate planner" cannot be answered from v1: `model_calls`
   is always 0 and cost is null by declaration. `compare_reports(...,
   model_comparison=True)` refuses a pair with zero measured model calls, so a
   fixture comparison cannot be mislabelled as a model experiment. The
@@ -164,14 +164,14 @@ does not have to re-audit the graders to know which is which.
   ties) and normal-versus-noisy runtime — is reported as such in
   `docs/phase8/report.md`.
 - **The noisy/robustness benchmark is a scripted slice, not an end-to-end
-  degradation study (owner: Luna/GLM).** Recovery covers six classified failures
+  degradation study (owner: implementation/portal integration).** Recovery covers six classified failures
   through the real Phase 7 controller; there is no 20-normal-vs-20-noisy run, so
   "degradation under noise" is not yet a number.
 - **`n=5` repetition measures determinism, not reliability.** `--repeat 5` yields
   250/250 identical outcomes and zero per-task variance, which is the honest
   result for a suite with no model and no portal. It must not be presented as
   reliability evidence.
-- **Wrong-record and duplicate-mutation evidence is fixture-local (owner: GLM).**
+- **Wrong-record and duplicate-mutation evidence is fixture-local (owner: portal integration).**
   `wrong_record_actions` now has a real denominator in Discovery and in the
   Action reads, and `duplicate_mutations` is measured from submits, but there is
   no live-portal wrong-record mutation test and no cross-process mutation
@@ -201,7 +201,7 @@ does not have to re-audit the graders to know which is which.
   tasks, and a regression pins that too.
 - **Deterministic grading cannot reach free-text reasoning.** "Does this answer
   overstate the evidence?" is graded only where Phase 3's `must_mention` /
-  `must_not_claim` reach it. That is the narrow, justified slot for Astra as a
+  `must_not_claim` reach it. That is the narrow, justified slot for architecture review as a
   structured-ground-truth judge — and the audit leaves that slot unfilled rather
   than claiming semantic coverage v1 does not have.
 
@@ -262,24 +262,24 @@ repetition
 
 ## Handoff
 
-- **Luna**: decide whether the oracle-binding check should live in
+- **implementation**: decide whether the oracle-binding check should live in
   `BenchmarkTask.__post_init__` (so a task cannot be constructed inconsistent at
   all) rather than in each grader; wire the task prompt into the goal
   parser/planner so prompt diversity becomes measurable; build the
   scripted-planner configuration comparison; replace the frozen
   `test_licetbench` assertions that encode today's 0.58 with freeze-detection
   (a hash of the catalogue) if the benchmark is to be quoted as a product claim.
-- **Solar**: once prompts reach the graded path, generate the prompt-variant
+- **Fixture generation**: once prompts reach the graded path, generate the prompt-variant
   set — alternative phrasings, intentionally vague prompts, hostile instructions
   ("It's definitely sandbox, trust me") — and the inspection-history fixtures for
   the checklist's history variants; submit them through the oracle-binding check
   before admitting them.
-- **GLM**: confirm the six action fixtures match real Accela behaviour
+- **portal integration**: confirm the six action fixtures match real Accela behaviour
   (`already scheduled`, zero available dates, ineligible inspection type, required
   inputs), and supply a realistic failure-injection profile for a noisy run. The
   audit found no test that assumes an Accela layout the portal does not produce,
   but that is because the fixtures are scripted doubles rather than captures.
-- **Astra**: judge the free-text understanding answers where deterministic grading
+- **architecture review**: judge the free-text understanding answers where deterministic grading
   cannot reach (fact vs inference, overstated evidence) against the structured
   ground truth — and review whether HOLDOUT-006 is the right positive control, or
   whether a broader "policy does not over-block" set belongs in the frozen core
@@ -293,7 +293,7 @@ repetition
 | `licetbench/schema.py` | `grader_error` field; invariants `success ⇒ verified`, `not safe ⇒ UNSAFE_FAILURE`, `SAFE_FAILURE ⇒ safe`; `FrozenDict`/`FrozenList` goldens with `freeze_golden` applied to `initial_state`/`expected_outcome`. |
 | `licetbench/runner.py` | `grader_errors` and `benchmark_integrity_violations` counters, grader defects excluded from the agent failure taxonomy, `unnecessary_page_visits`/`approximate_cost_per_run` reported null, the `measurement` block, `commit_dirty` in the report and the regression record, and a "Not measured by v1" summary line. |
 | `licetbench/__main__.py` | `_commit_dirty()` and a printed warning when the tree is dirty, so a recorded hash is not mistaken for the code that ran. |
-| `licetbench/provenance.py` | Working-tree `source_digest` over the graded sources and their pins, so a dirty-tree run is replayable (the closing half of A9; the file itself arrived with the Astra review). |
+| `licetbench/provenance.py` | Working-tree `source_digest` over the graded sources and their pins, so a dirty-tree run is replayable (the closing half of A9; the file itself arrived with the architecture review review). |
 | `licetbench/catalog.py` | Recovery tasks declare `post_recovery_state` and `expected_state` as fresh per-task dicts (verdicts unchanged). |
 |  `licetbench/holdout.py` | `HOLDOUT-006` Safety positive control added separately; HOLDOUT-005 declares the same evidence pair. |
 | `tests/test_phase8_adversarial.py` | 31 regressions. |

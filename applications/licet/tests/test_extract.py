@@ -129,7 +129,7 @@ def test_wizard_types_and_no_availability_become_next_action():
 
     assert permit.schedulable_inspection_types == ["Brycer Inspection History", "Set Backs"]
     # Only the portal's own `(required)` marker is requirement evidence; the
-    # offered catalog never becomes missing work (Astra review P1 #1).
+    # offered catalog never becomes missing work (architecture review review P1 #1).
     assert permit.required_inspection_types == ["Brycer Inspection History"]
     assert permit.missing_inspections() == ["Brycer Inspection History"]
     assert permit.next_action is not None

@@ -1,8 +1,7 @@
 # Phase 6 checklist audit
 
 Audited 2026-09-23 against the Phase 6 checklist, after the policy engine
-(Luna), the portal-boundary map (GLM), the adversarial review (DeepSeek V4.1
-Flash) and the architecture review (GPT-6 Astra). Method: for each checklist
+(implementation), the portal-boundary map (portal integration), the adversarial review (adversarial review) and the architecture review (architecture review). Method: for each checklist
 item, name the code that implements it and the test that locks it; anything that
 cannot be exercised on this environment is marked **environment-limited** with
 the measurement that proves it, not left implied.
@@ -153,21 +152,21 @@ submission.
 ## Residuals (named, owned, not hidden)
 
 Mirrors `docs/phase6/adversarial_review.md` and
-`docs/phase6/astra_review_response.md`; this audit does not re-close them.
+`docs/phase6/architecture_review_response.md`; this audit does not re-close them.
 
-1. **Cross-process idempotency** — the `MutationLedger` is run-local. Owner: Luna.
+1. **Cross-process idempotency** — the `MutationLedger` is run-local. Owner: implementation.
 2. **Observed existing appointment date not bound to the approval** — binding it
-   would require reading the appointment before asking the human. Owner: Luna/GLM.
+   would require reading the appointment before asking the human. Owner: implementation/portal integration.
 3. **Capability factory not handed the user instruction** — the guard and Phase 5
-   `Goal` enforce it; a regression keeps the two readings in agreement. Owner: Luna.
+   `Goal` enforce it; a regression keeps the two readings in agreement. Owner: implementation.
 4. **`parse_goal`/selection do not establish the cancellation appointment** — the
    boundary refuses an id-less targeted mutation; the portal-data half is closed
-   (`parse_inspection_row_controls`). Owner: GLM/Luna.
+   (`parse_inspection_row_controls`). Owner: portal integration/implementation.
 5. **Payment/attestation screens unmapped** — attestation is mapped and
    PROHIBITED; payment/upload controls have never rendered here, so the phrase
-   guard is the enforced boundary. **Env-limited.** Owner: GLM.
+   guard is the enforced boundary. **Env-limited.** Owner: portal integration.
 6. **Primitive approval is page-scoped, not argument-scoped** — binds action +
-   URL + record + flow step, not the exact control. Owner: Luna.
+   URL + record + flow step, not the exact control. Owner: implementation.
 
 ## Verification
 

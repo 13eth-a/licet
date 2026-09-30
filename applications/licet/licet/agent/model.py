@@ -1,9 +1,7 @@
 """The model boundary: one place that talks to an LLM.
 
-Phase 1's first prerequisite. Until now `anthropic` was a dependency and
-`openai` was not installed, no code called a model at all, and the model slugs in
-config were unvalidated (nothing resolved `claude-sonnet-5`, so a bad slug would
-have failed mid-run). This module makes the model an injectable dependency with a
+Phase 1's first prerequisite. Until now no code called the OpenAI API and the configured model IDs
+were unvalidated, so a bad model ID could fail mid-run. This module makes the model an injectable dependency with a
 small, provider-neutral surface, so the planner loop can be tested with a
 scripted model and swapping providers is a config change rather than a rewrite.
 

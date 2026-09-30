@@ -1,6 +1,6 @@
 """Golden-state fixtures and Phase 3 eval cases.
 
-The interpretation oracles are Astra's 30 worked decisions
+The interpretation oracles are the architecture review’s 30 worked decisions
 (``docs/phase3/reasoning_cases.md``): each case below binds one structured
 permit state to the verdict the contract requires — including the *forbidden*
 conclusions, because a hedged restatement of an unsupported claim is still an
@@ -158,7 +158,7 @@ ACA_PAGE_FIXTURES: tuple[ExtractionFixture, ...] = (
             "type": "Rough Electrical",
             "lifecycle_normalized": "COMPLETED",
             "result_normalized": "FAILED",
-            # Portal MM/DD/YYYY is normalized to ISO at extraction (GLM Phase 5
+            # Portal MM/DD/YYYY is normalized to ISO at extraction (portal integration Phase 5
             # review H02) so downstream attempt ordering sees comparable dates.
             "completed_date": "2026-09-18",
         },
@@ -553,7 +553,7 @@ def build_cases() -> list["Phase3Case"]:
                    _foreign_record_state(),
                    (), (), "conflicting"))
 
-    # --- adversarial regressions (DeepSeek review A1–A11) -------------------
+    # --- adversarial regressions (adversarial review A1–A11) -------------------
     # Counterexamples reproduced against the inherited rules. Negative
     # assertions carry as much weight as expected ones here, and gate
     # classification is asserted directly rather than inferred from the type.

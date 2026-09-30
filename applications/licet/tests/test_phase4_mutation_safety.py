@@ -1,4 +1,4 @@
-"""Phase 4 mutation-safety regressions (DeepSeek V4.1 Flash review portion).
+"""Phase 4 mutation-safety regressions (adversarial review portion).
 
 Each test pins one path that could mutate the wrong record, duplicate an
 action, violate a user constraint, or falsely report success — the four

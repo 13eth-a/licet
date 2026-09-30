@@ -1,14 +1,14 @@
 # Phase 9 — portal read reliability: root cause of the `READ_INSPECTIONS` barrier
 
-**Lane:** GLM 5.3 Flash (portal/demo reliability), 2026-09-25. Scope: resolve release gate #1's
-stated unknown — Astra: *"Root cause of the portal read failure is not resolved by this review."*
+**Lane:** portal integration (portal/demo reliability), 2026-09-25. Scope: resolve release gate #1's
+stated unknown — architecture review: *"Root cause of the portal read failure is not resolved by this review."*
 No live portal, model API, or credential was used; the diagnosis is from the captured live trace
 plus in-repo evidence, and the fix is verified offline.
 
 ## The failure every live run since Phase 5 shares
 
-Astra's fresh plan-only run (`logs/phase9-astra/live-plan-only.json`, sanitized in
-[`astra-live-summary.json`](astra-live-summary.json)) stopped at `READ_INSPECTIONS`:
+the architecture review’s fresh plan-only run (`logs/phase9-architecture review/live-plan-only.json`, sanitized in
+[`review-live-summary.json`](review-live-summary.json)) stopped at `READ_INSPECTIONS`:
 
 ```text
 FAILURE  type=extraction  message="section unavailable: inspections"
@@ -22,7 +22,7 @@ Phase 9 live run — always at the same step, always with the same message.
 ## Root cause (pinned to one dispatcher call)
 
 The raw session log of the 2026-09-25 run
-(`logs/phase9-astra/phase5-live-20260925T215455649786Z-d05b442b.jsonl`, lines 11–17) shows what
+(`logs/phase9-architecture review/phase5-live-20260925T215455649786Z-d05b442b.jsonl`, lines 11–17) shows what
 actually happened during those seven recovery attempts — the same call failing identically, ~8 s
 apart:
 
@@ -123,12 +123,12 @@ the sandbox's calendar, which is a separate, documented limitation.
 
 ## Suggested next-lane handoffs
 
-- **Luna (owner):** accept the fix, then run the live plan-only validation and, if it reaches the
+- **implementation (owner):** accept the fix, then run the live plan-only validation and, if it reaches the
   calendar, capture the flagship. The five post-freeze live runs remain the open gate.
-- **DeepSeek:** the new fallback is one more read-path click; worth one adversarial look at
+- **adversarial review:** the new fallback is one more read-path click; worth one adversarial look at
   whether a hostile page could bait the label-variant order (both labels are pre-whitelisted
   benign targets, so the blast radius is a page read, never a submit).
-- **Astra:** this resolves the stated unknown in the senior review; the release-gate wording for
+- **architecture review:** this resolves the stated unknown in the senior review; the release-gate wording for
   gate #1 can now say "root cause identified and fixed; live rerun pending" instead of
   "not resolved".
 

@@ -41,9 +41,9 @@
   "known_failure_in_run": {
     "step": "06 READ_INSPECTION_HISTORY",
     "error": "not_actionable — no visible element for selector=#ctl00_PlaceHolderMain_shInspection_btnSearch across 9 frame(s); present but not visible",
-    "shape": "the dead-but-rendered Inspections wrapper diagnosed in portal_read_root_cause.md, this time via a model-chosen selector in the legacy loop; the GLM label-fallback fix covers licet/phase3/runner.py and licet/phase4/accela_portal.py, not this legacy model/tool selector path",
+    "shape": "the dead-but-rendered Inspections wrapper diagnosed in portal_read_root_cause.md, this time via a model-chosen selector in the legacy loop; the portal integration label-fallback fix covers licet/phase3/runner.py and licet/phase4/accela_portal.py, not this legacy model/tool selector path",
     "recovery": "the run continued through the scheduling wizard, which shows the required inspection type; the run then scored PASS.",
-    "fix": "2026-09-26 follow-up (MiMo 2.6 Pro backup lane): the legacy model/tool loop now has the same bounded dead-wrapper label fallback as the Phase 3 runner — on a present-but-not-visible click it tries the benign section labels once each through the same dispatcher/guard and returns the settled read. Regression tests in tests/test_planner.py; offline verification identical to the frozen artifacts. A live rerun is still needed to show the recovery on the portal."
+    "fix": "2026-09-26 follow-up (release verification backup lane): the legacy model/tool loop now has the same bounded dead-wrapper label fallback as the Phase 3 runner — on a present-but-not-visible click it tries the benign section labels once each through the same dispatcher/guard and returns the settled read. Regression tests in tests/test_planner.py; offline verification identical to the frozen artifacts. A live rerun is still needed to show the recovery on the portal."
   },
   "claims_this_run_supports": [
     "Licet found and verified the correct permit for 81 Commerce Ave in one live autonomous run.",
@@ -53,7 +53,7 @@
   ],
   "claims_this_run_does_not_support": [
     "Any verified live booking (none exists).",
-    "That the semantic Phase 5 planner path reaches availability (unproven; GLM's read fix still needs its own live rerun).",
+    "That the semantic Phase 5 planner path reaches availability (unproven; the portal integration’s read fix still needs its own live rerun).",
     "Reliability from one run; the five post-freeze repetitions remain outstanding.",
     "A live payment/attestation boundary demonstration."
   ],

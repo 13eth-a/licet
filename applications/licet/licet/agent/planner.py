@@ -69,7 +69,7 @@ from licet.safety.guard import GuardDecision
 from licet.schema.extract import permit_from_page
 from licet.schema.permit import Permit
 
-# Dead-but-rendered section wrappers — the GLM lane's root-cause finding
+# Dead-but-rendered section wrappers — the portal integration lane's root-cause finding
 # (docs/phase9/portal_read_root_cause.md): the portal renders a section control
 # but never shows it ("present but not visible"). The 2026-09-26 live P13 run
 # hit it through this legacy model/tool loop — the model aimed at

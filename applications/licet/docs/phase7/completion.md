@@ -1,6 +1,6 @@
 # Phase 7 completion — recovery runtime and acceptance
 
-2026-09-24. This implementation follow-up supersedes the open runtime-wiring items in the earlier Astra, DeepSeek, and GLM reviews. Phase 7's bounded recovery implementation and simulated integration acceptance are complete. These results are not live Accela validation.
+2026-09-24. This implementation follow-up supersedes the open runtime-wiring items in the earlier architecture review, adversarial review, and portal integration reviews. Phase 7's bounded recovery implementation and simulated integration acceptance are complete. These results are not live Accela validation.
 
 ## What changed
 

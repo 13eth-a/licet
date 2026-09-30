@@ -1,4 +1,4 @@
-"""Adversarial review regressions (DeepSeek, Phase 3).
+"""Adversarial review regressions (adversarial review, Phase 3).
 
 Each test is a counterexample reproduced against the inherited Phase 3 rules.
 The theme is the one the phase cannot get wrong: never state a requirement,
@@ -303,7 +303,7 @@ def test_renderer_marks_disputed_facts_as_disputed():
     assert "some are disputed" in render_answer(result)
 
 
-# --- H01-H07: portal state extraction regressions (GLM, Phase 5) -------------
+# --- H01-H07: portal state extraction regressions (portal integration, Phase 5) -------------
 # Scope per the Phase 5 assignment: planner failures caused by confusing Accela
 # state, not by planner reasoning. These run real page payloads through the ACA
 # adapter and assert what the planner's gates actually receive.
@@ -413,7 +413,7 @@ def test_due_date_header_does_not_defeat_the_fees_table():
 
 
 def test_blocks_answer_uncertainty_is_producible_by_the_deterministic_stack():
-    """DeepSeek's Phase 5 handoff: the class must not be model-only.
+    """the adversarial review’s Phase 5 handoff: the class must not be model-only.
 
     An unavailable section, unknown ordering, and a completed attempt with no
     recorded result each produce ``blocks_answer=True`` from the shipped rule

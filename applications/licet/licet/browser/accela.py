@@ -1158,7 +1158,7 @@ def has_postback_history(html: str) -> bool:
 
 # --- Phase 7 portal weirdness: the states recovery must recognise -----------
 
-# GLM 5.3 Flash, Phase 7. The recovery controller (licet/phase7/recovery.py)
+# portal integration, Phase 7. The recovery controller (licet/phase7/recovery.py)
 # decides *whether* a failure may be recovered; this vocabulary says *what ACA
 # actually did*. Plain data + one classifier, same charter as the rest of this
 # module: testable offline against captured text/URLs, no browser required.

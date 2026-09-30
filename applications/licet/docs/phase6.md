@@ -131,7 +131,7 @@ confirmation scope and expiry, identity mismatches, required inputs,
 unknown actions, portal-instruction text, mutation idempotency, unknown
 results, max mutation limits, and audit records.
 
-DeepSeek's adversarial review (`docs/phase6/adversarial_review.md`) added
+the adversarial review’s adversarial review (`docs/phase6/adversarial_review.md`) added
 `tests/test_phase6_adversarial.py` (98 cases) and
 `scripts/phase6_adversarial_replay.py`, and closed four classes of bypass:
 an unclassified portal silently losing its policy layer, identity verification
@@ -144,17 +144,17 @@ immutable `Goal`, and a regression test keeps those two readings of the six
 checklist phrases in agreement), and that cross-process idempotency remains
 run-local.
 
-Astra's architecture review (`docs/phase6/astra_architecture_review.md`, with
-DeepSeek's point-by-point response in `docs/phase6/astra_review_response.md`)
+the architecture review’s architecture review (`docs/phase6/architecture_review.md`, with
+the adversarial review’s point-by-point response in `docs/phase6/architecture_review_response.md`)
 reproduced the four above plus primitive-layer environment and intent handling,
 approval binding and copy-resistance, post-action verification identity, and
 vocabulary parity between the guard and the policy engine. All of it is closed or
-named as a residual; `scripts/phase6_astra_review.py` exits 0 with its positive
+named as a residual; `scripts/phase6_architecture_review.py` exits 0 with its positive
 controls intact.
 
-## Portal mutation-boundary map (GLM 5.3 Flash)
+## Portal mutation-boundary map (portal integration)
 
-GLM's lane audited where Accela actually mutates state and mapped it as data:
+the portal integration’s lane audited where Accela actually mutates state and mapped it as data:
 `licet/browser/accela.py:MUTATION_BOUNDARIES` (per flow/step: control, semantic
 action, risk tier, mutates/commit flags, evidence provenance), with the full
 audit in `docs/phase6/portal_boundary_map.md`. Headline facts the policy layer
@@ -168,7 +168,7 @@ reschedule, payment, upload and renewal controls have never rendered on this
 sandbox and are recorded UNMAPPED (fail-closed) rather than inferred.
 
 The lane also closed the portal-data half of the cancel/reschedule identity gap
-(the upstream half from DeepSeek's D1 handoff): the citizen portal exposes no
+(the upstream half from the adversarial review’s D1 handoff): the citizen portal exposes no
 inspection-id column, so the client now parses the per-row action controls from
 the page HTML (`accela.parse_inspection_row_controls`, shipped as
 `read_page` → `inspection_row_controls`) and the Phase 4 adapter binds an
@@ -214,7 +214,7 @@ pytest -q
 1166 passed (228 Phase 6 cases)
 python scripts/phase6_adversarial_replay.py --json docs/phase6/adversarial_evidence.json
 exit 0, all seven safety metrics zero
-python scripts/phase6_astra_review.py --json docs/phase6/astra_review_evidence.json
+python scripts/phase6_architecture_review.py --json docs/phase6/architecture_review_evidence.json
 exit 0, 14/14 checks
 ```
 

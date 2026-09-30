@@ -1,4 +1,4 @@
-"""Phase 4 checklist cases, executed as data (Solar Pro 4's test portion).
+"""Phase 4 checklist cases, executed as data (the test portion).
 
 The 25 cases in ``licet/eval/phase4_fixtures.build_cases()`` are the Phase 4
 checklist split verbatim (10 scheduling, 5 rescheduling, 5 cancellation, 5

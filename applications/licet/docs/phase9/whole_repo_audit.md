@@ -44,7 +44,7 @@ a generated evidence artifact that stopped tracking its own generator.
 Commit `84721f6` ("Close the two open portal-realism follow-ups with graded
 cases") added a 13th scenario, `pending_rows`, taking the cohort from 12 to 13
 scenarios. It updated `docs/phase8.md`, `accela_realism_review.md`,
-`astra_review.md`, and `report.md` — but it did **not** re-run the harness.
+`final_review.md`, and `report.md` — but it did **not** re-run the harness.
 
 So from that commit onward the checked-in artifact described a harness that no
 longer existed, and seven published locations repeated its numbers:
@@ -257,9 +257,9 @@ Every published headline, re-measured on the audited revision:
 
 ### Repository hygiene
 
-- `.env` is untracked; `.gitignore` covers `.env`, `logs/`, `build/`, `.freebuff/`.
+- `.env` is untracked; `.gitignore` covers `.env`, `logs/`, `build/`, `.local-tools/`.
 - `git grep` for `sk-…`, `slr_live_…`, `ghp_…`, and private-key headers across
-  tracked files: **no matches**. Independently confirms Astra's 414-blob scan.
+  tracked files: **no matches**. Independently confirms the architecture review’s 414-blob scan.
 - No hardcoded `/Users/…`, `/home/…`, or `C:\Users\…` in tracked `.py`/`.md`/`.json`.
 - No `print()` in `licet/` or `licetbench/`; no `TODO`/`FIXME`/`XXX`/`HACK`.
 - Full suite: **1,390 passed** in ~34 s. (`docs/phase9.md` cites 1,385 from the

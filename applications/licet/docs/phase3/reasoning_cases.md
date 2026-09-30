@@ -1,7 +1,7 @@
 # Phase 3 interpretation decisions
 
-Astra's interpretation oracle, 2026-09-21. These are 30 worked decisions for
-Luna/Solar to encode in golden tests, not claims that a Phase 3 engine has passed
+the architecture review’s interpretation oracle, 2026-09-21. These are 30 worked decisions for
+implementation/fixture generation to encode in golden tests, not claims that a Phase 3 engine has passed
 30 tests. Unless a row states otherwise, record identity is verified, stated
 observations are current, and unmentioned prerequisites are unknown. F = FACT,
 I = INFERENCE, U = UNCERTAIN. “No supported blocker” never means “no blocker.”

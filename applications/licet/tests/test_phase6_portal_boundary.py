@@ -1,4 +1,4 @@
-"""Phase 6 — GLM lane: the portal mutation-boundary map and appointment identity.
+"""Phase 6 — portal integration lane: the portal mutation-boundary map and appointment identity.
 
 Locks the portal-side safety knowledge to the layers that enforce it:
 
@@ -74,7 +74,7 @@ def test_mutating_boundaries_are_state_changing_actions(action):
 
 
 def test_scheduling_wizard_navigation_does_not_mutate():
-    """The invariant Astra asked for: reaching the gate cannot book."""
+    """The invariant architecture review asked for: reaching the gate cannot book."""
     mutating = [e for e in accela.MUTATION_BOUNDARIES
                 if e["flow"] == "schedule_inspection" and e["mutates"]]
     assert len(mutating) == 1

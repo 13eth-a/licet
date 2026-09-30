@@ -1,6 +1,6 @@
-# Phase 8 — Accela realism review (GLM 5.3 Flash lane)
+# Phase 8 — Accela realism review (portal integration lane)
 
-Reviewer: GLM 5.3 Flash, per the Phase 8 model-role allocation ("Portal-specific
+Reviewer: portal integration, per the Phase 8 review scope ("Portal-specific
 benchmark support: build realistic Accela test cases and debug failures caused
 by portal behavior"). Every finding below is checked against behavior actually
 measured on live ACA portals during earlier phases — principally

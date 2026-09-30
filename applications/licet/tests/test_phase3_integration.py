@@ -209,7 +209,7 @@ def test_runner_drives_benign_clicks_and_merges_observations():
     # (required) marker became a fact. Coverage is PARTIAL, not complete: this
     # fixture's declared-empty marker ("You have not added any inspections.")
     # sits beside a parsed row, so the page shape is self-contradicting and the
-    # read must not claim complete coverage of it (GLM Phase 5 review H05).
+    # read must not claim complete coverage of it (portal integration Phase 5 review H05).
     assert state.coverage["inspections"].status == CoverageStatus.PARTIAL
     assert state.inspections and state.inspections[0].failed
     assert any(f.field == "required_type" for f in state.facts)
@@ -256,7 +256,7 @@ class HiddenWrapperClient(RetrievalFakeClient):
 
 
 def test_runner_falls_back_when_exact_label_is_dead_but_rendered():
-    """GLM Phase 9: `not_actionable` on 'Inspections' must try the label the
+    """portal integration Phase 9: `not_actionable` on 'Inspections' must try the label the
     portal actually renders, not report the whole section unavailable."""
     inspections_read = dict(
         RECORD_PAGE_DATA,

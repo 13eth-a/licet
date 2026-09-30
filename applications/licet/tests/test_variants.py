@@ -1,4 +1,4 @@
-"""Solar Pro 4 — LicetBench variant generation regressions.
+"""LicetBench variant generation regressions.
 
 Pins the bulk generation contract from Phase 8's Solar lane:
 
@@ -135,7 +135,7 @@ def test_prompt_variants_preserve_the_oracle():
 
 
 def test_prompt_variant_results_are_not_measured_as_diversity():
-    # Until Luna wires the task prompt into the graded path, every prompt
+    # Until implementation wires the task prompt into the graded path, every prompt
     # variant grades identically to its base (the prompt is inert — audit A8).
     core_by_id = {task.id: task for task in build_core_tasks()}
     for variant in build_variant_prompt_tasks():

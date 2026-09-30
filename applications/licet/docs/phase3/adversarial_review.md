@@ -1,7 +1,7 @@
-# Phase 3 adversarial review — DeepSeek
+# Phase 3 adversarial review — adversarial review
 
-Reviewed 2026-09-21 against the working tree after Luna's implementation and
-GLM's extraction/runtime integration. Scope, per the Phase 3 assignment:
+Reviewed 2026-09-21 against the working tree after the implementation’s implementation and
+the portal integration’s extraction/runtime integration. Scope, per the Phase 3 assignment:
 hallucination checks, contradiction cases, unsupported blocker detection, rule
 review — specifically H05 ordering semantics, the fee/condition wording
 matchers, and `render_answer`'s classification-preserving phrasing.
@@ -61,7 +61,7 @@ exists to prevent — not a crash, but an unsupported confident claim.
   the unsupported *gate* was removed.
 - **`execution_allowed` remains `False`**, and the retrieval runner is unchanged:
   no finding here creates a mutation path.
-- **The model-level reasoning stage is still unwired** (GLM's recorded
+- **The model-level reasoning stage is still unwired** (the portal integration’s recorded
   limitation). Everything reviewed is deterministic.
 
 ## Evidence
@@ -95,13 +95,13 @@ records the observed output, not a reconstruction.
 
 ## Handoff
 
-- **Luna**: publication-gate enforcement for *contested premises* (a claim
+- **implementation**: publication-gate enforcement for *contested premises* (a claim
   derived from a value that a same-record observation disputes should be dropped
   or explicitly abstained from, mirroring the foreign-record path); and the
   model-level interpreter must emit this classification vocabulary
   (`confirmed_gate` / `observed_problem` / `potential_impediment`,
   `required` / `likely` / `possible`) unchanged.
-- **GLM / Solar**: the exact-label condition vocabulary and the document-status
+- **portal integration / fixture generation**: the exact-label condition vocabulary and the document-status
   sets are Null-Island shaped. Real ACA captures should extend
   `_ACTIVE_CONDITION_LABELS`, `_INACTIVE_CONDITION_LABELS`,
   `_MISSING_DOCUMENT_LABELS` and the fee-gate phrasings — an unknown label is
@@ -118,7 +118,7 @@ records the observed output, not a reconstruction.
   `run_extraction_fixtures()`, with the golden set now at 57 reasoning cases.
   An unknown label still degrades to an uncertainty or `partial` coverage rather
   than a fabricated value.
-- **Astra**: the contract's gate precision/recall rule is now implemented in
+- **architecture review**: the contract's gate precision/recall rule is now implemented in
   `licet/eval/phase3.py`; the remaining contract metric not yet reported is
   *requirement-strength correctness* per candidate.
 - **Phase 4**: unaffected. Phase 3 still cannot schedule, pay, submit, or

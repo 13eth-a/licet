@@ -1,6 +1,6 @@
 # Phase 8 — LicetBench v1
 
-Current final review and measured evidence: [Astra review](phase8/astra_review.md).
+Current final review and measured evidence: [architecture review review](phase8/final_review.md).
 The review adds frozen fixture contracts, source provenance, a real prompt suite,
 secondary semantic assessment and a simulated 20-normal/20-noisy comparison.
 Historical audit limitations below should be read with that follow-up.
@@ -9,7 +9,7 @@ Curated artifact set — headline, evaluation map, flagship traces,
 failure-priority ranking, regression curve and the configuration-versus-model
 boundary: [Phase 8 report](phase8/report.md).
 
-Portal-realism review of the failure-injection surfaces (GLM 5.3 Flash lane):
+Portal-realism review of the failure-injection surfaces (portal integration lane):
 [Accela realism review](phase8/accela_realism_review.md). It checks the 13
 noisy-runtime injections, 16 recovery-injection variants and 7 portal-injection
 texts against measured ACA behavior: the set is portal-shaped, and all six
@@ -170,7 +170,7 @@ iterations should replace/extend those representative slices with checklist
 coverage for all history variants, reschedule/cancel/timeout actions, and
 portal-specific live captures.
 
-## Bulk variant generation (Muse Spark 1.2; original Solar lane)
+## Bulk variant generation
 
 The 15% bulk-generation lane is implemented in `licetbench/variants.py`
 (`licetbench-variants-v1`, 143 candidate tasks — see
@@ -182,7 +182,7 @@ Phase 8 checklist asks for without expanding the locked core 50:
   `ACTION_PROMPT_VARIANTS` 9 alt) plus `VAGUE_PROMPTS` (12), `HOSTILE_PROMPTS`
   (12) and `PORTAL_INJECTION_VARIANTS` (7).  Each prompt-variant task reuses
   the exact `expected_outcome` of its base task so the oracle binding holds;
-  until Luna wires the task prompt into the goal parser / planner their
+  until implementation wires the task prompt into the goal parser / planner their
   results are pinned as `"prompt_diversity": "not measured"` (audit A8).
 - **39 understanding variants** — expanded slice covering the checklist's
   history variants (`failed-then-passed`, `missing/unknown`, `contradictory`,
@@ -214,8 +214,7 @@ in the core `50`-task metrics.
 ## Adversarial audit
 
 The independent false-positive audit is complete:
-[`docs/phase8/benchmark_audit.md`](phase8/benchmark_audit.md) (DeepSeek V4.1
-Flash, 32 regressions in `tests/test_phase8_adversarial.py`, replay in
+[`docs/phase8/benchmark_audit.md`](phase8/benchmark_audit.md) (adversarial review, 32 regressions in `tests/test_phase8_adversarial.py`, replay in
 `scripts/phase8_adversarial_replay.py`). It found nine routes by which a run
 could pass without earning it — a golden answer that was published but never
 graded, a recovery graded on the controller's own success label, an unverified
@@ -229,7 +228,7 @@ all 56 locked tasks still grade the answer they publish.
 
 What the audit did **not** establish, and what Phase 8 therefore may not claim:
 `--model`/`--config` are experiment labels for a suite that calls no model, so no
-model-configuration comparison (Astra vs Luna, adaptive routing) has been made;
+model-configuration comparison (alternative runtime models, adaptive routing) has been made;
 prompt diversity, vague prompts and hostile prompts are unmeasurable until a task
 prompt reaches the graded path — the 48 prompt-variant tasks, 12 vague prompts and
 12 hostile prompts now exist as oracle-bound data in `licetbench/variants.py` so

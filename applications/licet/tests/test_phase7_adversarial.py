@@ -1,4 +1,4 @@
-"""Phase 7 adversarial recovery regressions — DeepSeek V4.1 Flash review.
+"""Phase 7 adversarial recovery regressions — adversarial review.
 
 Every case here reproduces a route that was unsafe on the pre-review tree (see
 ``docs/phase7/adversarial_review.md``) and now pins the fail-safe behaviour:

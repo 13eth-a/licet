@@ -215,7 +215,7 @@ def select_inspection_action(
         if len(targets) != 1 or not targets[0].is_scheduled:
             return stop(SelectionStatus.AMBIGUOUS, "existing scheduled inspection is not uniquely established", "current target appointment")
 
-    # Preserve all user constraints verbatim; Luna's date layer resolves them.
+    # Preserve all user constraints verbatim; the implementation’s date layer resolves them.
     action = replace(requested_action, action_type=kind, inspection_type=portal_name,
                      constraints=list(requested_action.constraints)) if requested_action else InspectionAction(kind, permit_id, portal_name)
     return ActionSelection(action, "one evidence-supported target; policy and pre-action verification still required",

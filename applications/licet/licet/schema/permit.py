@@ -64,7 +64,7 @@ class InspectionStatus(str, Enum):
 class Provenance(str, Enum):
     """Where a fact came from — evals score these differently.
 
-    Phase 3 (Astra review P1 #3): unknown provenance must stay unknown. A bare
+    Phase 3 (architecture review review P1 #3): unknown provenance must stay unknown. A bare
     string with no source is coerced to UNATTRIBUTED — never silently promoted
     to a portal fact. PORTAL is reserved for values read off a page with
     evidence attached.
@@ -287,7 +287,7 @@ class Permit(BaseModel):
     def missing_inspections(self) -> list[str]:
         """Explicitly REQUIRED types with no matching inspection attempt yet.
 
-        Phase 3 (Astra review P1 #1): the offered catalog is not a checklist.
+        Phase 3 (architecture review review P1 #1): the offered catalog is not a checklist.
         Only types the portal itself marks `(required)` may become outstanding
         work. Offered-but-unseen types are available options, not obligations —
         `offered_inspection_types()` carries them under a name that implies no

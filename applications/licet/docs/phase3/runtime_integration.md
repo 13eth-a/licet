@@ -1,7 +1,7 @@
-# Phase 3 runtime integration — GLM handoff
+# Phase 3 runtime integration — portal integration handoff
 
 Completed 2026-09-21. Owner: Accela extraction + runtime integration. This
-closes the Luna/GLM portion of the Phase 3 assignment on top of Astra's
+closes the implementation/portal integration portion of the Phase 3 assignment on top of the architecture review’s
 reasoning handoff (`reasoning_contract.md`, `reasoning_cases.md`,
 `current_architecture_evidence.json`).
 
@@ -13,7 +13,7 @@ reasoning handoff (`reasoning_contract.md`, `reasoning_cases.md`,
 | `licet/phase3/errors.py` | `Phase3ErrorCode`: `INSPECTIONS_NOT_FOUND`, `FEES_NOT_FOUND`, `HISTORY_NOT_FOUND`, `DOCUMENTS_NOT_FOUND`, `CONDITIONS_NOT_FOUND`, `HISTORY_PARSE_FAILED`, `STATE_EXTRACTION_FAILED`, `CONFLICTING_RECORD_STATE`, `INSUFFICIENT_EVIDENCE`, `UNSUPPORTED_STATUS`, `FOREIGN_RECORD_EVIDENCE`. |
 | `licet/phase3/runner.py` | Read-only targeted retrieval: executes `needed_sections` through the **ToolDispatcher** (navigate to the record's own deep link + benign section-label clicks resolved via `BENIGN_TARGETS`), one bounded pass, URL tracked from outcomes, loading sections get one settle-and-reread. |
 | `licet/phase3/render.py` | Deterministic narrative renderer over a validated `ReasoningResult` only. Preserves FACT/INFERENCE/UNCERTAIN, blocker classification, requirement strength (`Required/Likely/Possible:`), uncertainties, and partial-answer provenance. Introduces no claims. |
-| `licet/eval/phase3_fixtures.py` | Golden-state fixtures (5 synthetic records with recorded ground truth) + 57 reasoning cases encoding Astra's 30-row oracle, the 11 adversarial counterexamples, the flagship acceptance cases, and the checklist's missing-section / multi-blocker cases. Also holds the per-municipality **extraction fixtures** (`ACA_PAGE_FIXTURES`) that run real `read_page` payloads through the ACA adapter. |
+| `licet/eval/phase3_fixtures.py` | Golden-state fixtures (5 synthetic records with recorded ground truth) + 57 reasoning cases encoding the architecture review’s 30-row oracle, the 11 adversarial counterexamples, the flagship acceptance cases, and the checklist's missing-section / multi-blocker cases. Also holds the per-municipality **extraction fixtures** (`ACA_PAGE_FIXTURES`) that run real `read_page` payloads through the ACA adapter. |
 | `licet/eval/phase3.py` | Evaluator with the contract's metrics: unsupported-blocker count (numerator/denominator), false-ready count, contradiction recall, abstentions. |
 
 Plus the P1 fixes below in `licet/phase3/extract.py`, `rules.py`,
@@ -22,7 +22,7 @@ Plus the P1 fixes below in `licet/phase3/extract.py`, `rules.py`,
 
 ## The review's P1 items — status
 
-| Astra finding | Resolution |
+| architecture review finding | Resolution |
 |---|---|
 | Catalog entries become requirements | `Permit.missing_inspections()` now subtracts history only from `required_inspection_types` (ACA's own `(required)` marker, captured by the adapter). New `offered_inspection_types()` carries the catalog under a name that implies no obligation. `apply_next_action` emits nothing without explicit requirement evidence. |
 | Status substring matches reverse meaning | Already exact-vocabulary in phase3 (verified by tests); `"active hold"` now reads as active via bounded phrase matching, not positive-substring guessing. Negative phrases (`Not Issued`, `Unexpired`, `Inactive`, `Not Scheduled`, `Not Approved`) are covered by `tests/test_phase3.py` + golden case S05. |
@@ -133,16 +133,16 @@ not established.
 
 ## Handoff
 
-- **Luna**: publication-gate enforcement in code before any model output is
+- **implementation**: publication-gate enforcement in code before any model output is
   rendered (gate list in `reasoning_contract.md` §Publication gates); the
   model-level reasoning invocation.
-- **Solar**: ~~encode additional per-municipality ACA wording variants as
+- **fixture generation**: ~~encode additional per-municipality ACA wording variants as
   fixtures (fees grid header variants are the first gap)~~. **Done**:
   `ACA_PAGE_FIXTURES` (fees/documents/inspections/history/conditions header
   variants across two municipal wordings) with the adapter canonical-field
   mapping they require, plus the checklist's missing-section and multi-blocker
   golden cases.
-- **DeepSeek**: challenge the golden set itself — especially H05 ordering
+- **adversarial review**: challenge the golden set itself — especially H05 ordering
   semantics and the fee/condition wording matchers — and audit
   `render_answer` for classification-preserving phrasing. **Done**:
   `docs/phase3/adversarial_review.md` (counterexamples A01–A11, now 46 golden

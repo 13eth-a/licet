@@ -1,6 +1,6 @@
 """Portal-aware recovery: what ACA just did, and what may be done about it.
 
-Phase 7 (GLM 5.3 Flash). The recovery controller (`licet/phase7/recovery.py`)
+Phase 7 (portal integration). The recovery controller (`licet/phase7/recovery.py`)
 decides *whether* a failure may be recovered and bounds every attempt; this
 module is the Accela half of the decision. It is deliberately two things:
 
@@ -10,7 +10,7 @@ module is the Accela half of the decision. It is deliberately two things:
    expressed as data over one observation, and
 2. **A settled page identity** for `RecoveryController.loop_observed`.
 
-The DeepSeek Phase 7 handoff recorded the residual: *the loop key is only as
+The adversarial review Phase 7 handoff recorded the residual: *the loop key is only as
 stable as the page state the caller supplies; a render timestamp or spinner
 label makes every occurrence unique — the caller must pass the settled page
 identity, not a live render token.* The planner was passing
@@ -40,7 +40,7 @@ from licet.phase7.recovery import FailureType, RecoveryResult
 
 
 class PortalFinding(StrEnum):
-    """The weird states ACA produces, as the checklist's GLM lane names them.
+    """The weird states ACA produces, as the checklist's portal integration lane names them.
 
     Values mirror `accela.detect_weirdness` output strings 1:1; the enum gives
     the recovery layer a typed vocabulary while `accela.py` stays
@@ -101,7 +101,7 @@ class PageIdentity:
     Built from a `read_page` observation (or any mapping with the same keys).
     Deliberately excludes everything that changes while a section is still
     rendering — visible text, timestamps, spinner labels, "Loading..." — so the
-    same settled page produces the same identity every time (the DeepSeek
+    same settled page produces the same identity every time (the adversarial review
     handoff's caller contract), and two different pages never collapse into one
     key just because ACA kept the URL constant (postback wizards).
     """
@@ -318,7 +318,7 @@ def settled_browser_state(observation: Mapping[str, Any] | None,
     identity, flow position, section step, plus the finding list so traces show
     what the portal was doing. Deliberately excludes page text and anything
     mid-render — a spinner label or an in-flight grid must never become the
-    state a loop key is built from (the DeepSeek residual), and text churn must
+    state a loop key is built from (the adversarial review residual), and text churn must
     never read as progress (`World.fingerprint` ignores this dict anyway).
     """
     observation = dict(observation or {})
@@ -343,7 +343,7 @@ def settled_browser_state(observation: Mapping[str, Any] | None,
 def identity_from_world(world: Any) -> str:
     """The settled page-state string for `loop_observed`, from a Phase 5 World.
 
-    Contract (DeepSeek handoff): pass the settled page identity, never a live
+    Contract (adversarial review handoff): pass the settled page identity, never a live
     render token. `browser_state` now carries the derived identity
     (`settled_browser_state`), so the same settled page yields the same key
     across replans, and a spinner label cannot defeat detection. The fallback
@@ -367,7 +367,7 @@ def identity_from_world(world: Any) -> str:
 
 def audit_transient_identity_sources() -> tuple[dict[str, str], ...]:
     """Which ACA states produce a transient `active_section`/URL (the audit
-    DeepSeek's handoff asked for), each with the mitigation now in place."""
+    the adversarial review’s handoff asked for), each with the mitigation now in place."""
     return (
         {
             "state": "AJAX sections still rendering (Inspections shows 'Loading...')",

@@ -87,7 +87,7 @@ class ScriptedCapabilities:
 
 
 # ============================================================================
-# Solar Pro 4 addition: the checklist's 30-scenario deterministic planner set,
+# Fixture addition: the checklist's 30-scenario deterministic planner set,
 # as reusable data plus a library-level replay function. The scenario builder is
 # intentionally small; each scenario is resolved through the production planner
 # with a scripted capability, not asserted against an ad-hoc mock. That makes the

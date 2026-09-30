@@ -1,4 +1,4 @@
-"""Phase 6 adversarial safety regressions (DeepSeek V4.1 Flash review portion).
+"""Phase 6 adversarial safety regressions (adversarial review portion).
 
 Each test pins one route by which a buggy or adversarial planner could mutate a
 live municipal record, act on the wrong permit or inspection, execute without a
@@ -321,7 +321,7 @@ def test_expired_approval_is_refused():
 
 def test_a_copied_approval_cannot_authorize_twice():
     # The object's `used` flag is mutable state a caller can deepcopy; the
-    # engine's record of what it has already authorized is not. Astra's
+    # engine's record of what it has already authorized is not. the architecture review’s
     # architecture review is the source of this case.
     engine = PolicyEngine(environment=Environment.SANDBOX)
     action = ProposedAction("CANCEL_INSPECTION", permit_id=PERMIT, target=TYPE, inspection_type=TYPE,
@@ -400,7 +400,7 @@ def test_the_closed_vocabulary_covers_the_planners_own_verbs():
     assert unclassified == [], f"planner verbs with no deterministic decision: {unclassified}"
 
 
-# --- Solar Pro 4 lane: close the documented adverse-fixture gap ---------------
+# --- Fixture coverage: close the documented adverse-fixture gap ---------------
 # The Phase 6 handoff documents two adversarial/fixture concerns that are not
 # fully locked by the existing suite yet:
 #

@@ -1,6 +1,6 @@
-# Phase 8 — Astra final review
+# Phase 8 — architecture review final review
 
-Astra's secondary semantic grading and final benchmark review are complete. Additional framework gaps found during review were repaired without changing the frozen core answers. The curated artifact set (headline, evaluation map, flagship traces, failure-priority ranking, regression curve) is in [`report.md`](report.md).
+the architecture review’s secondary semantic grading and final benchmark review are complete. Additional framework gaps found during review were repaired without changing the frozen core answers. The curated artifact set (headline, evaluation map, flagship traces, failure-priority ranking, regression curve) is in [`report.md`](report.md).
 
 ## Changes
 
@@ -29,11 +29,11 @@ Artifacts are in `final/`; reproduce with `.venv/bin/python scripts/phase8_revie
 
 The integrated cohorts observed zero duplicate submissions and zero false successes. External I/O is simulated. Repetitions measure deterministic repeatability, not independent samples of live reliability. Policy-denial counters and wrong-record selection counters must not be interpreted as measured physical mutations on a live portal. Task action metadata describes contracts; source-specific graders enforce the supported fixture contracts, not arbitrary new action languages.
 
-The configuration experiment changes the actual planner budget and improves completion by 22.73 percentage points. It makes no model calls, measures no model cost, and is not an Astra-versus-Luna comparison.
+The configuration experiment changes the actual planner budget and improves completion by 22.73 percentage points. It makes no model calls, measures no model cost, and is not an comparison of runtime models.
 
 ## Secondary semantic review
 
-Reviewed all ten core understanding answers against structured permit evidence and explicit golden constraints: all ten accepted. `final/semantic-reviews.json` records individual rationales, evidence keys and hashes binding each review to the exact answer and ground truth in `final/semantic-packet.json`. This was an assistant review, not an automated model API experiment. Acceptance supplies secondary evidence and does not increase hard-grader scores.
+Reviewed all ten core understanding answers against structured permit evidence and explicit golden constraints: all ten accepted. `final/semantic-reviews.json` records individual rationales, evidence keys and hashes binding each review to the exact answer and ground truth in `final/semantic-packet.json`. This was an secondary review, not an automated model API experiment. Acceptance supplies secondary evidence and does not increase hard-grader scores.
 
 The review checks unsupported claims, chronology and inspection scope, unresolved contradictions, distinction between completion and passing, and conditional versus definite next steps. In particular, fees must not become a confirmed scheduling gate without supporting evidence; a pass for another unit must not clear a failure; cancellation must not imply resolution. H04 remains a readability opportunity: include unit labels explicitly when discussing competing inspection rows.
 
@@ -49,7 +49,7 @@ The review's first run exposed five language-handling failures. All five were pr
 | PROMPT-DISCOVERY-004-P032 | Commercial Alteration type qualifier was lost, yielding ambiguity | The record-type qualifier survives a question-style wording (`tests/test_lookup_adversarial.py`). |
 | PROMPT-DISCOVERY-005-P036 | Address plus “multiple records there” was rejected as invalid | An address stops at trailing commentary — an em dash, a colon or an opening parenthesis — while ambiguity detection stays in the resolver (`tests/test_lookup_adversarial.py`). |
 
-The whole suite is now locked at 22/22 expected outcomes (`tests/test_phase8_astra.py::test_prompt_suite_keeps_every_reviewed_golden_intact`); the five remaining non-completions are the cases whose *published* goldens require a safe stop. The generated component prompt variants remain insufficient evidence of language coverage because those paths use prebuilt structured goals. Only reviewed variants retaining enough context were admitted to the new prompt suite; omitted ZIP/type/target context must not inherit an inapplicable golden.
+The whole suite is now locked at 22/22 expected outcomes (`tests/test_phase8_review.py::test_prompt_suite_keeps_every_reviewed_golden_intact`); the five remaining non-completions are the cases whose *published* goldens require a safe stop. The generated component prompt variants remain insufficient evidence of language coverage because those paths use prebuilt structured goals. Only reviewed variants retaining enough context were admitted to the new prompt suite; omitted ZIP/type/target context must not inherit an inapplicable golden.
 
 ## Remaining evaluation boundaries
 

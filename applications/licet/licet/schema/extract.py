@@ -84,7 +84,7 @@ def permit_from_page(
 
     # Coverage notes (Phase 3): loading markers, empty observations, calendar
     # scope and truncation are *coverage*, not outstanding requirements. Storing
-    # them as requirements made absence read as an unmet obligation (Astra
+    # them as requirements made absence read as an unmet obligation (architecture review
     # review P1 #5) — e.g. a half-rendered AJAX section becoming "missing work".
     if data.get("loading"):
         permit.coverage_notes.append(
@@ -118,7 +118,7 @@ def permit_from_page(
         )
 
     # The scheduling wizard's own type list, when this page has it. Offered and
-    # required are different universes (Astra review P1 #1): `(required)` is the
+    # required are different universes (architecture review review P1 #1): `(required)` is the
     # only requirement signal, and a truncated grid page never proves absence.
     types = accela.parse_inspection_types(data.get("fields") or [])
     if types:
@@ -141,7 +141,7 @@ def permit_from_page(
 
     # Calendar availability: scope the claim to the months actually observed.
     # Empty calendar samples from three rendered months say nothing about a
-    # fourth (Astra review P1 #5).
+    # fourth (architecture review review P1 #5).
     if data.get("calendar"):
         months = [month.get("month") or "" for month in data["calendar"]]
         active = sum(len(month.get("active_days") or []) for month in data["calendar"])
@@ -164,7 +164,7 @@ def apply_next_action(permit: Permit) -> Permit:
     """Record what the record is actually waiting on, as a derived fact.
 
     Only an explicitly REQUIRED, still-unmet inspection becomes a next action;
-    the offered catalog never does (Astra review P1 #1). When no explicit
+    the offered catalog never does (architecture review review P1 #1). When no explicit
     requirement exists, next_action stays None — an absence of evidence is not
     an action item.
     """

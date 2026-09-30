@@ -1,9 +1,9 @@
-# Phase 7 — Astra semantic recovery decisions
+# Phase 7 — architecture review semantic recovery decisions
 
 > Implementation follow-up: see [Phase 7 completion](completion.md) for the runtime fixes and current acceptance evidence. The findings below describe the earlier review snapshot.
 
 
-Reviewed 2026-09-24. Role: selective semantic recovery/replanning specialist. Luna owns controller/runtime integration; DeepSeek owns failure attacks; GLM owns portal routes. No live portal or model calls were made.
+Reviewed 2026-09-24. Role: selective semantic recovery/replanning specialist. implementation owns controller/runtime integration; adversarial review owns failure attacks; portal integration owns portal routes. No live portal or model calls were made.
 
 ## Delivered
 
@@ -25,7 +25,7 @@ The caller supplies trusted original-goal requirements, independently verified f
 
 Outcome semantics: SUCCESS requires fresh, nonconflicting, identity-verified goal evidence and no unresolved attempted mutation. PARTIAL_SUCCESS retains useful verified findings when the remaining goal is blocked; it never implies the mutation succeeded. BLOCKED means no useful verified goal work can be claimed. A technical FAILED status may be layered on by the caller for implementation errors; it must still retain earlier findings in the report. Missing goal-required sections cannot coexist with SUCCESS even if a caller asserts goal_satisfied.
 
-## Decisions requested by DeepSeek and GLM
+## Decisions requested by adversarial review and portal integration
 
 **A→B→A is not continuing semantic progress.** The transition can signal a world change requiring refresh, but revisiting B must not replenish retry/replan budgets or count as NEW_INFORMATION. Track cumulative evidence identity (record + section + semantic content/provenance), separate from current page state. Keep global step/recovery ceilings and settled identity loop detection. The current ProgressTracker compares only the immediately previous information set; it cannot establish this invariant alone.
 
@@ -37,10 +37,10 @@ Outcome semantics: SUCCESS requires fresh, nonconflicting, identity-verified goa
 
 ## Missing work found in the presumed-complete roles
 
-1. **Luna — runtime wiring remains incomplete.** GoalPlanner calls classification/loop/progress hooks, but not RecoveryController.recover, allow_replan, or replan_required. Invalid selector output still stops immediately. The semantic module delivered here is an explicit integration contract, not an assertion of runtime recovery. Wire it after structured state change/failure, consume controller budgets once per attempt, and dispatch only closed safe read strategies. Preserve immutable goal, constraints, approval invalidation, and mutation ledger across replans.
-2. **Luna/GLM — named portal routes are not executable recovery yet.** RECOVER_FROM_HOME, RETURN_TO_RECORD, RETURN_TO_ORIGIN_TAB, CLOSE_INFORMATIONAL_MODAL, and WAIT_FOR_SETTLE need bounded, validated implementations. Unknown or consequential modals must route to policy or stop. Do not infer that a route label proves recovery happened.
-3. **Luna/DeepSeek — controller validator is optional.** recover accepts any non-raising callback as success when validate is omitted, including a callback returning False. Require meaningful fresh-state validation on runtime paths; a callback completing is not recovery. This is especially important for wrong-page/record recovery.
-4. **Luna/DeepSeek — mutation reconciliation input must be tri-state and bounded.** mutation_reconciled branches on truthiness of occurred, so callers must not pass None as if absence were proven. Even a real False needs authoritative absence evidence and a retry ceiling; repeated reserve/reconcile-absent cycles must not create unlimited attempts. Existing Phase 4/5 refusal to blindly replay should remain until this is proven end to end.
+1. **implementation — runtime wiring remains incomplete.** GoalPlanner calls classification/loop/progress hooks, but not RecoveryController.recover, allow_replan, or replan_required. Invalid selector output still stops immediately. The semantic module delivered here is an explicit integration contract, not an assertion of runtime recovery. Wire it after structured state change/failure, consume controller budgets once per attempt, and dispatch only closed safe read strategies. Preserve immutable goal, constraints, approval invalidation, and mutation ledger across replans.
+2. **implementation/portal integration — named portal routes are not executable recovery yet.** RECOVER_FROM_HOME, RETURN_TO_RECORD, RETURN_TO_ORIGIN_TAB, CLOSE_INFORMATIONAL_MODAL, and WAIT_FOR_SETTLE need bounded, validated implementations. Unknown or consequential modals must route to policy or stop. Do not infer that a route label proves recovery happened.
+3. **implementation/adversarial review — controller validator is optional.** recover accepts any non-raising callback as success when validate is omitted, including a callback returning False. Require meaningful fresh-state validation on runtime paths; a callback completing is not recovery. This is especially important for wrong-page/record recovery.
+4. **implementation/adversarial review — mutation reconciliation input must be tri-state and bounded.** mutation_reconciled branches on truthiness of occurred, so callers must not pass None as if absence were proven. Even a real False needs authoritative absence evidence and a retry ceiling; repeated reserve/reconcile-absent cycles must not create unlimited attempts. Existing Phase 4/5 refusal to blindly replay should remain until this is proven end to end.
 5. **Whole-phase acceptance remains outstanding.** Existing replay examples exercise components. They are not evidence of 20+ noisy executions through the actual Phase 2–6 runtime, recovery strategies, and policy boundary. Preserve safe stops as valid outcomes, report false recovery/duplicates separately, and distinguish scripted from live evidence.
 
 ## Integration acceptance

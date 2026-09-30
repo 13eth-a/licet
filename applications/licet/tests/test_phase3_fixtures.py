@@ -71,7 +71,7 @@ def test_inspection_grid_header_variant_keeps_type_and_completion_date():
     assert inspection.lifecycle_normalized == "COMPLETED"
     assert inspection.result_normalized == "FAILED"
     # Portal MM/DD/YYYY is normalized to ISO at extraction, so attempt ordering
-    # (Phase 3 H05) and Phase 4 date math see comparable dates (GLM review H02).
+    # (Phase 3 H05) and Phase 4 date math see comparable dates (portal integration review H02).
     assert inspection.completed_date == "2026-09-18"
 
 

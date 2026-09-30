@@ -2,7 +2,7 @@
 
 ## Phase 5: extraction honesty is fixture-verified, not live-capture-verified (2026-09-22)
 
-- **The Phase 5 portal-state review (GLM) fixed seven extraction defects
+- **The Phase 5 portal-state review (portal integration) fixed seven extraction defects
   against reconstructed ACA shapes, not fresh live captures.** The date
   normalization (H02), status-column outcome recovery (H06), legend rejection
   (H01), declared-empty conflict (H05), and fee-status wordings (H03/H04) are

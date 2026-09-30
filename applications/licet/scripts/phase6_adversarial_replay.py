@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 6 adversarial replay (DeepSeek V4.1 Flash review).
+"""Phase 6 adversarial replay (adversarial review).
 
 Re-derives every counterexample from ``docs/phase6/adversarial_review.md`` against
 the current tree and reports, per case, what the **pre-review** behaviour allowed

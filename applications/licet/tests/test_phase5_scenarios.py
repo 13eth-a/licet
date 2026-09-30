@@ -1,4 +1,4 @@
-"""Solar Pro 4 regression lock for the Phase 5 planner scenario set.
+"""Regression lock for the Phase 5 planner scenario set.
 
 The scenarios in ``licet.eval.phase5_fixtures.planner_scenarios`` are the
 checklist's 30 deterministic planner cases expressed as data: 5 simple goal

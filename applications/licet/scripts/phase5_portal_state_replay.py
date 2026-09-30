@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 5 portal-state replay (GLM 5.3 Flash review).
+"""Phase 5 portal-state replay (portal integration review).
 
 Re-derives each counterexample from ``docs/phase5/portal_state_review.md``
 against the current tree. Scope, per the Phase 5 assignment: cases where a

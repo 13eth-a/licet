@@ -186,7 +186,7 @@ def reason_with_model(
 ) -> ReasoningResult:
     """Model-level Phase 3 interpretation, isolated and read-only.
 
-    This is the coordinator for Astra's structured interpretation prompt. It is
+    This is the coordinator for the architecture review’s structured interpretation prompt. It is
     intentionally not the planner: the planner is about *acting*; this stage is
     about *explaining*. It receives a compact structured permit snapshot, never a
     raw page, and it returns a structured ``ReasoningResult`` that the renderer
@@ -408,7 +408,7 @@ def _validate_model_output(
 
     The model may qualify, connect, or reject deterministic conclusions, but it
     cannot invent portal facts or enable execution. This is the code-side
-    publication gate the contract assigns to Luna.
+    publication gate the contract assigns to implementation.
     """
     if not isinstance(structured, dict):
         raise Phase3Error(
@@ -550,7 +550,7 @@ def _coerce_uncertainty(unc: dict[str, Any]) -> Uncertainty:
 def _apply_contested_premise_gate(result: ReasoningResult, state: PermitState) -> None:
     """Publication gate: contested premises must not quietly survive as facts.
 
-    Luna's remaining handoff item. When two same-record observations disagree
+    the implementation’s remaining handoff item. When two same-record observations disagree
     (A9: a fee read as unpaid is later read as paid), the value the model
     might assert is built on a premise the snapshot itself disputes. The
     contract says to retain both facts until their relation is supported; the

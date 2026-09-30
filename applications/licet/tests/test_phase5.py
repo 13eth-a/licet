@@ -411,7 +411,7 @@ def test_preflight_cannot_mutate_using_stale_reasoning():
 
 # --- goal-language cases found by the Phase 8 `prompts` suite ---------------
 # PROMPT-003 and PROMPT-006 were measured production parsing failures (see
-# docs/phase8/astra_review.md). The goldens were left alone and the parser was
+# docs/phase8/final_review.md). The goldens were left alone and the parser was
 # fixed instead, so each fix is pinned here rather than only in the benchmark.
 
 

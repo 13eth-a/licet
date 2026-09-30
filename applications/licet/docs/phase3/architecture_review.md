@@ -1,4 +1,4 @@
-# Phase 3 architecture review — Astra
+# Phase 3 architecture review — architecture review
 
 Reviewed 2026-09-21 against the current working tree. Phase 3 runtime classes,
 extractors, and reasoning coordinator were not yet present. These are concrete
@@ -14,7 +14,7 @@ minus every historical type. `licet/schema/extract.py:140` turns that list into
 “schedule an inspection.” A catalog is not a required checklist. A failed or
 cancelled historical entry also suppresses that type from this subtraction.
 
-Luna: separate offered types, explicit requirements, and attempts. Deprecate this
+implementation: separate offered types, explicit requirements, and attempts. Deprecate this
 method as a next-action source. Preserve an offered-but-unseen utility only under
 a name that carries no obligation. Sequence and resolution require matching
 scope, outcome, and chronology, as specified in the reasoning contract.
@@ -29,7 +29,7 @@ scope, outcome, and chronology, as specified in the reasoning contract.
 - “Corrections Required” -> UNKNOWN despite a failed/correction outcome.
 - Permit “Not Issued” -> ISSUED; “Unexpired” -> EXPIRED; “Inactive” -> ISSUED.
 
-Luna/GLM: use exact agency-supported labels after harmless normalization, separate
+implementation/portal integration: use exact agency-supported labels after harmless normalization, separate
 lifecycle/outcome vocabularies, and preserve unmapped values. Add explicit tests
 for negation and positive controls. A new global fuzzy alias is not a safe fix.
 
@@ -40,7 +40,7 @@ coercer wraps bare strings as Fact. Thus “Unverified inferred claim” becomes
 portal fact without evidence. URLs alone also cannot link a conclusion to an
 attempt or support its semantics.
 
-Luna: unknown provenance must remain unknown. Require evidence IDs for important
+implementation: unknown provenance must remain unknown. Require evidence IDs for important
 portal claims; preserve section, entity, raw source, observation/event times,
 coverage, and inference dependencies. Do not silently convert legacy strings into
 verified portal facts. Version the compatibility adapter if needed.
@@ -53,7 +53,7 @@ record questions can be answered from current page text within two or three
 reads. These assumptions conflict with Phase 3's read-only structured reasoning
 and evidence-dependent targeted retrieval.
 
-Luna: keep the Phase 3 interpreter in a separate invocation with zero action
+implementation: keep the Phase 3 interpreter in a separate invocation with zero action
 tools and the dedicated reasoning prompt. A system sentence saying “don't act”
 is insufficient if the coordinator still accepts mutation tool calls. Route
 needed_sections through a bounded, read-only retrieval adapter. Do not reuse the
@@ -67,7 +67,7 @@ coverage/observation facts, not unmet permit obligations. Empty calendar samples
 at `:127` become an agency-wide “no appointment dates” claim even though only
 observed months were sampled.
 
-Luna/GLM: move these to coverage/uncertainty. Scope calendar statements to observed
+implementation/portal integration: move these to coverage/uncertainty. Scope calendar statements to observed
 months and loaded coverage. Do not convert missing data into a blocker. Preserve
 successful empty observations separately from unavailable or failed extraction.
 
@@ -77,7 +77,7 @@ Current Inspection cannot distinguish lifecycle Completed from result Failed,
 represent comment linkage provenance, or establish requirement/location scope.
 Historical and current facts cannot be safely resolved merely by type/date.
 
-Luna/GLM: add these fields before enabling the reasoning stage; use the contract's
+implementation/portal integration: add these fields before enabling the reasoning stage; use the contract's
 unknown states when extraction cannot supply them. Date ties and partial history
 must remain unresolved. Never infer scope solely from equal display names.
 
@@ -87,14 +87,14 @@ must remain unresolved. Never infer scope solely from equal display names.
 list exists. It cannot represent independent blockers, competing next steps,
 conditions, dependency order, or confidence separately from provenance.
 
-Luna: accumulate same-record observations without destructive overwrite. Preserve
+implementation: accumulate same-record observations without destructive overwrite. Preserve
 contradictions and supersession evidence, then return structured candidates with
 requirement strength, premises, preconditions, affected stage, and explainable
 priority. Do not resolve conflicts with last-write-wins or maximum confidence.
 
 ## Handoff and readiness
 
-Astra deliverables are complete:
+architecture review deliverables are complete:
 
 - `reasoning_contract.md`: interface semantics, blocker taxonomy, temporal and
   contradiction policy, retrieval/stop rules, publication gates, evaluation rules.
@@ -102,9 +102,9 @@ Astra deliverables are complete:
 - `../../licet/agent/phase3_reasoning_prompt.md`: isolated structured interpretation prompt.
 - `current_architecture_evidence.json`: current-code reproductions for the owners.
 
-Luna owns schema/runtime integration and enforcement. GLM owns source-to-field
-mappings and coverage/linkage. Solar can encode these decisions as fixtures;
-DeepSeek should challenge claim entailment, not just citation existence.
+implementation owns schema/runtime integration and enforcement. portal integration owns source-to-field
+mappings and coverage/linkage. fixture generation can encode these decisions as fixtures;
+adversarial review should challenge claim entailment, not just citation existence.
 
 Final Phase 3 integration approval is pending implementation, not implied by
 completion of this reasoning handoff. Required acceptance evidence: golden-state

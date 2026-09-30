@@ -1,13 +1,13 @@
-# Accela portal mutation-boundary map — Phase 6 (GLM 5.3 Flash)
+# Accela portal mutation-boundary map — Phase 6 (portal integration)
 
 *Portal safety specialist deliverable, 2026-09-23. Scope per the Phase 6 role
 assignment: determine where Accela Citizen Access actually mutates state —
 which buttons commit, which "Continue" is navigation, where payments,
 attestations, cancellations and rescheduling live, and what the sandbox/live
 distinction is — so the policy layer's boundaries rest on observed controls
-rather than label guesses. This is the audit DeepSeek's review named as missing
-("the payment and attestation screens are unmapped (owner: GLM)") and the
-commit-control mapping Astra asked for ("GLM should supply the precise
+rather than label guesses. This is the audit the adversarial review’s review named as missing
+("the payment and attestation screens are unmapped (owner: portal integration)") and the
+commit-control mapping architecture review asked for ("portal integration should supply the precise
 portal-specific commit controls").*
 
 **Method.** Everything below is read from the repository's live evidence —
@@ -114,7 +114,7 @@ shape as unknown and the code refuses.
   deployment could render one), the correct behavior is already encoded:
   phrase-resolution holds the click, the semantic layer's `PAY_FEE` requires a
   scoped confirmation with an amount, and the constraint layer refuses a
-  no-spend goal. The audit gap DeepSeek named — nobody had verified what the
+  no-spend goal. The audit gap adversarial review named — nobody had verified what the
   section actually contains — remains open *by environment limit*, not by
   omission: the section on NI renders fee line items only (read path verified
   in Phase 3's fees observation), and no owned record shows a payable balance
@@ -230,9 +230,9 @@ flow, and the dispatcher's commit-point rule governs the wizard while it runs.
   adapter (re-derives the environment from the page being driven at submit
   time; a positively-live host refuses), and the primitive guard (every
   `changes_state` click needs a positively identified sandbox, approval
-  included). DeepSeek's replay locked all three (98 cases).
+  included). the adversarial review’s replay locked all three (98 cases).
 
-## 7. Wizard navigation and availability checks do not mutate (Astra's ask)
+## 7. Wizard navigation and availability checks do not mutate (the architecture review’s ask)
 
 The question was whether *reaching* the gate could itself mutate. Answer from
 the mapped controls: **no.** Every pre-confirm step in the scheduling wizard
@@ -265,15 +265,15 @@ vocabulary, so the two cannot drift:
 
 ## 9. Residuals (updated owners)
 
-- **Cancel/reschedule control shape (owner: GLM, blocked on environment).**
+- **Cancel/reschedule control shape (owner: portal integration, blocked on environment).**
   Unmapped because the sandbox offers no bookable appointment; the parser and
   the conservative binding are in place for the day it renders. Re-measure
   before the first live cancel eval.
-- **Payment section controls (owner: GLM, blocked on environment).** The
+- **Payment section controls (owner: portal integration, blocked on environment).** The
   section renders fee lines only on NI; no payable balance exists on any owned
   record. The phrase guard + constraint layer already cover the behavior; the
   control-id map stays empty until a payable record exists.
-- **Cross-agency generalization (owner: GLM, out of MVP scope).** All control
+- **Cross-agency generalization (owner: portal integration, out of MVP scope).** All control
   ids here are Null Island's render; ACA is agency-configured, so the map is a
   per-deployment artifact. `MUTATION_BOUNDARIES` marks evidence provenance per
   entry so a new deployment re-audits rather than inherits.

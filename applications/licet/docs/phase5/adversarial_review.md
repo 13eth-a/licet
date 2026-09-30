@@ -1,6 +1,6 @@
-# Phase 5 adversarial planner review — DeepSeek V4.1 Flash
+# Phase 5 adversarial planner review — adversarial review
 
-Reviewed 2026-09-22 against the working tree after Luna's planner/state machine
+Reviewed 2026-09-22 against the working tree after the implementation’s planner/state machine
 and the model selector. Scope, per the Phase 5 assignment: attack the planner
 loop from the side — find loops, redundant actions, stale state, false success,
 constraint loss, unmet preconditions, ignored external dependencies, and
@@ -141,22 +141,22 @@ actions and grants no new authority.
 ## Deliberately not changed (residual risk, named)
 
 - **A vague goal reports `SUCCESS` for its own narrowed interpretation (owner:
-  Luna/Astra).** `"Fix my permit."` completes as
+  implementation/architecture review).** `"Fix my permit."` completes as
   `(permit_verified, blockers_identified)` and the report carries
   `goal.vague=True`, so the narrowing is visible — but a UI that renders
   `SUCCESS` as "done" still overstates a request to *fix* the permit. Whether a
   vague goal should cap at `PARTIAL_SUCCESS` is a product/interpretation
   decision, not a safety fix, so it is recorded rather than changed.
-- **Free-text constraints are carried, not enforced (owner: Luna/GLM).** Beyond
+- **Free-text constraints are carried, not enforced (owner: implementation/portal integration).** Beyond
   payment/signature/operation, restrictions such as "do not contact the
   inspector" survive in `Goal.constraints` and are refused if a proposal drops
   them, but no component enforces their meaning. This is the Phase 4
   time/access-constraint residual, unchanged, and it now flows through Phase 5.
 - **`blocks_answer` is unproducible by the shipped rule engine (owner:
-  GLM/Astra).** The gate is enforced; only a model-level or injected reasoner can
+  portal integration/architecture review).** The gate is enforced; only a model-level or injected reasoner can
   currently emit that state. Phase 3 raised this as a handoff and it remains
   open.
-- **No cross-process idempotency (owner: Luna).** `attempted_mutations` is
+- **No cross-process idempotency (owner: implementation).** `attempted_mutations` is
   run-local. A process that dies between the commit click and the verification
   re-read is protected only by the portal's read gate on the next run. Phase 4
   recorded this as a Phase 5 concern; Phase 5 is single-run, so it is still open.
@@ -205,14 +205,14 @@ end to end (real GoalPlanner)
 
 ## Handoff
 
-- **Luna**: decide the vague-goal status boundary; if the objective binding ever
+- **implementation**: decide the vague-goal status boundary; if the objective binding ever
   needs to accept a normalizing reasoner, widen it explicitly at the reasoner
   contract rather than in `established()`. The Phase 4 cross-process idempotency
   gap is now also Phase 5's.
-- **GLM**: the `blocks_answer` uncertainty class is enforced but unproducible by
+- **portal integration**: the `blocks_answer` uncertainty class is enforced but unproducible by
   the deterministic rule engine; the model-level interpreter is the only emitter.
   Phase 5 will accept it as soon as it is wired.
-- **Astra**: the completion predicate is now the execution gate; nothing in
+- **architecture review**: the completion predicate is now the execution gate; nothing in
   `established()` may be relaxed without re-running the replay script. New
   goal-level facts (beyond the seven in `Goal.__post_init__`) must arrive with a
   record/snapshot-bound predicate here.

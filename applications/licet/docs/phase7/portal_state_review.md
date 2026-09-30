@@ -1,17 +1,17 @@
-# Phase 7 portal-state review — GLM 5.3 Flash
+# Phase 7 portal-state review — portal integration
 
 > Implementation follow-up: see [Phase 7 completion](completion.md) for the runtime fixes and current acceptance evidence. The findings below describe the earlier review snapshot.
 
 
-Reviewed 2026-09-24 against the working tree after Luna's recovery controller
-and DeepSeek's adversarial review. Scope, per the Phase 7 assignment: make
+Reviewed 2026-09-24 against the working tree after the implementation’s recovery controller
+and the adversarial review’s adversarial review. Scope, per the Phase 7 assignment: make
 recovery **portal-aware** — the "what the hell did Accela just do?" category.
 Unexplained redirects, session expiry (redirect *and* modal), page-load timing,
 partial AJAX rendering, stale result tables, modals, unexpected new tabs,
 iframe state, alternate navigation paths, Accela error pages, recovery after
-browser back. Plus the item DeepSeek's review handed over explicitly:
+browser back. Plus the item the adversarial review’s review handed over explicitly:
 
-> **GLM**: supply a *settled* page identity for `loop_observed` — the Accela
+> **portal integration**: supply a *settled* page identity for `loop_observed` — the Accela
 > sections settle asynchronously (empty table, then rows), so the caller must
 > pass the loaded state, not the in-flight one. Audit which Accela states
 > produce a transient `active_section`/URL.
@@ -44,7 +44,7 @@ the raw URL. On ACA that is close to the worst possible key: postback wizards
 share one URL across every step (`CapDetail.aspx` for all five scheduling
 steps), and record-section navigation never leaves the record detail at all.
 The key could only distinguish records, never pages, which is exactly the
-shape of the false-negative loop residual DeepSeek recorded. And the fallback
+shape of the false-negative loop residual adversarial review recorded. And the fallback
 contract — "pass the settled state, not a live render token" — was honoured by
 nobody because there was no settled identity to pass.
 
@@ -64,7 +64,7 @@ bounding.
 | Piece | File | What it is |
 |---|---|---|
 | Portal-weirdness vocabulary | `licet/browser/accela.py` | `EMPTY_TABLE_MARKERS`, `MODAL_TEXT_MARKERS`, `CONSEQUENTIAL_MODAL_MARKERS`, `SESSION_MODAL_MARKERS`, `PORTAL_HOME_URL_MARKERS`, `NEW_TAB_URL_MARKERS` + `detect_empty_table`, `detect_modal`, `detect_session_modal`, `is_portal_home`, `looks_like_new_tab`, `detect_weirdness`. Same charter as the rest of the module: data + small parsers, offline-testable, provenance stated. |
-| Portal state layer | `licet/phase7/portal.py` | `PortalFinding` (typed values mirroring `detect_weirdness`), `PageIdentity` (settled identity), `PortalState` (findings + identity + `unsettled`), `RecoveryRoute`, `route_recovery` (worst-first routing), `settled_browser_state` (the `browser_state` slice the planner persists), `identity_from_world` (the loop-key string), `audit_transient_identity_sources` (the audit DeepSeek asked for). |
+| Portal state layer | `licet/phase7/portal.py` | `PortalFinding` (typed values mirroring `detect_weirdness`), `PageIdentity` (settled identity), `PortalState` (findings + identity + `unsettled`), `RecoveryRoute`, `route_recovery` (worst-first routing), `settled_browser_state` (the `browser_state` slice the planner persists), `identity_from_world` (the loop-key string), `audit_transient_identity_sources` (the audit adversarial review asked for). |
 | `read_page` integration | `licet/browser/solari_client.py` | Every observation now carries `portal_findings` and `page_identity` (URL path + capID record identity). |
 | Retrieval integration | `licet/phase3/runner.py` | After each settled read, `_record_browser_state` folds the settled identity into the caller's `browser_state` dict (opt-in via the new `browser_state=` constructor argument; default dict keeps script callers unchanged). |
 | Planner integration | `licet/phase5/planner.py` | Loop key via `identity_from_world`; failed reads consult `route_recovery` — reads only, downgrade-only (see P3). |
@@ -142,7 +142,7 @@ portal metrics (unsafe targets zero)
   false_loops_from_step_changes        0
 ```
 
-## Transient identity audit (the DeepSeek handoff item)
+## Transient identity audit (the adversarial review handoff item)
 
 `audit_transient_identity_sources()` returns this as data; prose here for the
 review trail.
@@ -183,11 +183,11 @@ review trail.
 
 ## Deliberately not changed (residual risk, named)
 
-- **No recovery action is executed by the router (owner: Luna).** The planner
+- **No recovery action is executed by the router (owner: implementation).** The planner
   consumes routes only as downgrades; strategies like `RECOVER_FROM_HOME`
   ("re-search the known permit, verify, resume") name the recovery shape but
   the planner's existing replanning semantics still drive it. Wiring the
-  named strategies to bounded `recover()` calls is the natural Luna
+  named strategies to bounded `recover()` calls is the natural implementation
   follow-up and needs no new portal data — the routes are already in the
   trace.
 - **Modals/popups are text-detected, not DOM-confirmed.** ACA renders real
@@ -203,7 +203,7 @@ review trail.
 - **The empty-table vocabulary is wording-based.** A grid that renders zero
   rows *and* zero markers looks settled; the declared-empty distinction then
   rests on the section's own wording, as before. A DOM-level row count from
-  `read_page` would close this and belongs with Luna's browser-lane work.
+  `read_page` would close this and belongs with the implementation’s browser-lane work.
 
 ## Files touched
 
@@ -222,18 +222,18 @@ review trail.
 
 ## Handoff
 
-- **Luna**: bind the named strategies (`RECOVER_FROM_HOME`, `RETURN_TO_RECORD`,
+- **implementation**: bind the named strategies (`RECOVER_FROM_HOME`, `RETURN_TO_RECORD`,
   `RETURN_TO_ORIGIN_TAB`, `CLOSE_INFORMATIONAL_MODAL`, `WAIT_FOR_SETTLE`) to
   bounded `RecoveryController.recover()` calls if/when executor-level recovery
   lands — the routes and evidence are already on every trace event. A DOM row
   count in `read_page` would close the wording-only empty-grid residual.
-- **DeepSeek**: attack the router the way the controller was attacked. The
+- **adversarial review**: attack the router the way the controller was attacked. The
   interesting surfaces: `detect_modal`'s wording lists (an unforeseen
   consequential wording currently classifies informational), the worst-first
   ordering when several findings co-occur, and whether the downgrade-only
   contract can be violated by a caller that mutates `browser_state` between
   classification and routing.
-- **Astra**: whether `WAIT_FOR_SETTLE` downgrades should feed the replanner
+- **architecture review**: whether `WAIT_FOR_SETTLE` downgrades should feed the replanner
   (currently they surface in the message only) and whether a portal-home
   redirect during a *mutation* (routed nowhere, by design) needs a semantic
   decision rather than reconciliation.

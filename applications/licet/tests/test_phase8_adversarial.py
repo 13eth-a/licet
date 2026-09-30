@@ -1,4 +1,4 @@
-"""Phase 8 adversarial benchmark-grading regressions — DeepSeek V4.1 Flash review.
+"""Phase 8 adversarial benchmark-grading regressions — adversarial review.
 
 The Phase 8 assignment for this reviewer is to attack LicetBench itself: find
 every route by which the *benchmark* can hand out a PASS it did not earn, a
