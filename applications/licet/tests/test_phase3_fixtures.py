@@ -1,4 +1,4 @@
-"""phase 3 extraction fixtures: per-municipality aca page shapes"""
+"""phase 3 extraction fixtures: per municipality aca page shapes"""
 from __future__ import annotations
 
 from licet.eval import phase3_fixtures as fixtures

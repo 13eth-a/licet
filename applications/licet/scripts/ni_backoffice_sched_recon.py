@@ -1,4 +1,4 @@
-"""read-only: does the back office offer inspection dates the citizen wizard lacks?"""
+"""read only: does the back office offer inspection dates the citizen wizard lacks?"""
 from __future__ import annotations
 
 import argparse
@@ -138,9 +138,9 @@ def inspection_list_url(capid: dict, module: str) -> str:
           f"&capID1={capid['ID1']}&capID2={capid['ID2']}&capID3={capid['ID3']}")
     return f"{AV_URL}portlets/inspection/inspectionListCapSpecific.do?{qs}"
 
-# the "schedule inspections" menu item calls selectmanageinspection("0", ...) ->
+# the "schedule inspections" menu item calls selectmanageinspection("0", ...) >
 # openscheduleinspectionsdialog(), which showmodaldialog()s this url (captured from the record's
-# inspection-list html)
+# inspection list html)
 def schedule_dialog_url(module: str = "Building") -> str:
     return (f"{AV_URL}portlets/inspection/workloadingInspectionList.do"
             f"?value(mode)=doManage&doPending=true&RCAP=true&module={module}&spaceName=null")
@@ -158,7 +158,7 @@ def calendar_inspections_url(module: str = "Building") -> str:
 
 
 async def try_open_schedule_form(page, errors: list[str]) -> dict:
-    """click manage inspection -> schedule inspections on the live list page"""
+    """click manage inspection > schedule inspections on the live list page"""
     result: dict = {"menu_clicked": False, "item_clicked": False,
                     "frames_before": len(page.frames), "frames_after": None}
     try:
@@ -184,7 +184,7 @@ async def try_open_schedule_form(page, errors: list[str]) -> dict:
 
 
 async def collect_selects(page) -> list[dict]:
-    """every <select> across frames with its options (read-only)"""
+    """every <select> across frames with its options (read only)"""
     script = """() => [...document.querySelectorAll('select')].map(s => ({
         name: s.getAttribute('name') || '', id: s.id || '',
         options: [...s.options].map(o => ((o.text || '') + '').trim()).filter(Boolean).slice(0, 80),
@@ -201,7 +201,7 @@ async def collect_selects(page) -> list[dict]:
 
 
 def availability_hints(html_by_frame: dict[int, str]) -> dict:
-    """day-cell / capacity markers the schedule form or calendar may carry"""
+    """day cell / capacity markers the schedule form or calendar may carry"""
     joined = "\n".join(html_by_frame.values())
     return {
         "date_literals": sorted(set(DATE_RE.findall(joined)))[:20],

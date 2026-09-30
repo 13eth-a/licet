@@ -4,7 +4,7 @@ from licet.phase5.state import Action, Error, MUTATIONS, READS, Status
 
 
 def planner_metrics(runs, *, expected_actions=None, necessary_reads=None):
-    """optional golden paths support next-step and unnecessary-read scoring"""
+    """optional golden paths support next step and unnecessary read scoring"""
     total = len(runs)
     if any(labels is not None and len(labels) != total for labels in (expected_actions, necessary_reads)):
         raise ValueError("golden labels must cover every evaluated run")

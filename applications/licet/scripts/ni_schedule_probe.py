@@ -1,4 +1,4 @@
-"""map the citizen scheduling wizard — read-only, nothing is scheduled"""
+"""map the citizen scheduling wizard read only, nothing is scheduled"""
 
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ class Probe:
 
 
 def record_summary(text: str) -> dict:
-    """`record bld26-00469: / commercial electrical / record status: submitted`"""
+    """`record bld26 00469: / commercial electrical / record status: submitted`"""
     summary: dict = {}
     import re
 
@@ -219,7 +219,7 @@ async def dump_type_dialogs(client, stamp: str, tag: str) -> list[str]:
 
 
 async def walk_one_step_deeper(dispatcher, state, probe: Probe, deep: str, data: dict) -> dict | None:
-    """choose a type and continue — the commit is later, and is never clicked"""
+    """choose a type and continue the commit is later, and is never clicked"""
     options = accela.parse_inspection_types(data.get("fields") or [])
     if not options:
         out("  nothing to select: the wizard offers no inspection types")
@@ -366,7 +366,7 @@ async def main() -> int:
         out(f"  blocked calls: {[e['note'] for e in report['blocked_calls']]}")
         out("nothing was scheduled")
 
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         report["error"] = repr(exc)
         out(f"EXCEPTION: {exc!r}")
     finally:

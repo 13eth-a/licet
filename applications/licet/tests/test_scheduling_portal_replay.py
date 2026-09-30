@@ -1,4 +1,4 @@
-"""portal-realism replay: the real adapter books a day on real captured markup"""
+"""portal realism replay: the real adapter books a day on real captured markup"""
 from __future__ import annotations
 
 import asyncio
@@ -78,7 +78,7 @@ class CalendarReplayClient(FakeClient):
             data["calendar"] = [month.as_dict() for month in accela.parse_calendar(self.markup)]
             data["selectable_times"] = self.times if self.state == self.STATE_TIMES else ""
         elif self.state == self.STATE_RESULT:
-            # the base fake's acknowledgement row is hardcoded to 09/24/2026; re-date it to the day this
+            # the base fake's acknowledgement row is hardcoded to 09/24/2026; re date it to the day this
             # replay actually books so the executor's independent verification compares like with like
             booked_us = dt.date.fromisoformat(BOOKED_DATE).strftime("%m/%d/%Y")
             data["text"] = str(data.get("text") or "").replace("09/24/2026", booked_us)

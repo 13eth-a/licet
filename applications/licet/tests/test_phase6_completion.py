@@ -1,4 +1,4 @@
-"""phase 6 close-out: the checklist items the policy engine did not yet cover"""
+"""phase 6 close out: the checklist items the policy engine did not yet cover"""
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -64,7 +64,7 @@ def cancel(**kw):
     ("Schedule Rough Electrical inspection without making any changes.", CONSTRAINT_CONFLICT),
     ("Submit the application, but don't submit anything.", CONSTRAINT_CONFLICT),
     ("Cancel it, but do not cancel anything.", CONSTRAINT_CONFLICT),
-    # a prohibition that is not contradicted by a request is a constraint, not a conflict — it must not be
+    # a prohibition that is not contradicted by a request is a constraint, not a conflict it must not be
     # reported as one
     ("Read only", None),
     ("You can schedule, but don't cancel", None),

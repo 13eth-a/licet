@@ -40,7 +40,7 @@ def _load_module(directory: Path, name: str) -> types.ModuleType:
 
 
 def _install_baseline(directory: Path) -> None:
-    """swap a pre-fix tree's modules in for a comparison run"""
+    """swap a pre fix tree's modules in for a comparison run"""
     rules = _load_module(directory, "rules")
     extract = _load_module(directory, "extract")
     render = _load_module(directory, "render")

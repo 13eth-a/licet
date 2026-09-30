@@ -32,7 +32,7 @@ def test_locate_apply_wizard_steps():
 
 
 # the scheduling wizard shares one url for every step, so the popup's own wording is the only way to know
-# where we are (captured live 2026-09-20)
+# where we are (captured live 2026 09 20)
 SCHEDULING_URL = (
     "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
     "&TabName=Building&capID1=REC26&capID2=00000&capID3=000QC"
@@ -56,7 +56,7 @@ def test_locate_refines_the_scheduling_step_from_page_text():
 
 
 def test_locate_stops_at_select_record_without_text():
-    """url-only callers (the guard) must keep working unchanged"""
+    """url only callers (the guard) must keep working unchanged"""
     position = accela.locate(SCHEDULING_URL)
 
     assert (position.flow, position.step) == ("schedule_inspection", "select_record")
@@ -91,7 +91,7 @@ def test_detail_url_matches_the_verified_shape():
         "&capID1=REC26&capID2=00000&capID3=000QG"
         "&agencyCode=NULLISLAND&IsToShowInspection="
     )
-    # site-absolute, not agency-relative: prefixing the agency path 404s
+    # site absolute, not agency relative: prefixing the agency path 404s
     assert "/nullisland/NULLISLAND/" not in url
 
 
@@ -252,7 +252,7 @@ def test_parse_inspection_types_is_empty_without_a_wizard():
 
 
 def test_inspection_type_total_spans_the_paginated_grid():
-    """page 1 shows 10 rows of commercial alteration's 18 — never trust the rows"""
+    """page 1 shows 10 rows of commercial alteration's 18 never trust the rows"""
     assert accela.inspection_type_total(TYPE_GRID_TEXT) == 18
     assert accela.inspection_type_total("Available Inspection Types (0)") == 0
     assert accela.inspection_type_total("no heading here") is None
@@ -314,7 +314,7 @@ def test_selectable_times_is_empty_until_a_day_is_picked():
 
 
 def test_popup_continue_disabled_detects_the_stashed_postback():
-    """aca hides the real postback in `href_disabled`; force-clicking would fire it"""
+    """aca hides the real postback in `href_disabled`; force clicking would fire it"""
     assert accela.popup_continue_disabled(CALENDAR_HTML) is True
     enabled = CALENDAR_HTML.replace(' disabled="disabled"', "")
     assert accela.popup_continue_disabled(enabled) is False

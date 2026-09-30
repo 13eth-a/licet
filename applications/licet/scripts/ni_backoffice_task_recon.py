@@ -1,4 +1,4 @@
-"""read-only: what does the back office's application acceptance task expose?"""
+"""read only: what does the back office's application acceptance task expose?"""
 from __future__ import annotations
 
 import argparse

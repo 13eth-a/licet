@@ -1,4 +1,4 @@
-"""adversarial record-matching, confidence, and fallback tests for phase 2"""
+"""adversarial record matching, confidence, and fallback tests for phase 2"""
 
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ def test_ambiguity_commentary_does_not_enter_the_street_field(text):
 
 def test_record_type_qualifier_survives_a_question_wording():
     # the type qualifier is what separates two records at the same address, so losing it in the "which
-    # <type> is at ..." wording creates a false ambiguity (prompt-discovery-004-p032)
+    # <type> is at ..." wording creates a false ambiguity (prompt discovery 004 p032)
     request = parse_lookup_request("Which Commercial Alteration is at 123 Main Street?")
     assert request.street_name == "main st"
     assert request.permit_type == "Commercial Alteration"
@@ -186,7 +186,7 @@ def test_numeric_ordinal_streets_are_equivalent():
 
 
 def test_apartment_constraint_requires_unit_evidence():
-    # "apt 4" must not be typed into the street-name field; a well-formed query with a unit still has to
+    # "apt 4" must not be typed into the street name field; a well formed query with a unit still has to
     # find the base address record
     request = parse_lookup_request("Find the permit at 123 Main Street Apt 4")
     assert request.street_name == "main st"
@@ -207,7 +207,7 @@ def test_a_street_containing_a_unit_word_is_not_emptied():
 
 
 def test_street_name_does_not_match_as_a_substring_of_another_street():
-    # "main st" is a substring of "domain st"; whole-token matching must reject it
+    # "main st" is a substring of "domain st"; whole token matching must reject it
     request = PermitLookupRequest(street_name="main st")
     result = resolve_lookup(request, [SearchResult(record_number="BLD-1", address="999 Domain Street")])
     assert result.status is LookupStatus.AMBIGUOUS
@@ -456,8 +456,8 @@ def test_no_applicant_match_does_not_select_a_nonmatching_record():
 
 
 def test_applicant_with_an_address_uses_the_normal_ranking_path():
-    # with an address key present, applicant is corroboration, not the special unique-match rule: two
-    # same-address rows are separated by the applicant
+    # with an address key present, applicant is corroboration, not the special unique match rule: two
+    # same address rows are separated by the applicant
     request = PermitLookupRequest(
         street_number="123", street_name="main st", applicant_name="Jane Doe"
     )

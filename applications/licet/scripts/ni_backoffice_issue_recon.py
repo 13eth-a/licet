@@ -1,4 +1,4 @@
-"""read-only: does the back office expose an *issue* action for our records?"""
+"""read only: does the back office expose an *issue* action for our records?"""
 from __future__ import annotations
 
 import argparse
@@ -114,7 +114,7 @@ async def main() -> int:
         out("logged in")
         await dump(page, stamp, "dashboard")
 
-        # open the record space (read-only navigation)
+        # open the record space (read only navigation)
         clicked = await click_in_any_frame(page, ["a:has-text('Record')"], text="Record")
         out(f"Record nav clicked: {clicked}")
         await page.wait_for_timeout(8000)

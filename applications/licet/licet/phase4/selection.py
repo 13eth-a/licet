@@ -1,4 +1,4 @@
-"""evidence-bound action selection"""
+"""evidence bound action selection"""
 from __future__ import annotations
 
 import math
@@ -98,7 +98,7 @@ def select_inspection_action(
         for u in reasoning.uncertainties
     ):
         return stop(SelectionStatus.NEEDS_DATA, "inspection evidence is incomplete", "complete current inspection history")
-    # a broad readiness interpretation can be partial because non-inspection sections remain unread
+    # a broad readiness interpretation can be partial because non inspection sections remain unread
     if reasoning.answerability == "answered" and reasoning.needed_sections:
         return stop(SelectionStatus.NEEDS_DATA, "required inspection state is incomplete", "outstanding Phase 3 retrieval")
     if reasoning.answerability == "partial" and any(
@@ -109,7 +109,7 @@ def select_inspection_action(
     if requested_action and requested_action.permit_id != permit_id:
         return stop(SelectionStatus.CONFLICTING, "requested action addresses a different permit")
 
-    # do not remove low-confidence or conditional competitors to manufacture a unique winner
+    # do not remove low confidence or conditional competitors to manufacture a unique winner
     candidates = []
     for candidate in reasoning.next_actions:
         match = _ACTION.fullmatch(candidate.action.strip())

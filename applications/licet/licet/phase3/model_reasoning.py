@@ -1,4 +1,4 @@
-"""shared, dependency-light entry points for scripted phase 3 evals and replay"""
+"""shared, dependency light entry points for scripted phase 3 evals and replay"""
 from __future__ import annotations
 
 import logging
@@ -130,7 +130,7 @@ def understand_one(
     snapshot_id: str = "snapshot",
     use_model: bool = False,
 ) -> ReasoningResult:
-    """best-effort phase 3 understanding for one question"""
+    """best effort phase 3 understanding for one question"""
     if use_model:
         return reason_with_model(state, question, snapshot_id=snapshot_id)
     return understand(state, question, snapshot_id=snapshot_id)
@@ -142,7 +142,7 @@ def reason_with_model(
     *,
     snapshot_id: str = "snapshot",
 ) -> ReasoningResult:
-    """model-level phase 3 interpretation, isolated and read-only"""
+    """model level phase 3 interpretation, isolated and read only"""
     if not _model_enabled():
         logger.info(
             "phase3 model reasoning disabled (LICET_PHASE3_MODEL_ENABLED); "
@@ -281,7 +281,7 @@ def _payload_to_state(payload: dict[str, Any]) -> PermitState:
         except ValueError:
             confidence = ConfidenceBand.MEDIUM
         # replica facts need the same shape the deterministic layer's fact list expects, so the scripted
-        # model path can round-trip through derive_deterministic_findings / understand unchanged
+        # model path can round trip through derive_deterministic_findings / understand unchanged
         state.facts.append(
             Fact(
                 field=str(fact.get("field") or ""),
@@ -293,7 +293,7 @@ def _payload_to_state(payload: dict[str, Any]) -> PermitState:
                 raw_value=fact.get("raw_value"),
             )
         )
-    # rebuild the section entities, coverage, and record-state conflicts the snapshot carried, so the
+    # rebuild the section entities, coverage, and record state conflicts the snapshot carried, so the
     # scripted/model path reasons over the same record the deterministic layer saw rather than an empty
     # shell
     from dataclasses import fields as _dataclass_fields
@@ -335,7 +335,7 @@ def _validate_model_output(
     question: str,
     snapshot_id: str,
 ) -> ReasoningResult:
-    """publication-gate validation before the model result is used"""
+    """publication gate validation before the model result is used"""
     if not isinstance(structured, dict):
         raise Phase3Error(
             Phase3ErrorCode.STATE_EXTRACTION_FAILED,
@@ -366,7 +366,7 @@ def _validate_model_output(
 
 
 def _coerce_result(structured: dict[str, Any], snapshot_id: str, *, question: str = "") -> ReasoningResult:
-    """best-effort coercion of a model dict into reasoningresult"""
+    """best effort coercion of a model dict into reasoningresult"""
     answerability = str(structured.get("answerability", "answered"))
     result = ReasoningResult(
         record_key=str(structured.get("record_key")) or None,

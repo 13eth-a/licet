@@ -1,4 +1,4 @@
-"""probe module switching in the null island record grid (read-only)"""
+"""probe module switching in the null island record grid (read only)"""
 from __future__ import annotations
 
 import asyncio

@@ -1,4 +1,4 @@
-"""selection -> request -> policy/executor regressions for the narrow adapter"""
+"""selection > request > policy/executor regressions for the narrow adapter"""
 from dataclasses import replace
 from datetime import date
 

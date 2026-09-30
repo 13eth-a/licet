@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""phase 7 portal-weirdness replay (portal integration review)"""
+"""phase 7 portal weirdness replay (portal integration review)"""
 from __future__ import annotations
 
 import argparse
@@ -157,7 +157,7 @@ def loop_key_rows() -> list[dict]:
                      "legacy_unsafe": unsafe_legacy})
         check(f"loop key {name}", unsafe_legacy or legacy != current, current)
 
-    # legacy caller shape: raw page text as the page-state string
+    # legacy caller shape: raw page text as the page state string
     controller = RecoveryController()
     legacy_key = "Loading... 17:42:03"
     hits = [
@@ -250,7 +250,7 @@ def planner_rows() -> list[dict]:
         "unsafe": not ok,
     })
 
-    # mutations are never portal-routed
+    # mutations are never portal routed
     cap = _PortalScripted({"url": DETAIL, "text": "your session is about to expire"})
     clean = asyncio.run(GoalPlanner(cap).run(goal()))
     ok = clean.status is Status.SUCCESS and not any(

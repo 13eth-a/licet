@@ -1,4 +1,4 @@
-"""phase 4 scripted-action fixtures and the checklist's 25 action cases"""
+"""phase 4 scripted action fixtures and the checklist's 25 action cases"""
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -60,7 +60,7 @@ class ScriptedPortal:
 
 
 def snapshot(**overrides: object) -> InspectionSnapshot:
-    """a not-scheduled, eligible inspection on the default fixture permit"""
+    """a not scheduled, eligible inspection on the default fixture permit"""
     values: dict[str, object] = {
         "permit_id": PERMIT_ID,
         "inspection_id": INSPECTION_ID,
@@ -112,7 +112,7 @@ def run_case(case: ActionCase) -> tuple[InspectionActionResult, ScriptedPortal]:
     """execute one case through the real executor; return its result and portal"""
     portal = ScriptedPortal(case.before, after=case.after, error=case.error)
     executor = InspectionActionExecutor(portal)
-    # a confirmed case means a human approved *this* case, so the caller presents the scoped, single-use
+    # a confirmed case means a human approved *this* case, so the caller presents the scoped, single use
     # approval
     result = executor.execute(
         case.action,

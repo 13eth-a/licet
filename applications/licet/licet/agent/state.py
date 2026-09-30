@@ -56,13 +56,13 @@ class AgentState:
     pending_approval: PendingApproval | None = None
     step_count: int = 0
 
-    # signals behind the non-obvious stop conditions
+    # signals behind the non obvious stop conditions
     missing_information: list[str] = field(default_factory=list)
     no_valid_action_reason: str | None = None
     portal_issue: str | None = None
     ambiguous_candidates: list[str] = field(default_factory=list)
 
-    # stall detection: consecutive observations that are identical in every way we can see — same url,
+    # stall detection: consecutive observations that are identical in every way we can see same url,
     # same flow step, same page content
     last_observed_url: str | None = None
     last_observed_step: str | None = None
@@ -91,7 +91,7 @@ class AgentState:
         return self.steps_without_new_facts
 
     def set_active_permit(self, permit_state: CurrentPermitState) -> None:
-        """persist the selected permit so later phases do not re-search blindly"""
+        """persist the selected permit so later phases do not re search blindly"""
         self.active_permit = permit_state
         permit_id = getattr(permit_state.permit, "permit_id", None)
         if permit_id:
@@ -222,7 +222,7 @@ class AgentState:
         self.no_valid_action_reason = reason
 
     def record_portal_issue(self, reason: str) -> None:
-        """portal-side blocker: cloudflare 1015, session timeout, 5xx, offline"""
+        """portal side blocker: cloudflare 1015, session timeout, 5xx, offline"""
         self.portal_issue = reason
 
     def clear_portal_issue(self) -> None:

@@ -1,4 +1,4 @@
-"""recon the ni citizen-portal account-registration flow (read-only)"""
+"""recon the ni citizen portal account registration flow (read only)"""
 from __future__ import annotations
 
 import asyncio

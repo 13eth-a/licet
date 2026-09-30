@@ -1,4 +1,4 @@
-"""recon: does ni have usable inspection calendars? (read-only)"""
+"""recon: does ni have usable inspection calendars? (read only)"""
 from __future__ import annotations
 
 import asyncio

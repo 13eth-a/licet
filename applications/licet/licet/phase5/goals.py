@@ -45,7 +45,7 @@ def parse_goal(text: str, *, reference: date | None = None) -> Goal:
     dates = normalize_date_constraints(instruction, reference=reference)
     end = dates.end - timedelta(days=1) if instruction and instruction.lower().startswith("before ") and dates.end else dates.end
     # a leading "read only:" is the *grant* (an inquiry permission), not an extra restriction on a
-    # mutation (prompt-006)
+    # mutation (prompt 006)
     restricted = re.sub(r"^\s*read[- ]only\s*[:,]?\s*", "", low)
     if re.search(r"\b(?:except|unless|only|avoid|no later|no earlier)\b|\d{4}-\d{2}-\d{2}", restricted):
         clarification = "Resolve the additional restriction before mutation"

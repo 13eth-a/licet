@@ -1,4 +1,4 @@
-"""find an active appointment date reachable from the signed-in citizen account"""
+"""find an active appointment date reachable from the signed in citizen account"""
 from __future__ import annotations
 
 import argparse
@@ -38,7 +38,7 @@ MAX_TYPE_CHECKS = 200
 DEFAULT_RECORDS = 12
 DEFAULT_TYPES = 40
 DEFAULT_HORIZON = "2028-12"
-# programmatic default when a caller names no horizon; the cli derives a deeper count from --horizon
+# programmatic default when a caller names no horizon; the cli derives a deeper count from horizon
 # instead, so the shipped command reaches past 2027
 DEFAULT_CALENDAR_WINDOWS = 12
 _HORIZON_RE = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{1,2})$")
@@ -59,7 +59,7 @@ _RECORD_TYPE_DETAIL_LABELS = {
     "building/right of way/na/na": "Right of Way Use Permit",
     "building/sign/temporary/na": "Sign - Temporary",
     "building/commercial/demolition/na": "Commercial Demolition",
-    # 2026-09-30: record types created to widen the availability search
+    # 2026 09 30: record types created to widen the availability search
     "building/residential/alteration/na": "Residential Alteration",
     "building/residential/electrical/na": "Residential Electrical",
     "building/residential/new/na": "Residential New",
@@ -175,7 +175,7 @@ def parse_owned_page(text: str, html_frames: list[str]) -> OwnedPage:
 
 
 def record_reference(row: dict[str, Any]) -> dict[str, str] | None:
-    """resolve only a same-tenant capdetail link into an addressable record ref"""
+    """resolve only a same tenant capdetail link into an addressable record ref"""
     row_type = str(row.get("Record Type") or "").strip()
     expected_label = record_type_display_label(row_type)
     if expected_label is None:
@@ -237,7 +237,7 @@ def record_type_display_label(grid_type: str) -> str | None:
 
 
 def _record_type_matches(grid_type: str, detail_type: str) -> bool | None:
-    """compare the mapped my records hierarchy with its detail-page label"""
+    """compare the mapped my records hierarchy with its detail page label"""
     expected = record_type_display_label(grid_type)
     if expected is None:
         return None
@@ -246,7 +246,7 @@ def _record_type_matches(grid_type: str, detail_type: str) -> bool | None:
 
 def _date_is_in_calendar_evidence(active_date: str, availability: dict[str, Any],
                                   *, today: Callable[[], date]) -> bool:
-    """require the exact active date in the identity-bound calendar result"""
+    """require the exact active date in the identity bound calendar result"""
     try:
         day = date.fromisoformat(active_date)
     except (TypeError, ValueError):
@@ -261,7 +261,7 @@ def _date_is_in_calendar_evidence(active_date: str, availability: dict[str, Any]
 
 
 def parse_horizon_month(text: str) -> date:
-    """the last day of the ``yyyy-mm`` month the calendar scan must reach"""
+    """the last day of the ``yyyy mm`` month the calendar scan must reach"""
     match = _HORIZON_RE.match((text or "").strip())
     if not match:
         raise ValueError(f"unsupported horizon month: {text!r} (expected YYYY-MM)")
@@ -339,7 +339,7 @@ async def _inspect_owned_record(
     }
     if is_incomplete_application_row(row):
         # not an error and not an evidence gap: an unfinished application has no detail page, no
-        # offered-type catalog and no calendar to read
+        # offered type catalog and no calendar to read
         result.update(status="not_a_record", reason=(
             "incomplete draft application: no detail page, offered-type catalog "
             "or calendar exists to inspect"))
@@ -396,7 +396,7 @@ async def _inspect_owned_record(
         result.update(status="no_offered_inspection_types", reason="verified complete catalog is empty")
         return result
 
-    # a full 13-type sweep at a multi-year horizon is far more calendar traffic than one browser session
+    # a full 13 type sweep at a multi year horizon is far more calendar traffic than one browser session
     # budget allows, so types can be checked in chunks by skipping the first `type_offset` offered types
     selected = list(catalog[type_offset:type_offset + type_budget])
     if not selected:
@@ -469,7 +469,7 @@ async def _inspect_owned_record(
             return result
     result["type_results"] = type_results
     if len(catalog) - type_offset > type_budget:
-        # the catalog is complete by here (an incomplete one returns earlier) — what ran out is the
+        # the catalog is complete by here (an incomplete one returns earlier) what ran out is the
         # *check* budget
         result.update(status="unknown", reason=(
             f"type-check budget exhausted after {len(type_results)} of "
@@ -495,7 +495,7 @@ async def run_capacity_query(
     horizon: date | None = None,
     type_offset: int = 0,
 ) -> QuerySummary:
-    """bounded read-only query over records owned by the authenticated account"""
+    """bounded read only query over records owned by the authenticated account"""
     if not (1 <= max_records <= MAX_RECORDS
             and 1 <= max_types <= MAX_TYPE_CHECKS
             and 0 <= type_offset <= MAX_TYPE_CHECKS
@@ -541,7 +541,7 @@ async def run_capacity_query(
             return QuerySummary(status="unknown", reason="My Records pages ended before declared total",
                                 records_seen=len(owned), records=owned)
         if page_count >= max_record_pages:
-            # search the verified records already captured, but preserve the incomplete-ownership verdict
+            # search the verified records already captured, but preserve the incomplete ownership verdict
             # if no positive result is found
             break
         expected_next = page.last + 1
@@ -582,7 +582,7 @@ async def run_capacity_query(
                 type_offset=type_offset,
             )
         except Exception as exc:
-            # a per-record read failure must not hide a positive result on a later account-owned record
+            # a per record read failure must not hide a positive result on a later account owned record
             inspected = {
                 "permit_id": str(row.get("Record Number") or ""),
                 "record_type": str(row.get("Record Type") or ""),

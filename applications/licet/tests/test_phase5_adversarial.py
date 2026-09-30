@@ -1,4 +1,4 @@
-"""adversarial planner review (adversarial review) — attack the loop, then lock it"""
+"""adversarial planner review (adversarial review) attack the loop, then lock it"""
 import asyncio
 from copy import deepcopy
 from dataclasses import replace

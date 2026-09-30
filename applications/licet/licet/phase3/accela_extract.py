@@ -1,4 +1,4 @@
-"""accela page-to-observation adapter (phase 3 extraction specialist)"""
+"""accela page to observation adapter (phase 3 extraction specialist)"""
 from __future__ import annotations
 
 from datetime import datetime as _datetime
@@ -16,7 +16,7 @@ _SECTION_BY_LABEL: tuple[tuple[str, str], ...] = (
     ("conditions", "conditions"),
 )
 
-# rendered section tables, mapped by *meaning* rather than one hard-coded header string
+# rendered section tables, mapped by *meaning* rather than one hard coded header string
 _HEADER_FIELDS: dict[str, dict[str, str]] = {
     "inspections": {
         "inspection": "type", "inspection type": "type", "inspection name": "type",
@@ -98,7 +98,7 @@ def _normalize_date(value: Any) -> str | None:
 
 
 def _is_legend_type(value: str | None) -> bool:
-    """whether a would-be inspection *type* is itself a lifecycle/outcome word"""
+    """whether a would be inspection *type* is itself a lifecycle/outcome word"""
     from licet.phase3.extract import normalize_lifecycle, normalize_result
 
     text = (value or "").strip()
@@ -126,7 +126,7 @@ def _paid_from_cell(text: str) -> bool | None:
         return True
     if "unpaid" in lowered or "not paid" in lowered or "balance due" in lowered:
         return False
-    # aca agency wordings that state non-payment without the word "unpaid" (observed fee-grid statuses)
+    # aca agency wordings that state non payment without the word "unpaid" (observed fee grid statuses)
     if lowered in {"in collection", "past due", "delinquent", "overdue"}:
         return False
     return None
@@ -159,7 +159,7 @@ def _bool_from_cell(text: str) -> bool | None:
 
 
 def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
-    """coerce header-keyed cells into the canonical extract row contract"""
+    """coerce header keyed cells into the canonical extract row contract"""
     if section == "fees":
         if "paid" in row:
             paid = _paid_from_cell(str(row.pop("paid")))
@@ -171,7 +171,7 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
                 row["due"] = due
         if row.get("paid") is False and "due" not in row:
             row["due"] = True
-        # a due date is not a payment status: keep the money facts without letting a date-shaped cell
+        # a due date is not a payment status: keep the money facts without letting a date shaped cell
         # fabricate one (h04)
         row.pop("due_date", None)
     elif section == "documents":
@@ -194,7 +194,7 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
             key = ("scheduled_date" if "schedul" in status_lower else
                    "completed_date" if ("complet" in status_lower or "done" in status_lower)
                    else "requested_date")
-            # parseable -> iso; anything else keeps the portal's raw token so downstream ordering honestly
+            # parseable > iso; anything else keeps the portal's raw token so downstream ordering honestly
             # reports unknown instead of losing the evidence
             row.setdefault(key, normalized or str(date))
         for key in ("requested_date", "scheduled_date", "completed_date"):
@@ -206,7 +206,7 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
 
 
 def section_for_page(data: Mapping[str, Any]) -> str | None:
-    """which record section this read_page payload is showing, best-effort"""
+    """which record section this read_page payload is showing, best effort"""
     text = (str(data.get("text") or "")).lower()
     for marker, section in _SECTION_BY_LABEL:
         if marker in text:
@@ -238,7 +238,7 @@ def _header_fields(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _address_fields(data: Mapping[str, Any]) -> dict[str, Any]:
-    """work-location block: labeled lines only, never positional guessing"""
+    """work location block: labeled lines only, never positional guessing"""
     text = str(data.get("text") or "")
     fields: dict[str, Any] = {}
     for line in text.splitlines():
@@ -316,7 +316,7 @@ def overview_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _inspection_lines_as_rows(text: str) -> list[dict[str, str]]:
-    """validated row candidates from inspection-shaped text lines"""
+    """validated row candidates from inspection shaped text lines"""
     from licet.phase3.extract import normalize_lifecycle, normalize_result
 
     rows: list[dict[str, str]] = []
@@ -418,7 +418,7 @@ def fees_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _money_lines_as_rows(text: str) -> list[dict[str, str]]:
-    """fee-shaped lines: ``<description> | <money>`` or ``<desc>: <money>``"""
+    """fee shaped lines: ``<description> | <money>`` or ``<desc>: <money>``"""
     rows: list[dict[str, str]] = []
     for line in str(text or "").splitlines():
         line = line.strip()

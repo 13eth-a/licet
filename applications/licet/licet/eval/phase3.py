@@ -17,7 +17,7 @@ class Phase3Case:
     expected_blocker_types: tuple[str, ...] = ()
     forbidden_blocker_types: tuple[str, ...] = ()
     expected_answerability: str | None = None
-    # substrings the rendered answer must contain (rendered from the result only — never from raw page text)
+    # substrings the rendered answer must contain (rendered from the result only never from raw page text)
     must_mention: tuple[str, ...] = ()
     # substrings that must not appear as an asserted claim in the answer
     must_not_claim: tuple[str, ...] = ()
@@ -33,7 +33,7 @@ class Phase3Case:
 
 
 def _asserted(answer: str, claim: str) -> bool:
-    """whether `claim` appears un-negated in the rendered answer"""
+    """whether `claim` appears un negated in the rendered answer"""
     import re
 
     answer_lower = answer.lower()
@@ -79,7 +79,7 @@ def score_case(case: Phase3Case) -> dict[str, object]:
         for kind, unwanted in case.forbidden_classifications
         if classifications.get(kind) == unwanted
     )
-    # requirement-strength correctness per candidate
+    # requirement strength correctness per candidate
     strength_mismatches = sorted(
         f"{kind} strength={strength_by_type.get(kind)!r} (wanted {wanted!r})"
         for kind, wanted in case.expected_strength

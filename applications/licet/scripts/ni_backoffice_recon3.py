@@ -1,4 +1,4 @@
-"""recon phase 3: find null island records with inspections (read-only)"""
+"""recon phase 3: find null island records with inspections (read only)"""
 
 from __future__ import annotations
 

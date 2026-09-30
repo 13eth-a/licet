@@ -30,7 +30,7 @@ def stamp_now() -> str:
 
 
 def checkpoint(path: Path, event: str, **details) -> None:
-    """append and flush one credential-free progress event immediately"""
+    """append and flush one credential free progress event immediately"""
     record = {"timestamp": datetime.now(timezone.utc).isoformat(), "event": event, **details}
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as stream:

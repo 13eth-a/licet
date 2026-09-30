@@ -343,7 +343,7 @@ def test_legend_line_does_not_fabricate_an_inspection_row():
 
 
 def test_declared_empty_beside_rows_degrades_to_partial():
-    """h05: a self-disputing page must not claim complete coverage"""
+    """h05: a self disputing page must not claim complete coverage"""
     observation = accela_extract.inspections_observation(page(
         "inspections",
         text="Inspections\nYou have not added any inspections.\nRough Electrical | Completed | Failed",
@@ -374,7 +374,7 @@ def test_due_date_header_does_not_defeat_the_fees_table():
 
 
 def test_blocks_answer_uncertainty_is_producible_by_the_deterministic_stack():
-    """the adversarial review’s phase 5 handoff: the class must not be model-only"""
+    """the adversarial review’s phase 5 handoff: the class must not be model only"""
     from licet.phase3.state import Coverage, CoverageStatus
 
     state = extract_partial_state(page("overview", fields={"record_number": "P", "status": "Issued"}))

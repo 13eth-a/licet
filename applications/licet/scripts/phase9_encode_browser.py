@@ -1,4 +1,4 @@
-"""encode actual screen frames at recorded timing; optional idle-wait shortening"""
+"""encode actual screen frames at recorded timing; optional idle wait shortening"""
 import argparse
 import json
 import subprocess

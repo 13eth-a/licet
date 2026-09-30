@@ -87,7 +87,7 @@ def as_untrusted(kind: SourceKind, text: str) -> Observation:
 
 
 def is_authoritative(observation: Observation) -> bool:
-    """whether an observation may authorize an action (trusted, non-empty)"""
+    """whether an observation may authorize an action (trusted, non empty)"""
     return observation.actionable and bool(observation.text.strip())
 
 

@@ -1,4 +1,4 @@
-"""deterministic source-specific grading for licetbench tasks"""
+"""deterministic source specific grading for licetbench tasks"""
 from __future__ import annotations
 
 from typing import Any
@@ -474,7 +474,7 @@ def _grade_recovery(task: BenchmarkTask) -> BenchmarkResult:
         state["failure"], operation=state["operation"], mutation=bool(state.get("mutation"))
     )
     controller = RecoveryController()
-    # the evidence the controller may not invent: what the fixture portal shows when it is re-read, and
+    # the evidence the controller may not invent: what the fixture portal shows when it is re read, and
     # what the task says recovery must prove
     repaired = state.get("post_recovery_state")
     must_prove = expected.get("expected_state")

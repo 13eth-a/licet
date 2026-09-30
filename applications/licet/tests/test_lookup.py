@@ -134,7 +134,7 @@ def test_record_search_actions_use_runtime_search_controls():
 
 
 def test_address_actions_select_mode_then_fill_both_id_families():
-    """ni's address mode swaps in txtapo_* controls and drops txtgs* entirely (live-verified), so each field targets both families by id suffix"""
+    """ni's address mode swaps in txtapo_* controls and drops txtgs* entirely (live verified), so each field targets both families by id suffix"""
     attempt = build_search_plan(PermitLookupRequest(street_number="123", street_name="main"))[0]
     actions = search_actions(attempt)
     assert actions[0]["name"] == "select"
@@ -322,7 +322,7 @@ def test_result_table_parser_handles_disabled_next():
 def test_results_page_classification_distinguishes_three_verdicts():
     assert classify_results_page("No records found for your search.") == "zero_results"
     assert classify_results_page("Record Number | Record Type | Address") == "results"
-    # neither: the search may not have executed at all — never "no records"
+    # neither: the search may not have executed at all never "no records"
     assert classify_results_page("An unexpected error occurred.") == "parse_failed"
 
 

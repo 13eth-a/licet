@@ -73,7 +73,7 @@ async def probe_address(dispatcher, state, metrics: LookupMetrics) -> bool:
 
 
 async def probe_ambiguity(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """two sign - temporary records share one address; nothing distinguishes them, so the only correct outcome is ambiguous with both candidates"""
+    """two sign temporary records share one address; nothing distinguishes them, so the only correct outcome is ambiguous with both candidates"""
     request = parse_lookup_request(f"permits at {AMBIGUOUS_ADDRESS}")
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(
@@ -90,7 +90,7 @@ async def probe_ambiguity(dispatcher, state, metrics: LookupMetrics) -> bool:
 
 
 async def probe_mismatch(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """ask for one record, force-open a different one via its own result row: identity verification must refuse to bless the wrong record"""
+    """ask for one record, force open a different one via its own result row: identity verification must refuse to bless the wrong record"""
     request = PermitLookupRequest(record_number=NONEXISTENT_RECORD)
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(f"Find permit {NONEXISTENT_RECORD}", request, state)
@@ -129,7 +129,7 @@ async def main(probes: list[str]) -> int:
         await _authenticate(client)
         dispatcher = ToolDispatcher(client, logger=logger)
         # one accumulator shared by every probe, so the report carries the aggregate retrieval kpis
-        # (wrong-record rate must be 0) alongside the per-probe verdicts
+        # (wrong record rate must be 0) alongside the per probe verdicts
         lookup_metrics = LookupMetrics()
         for name in probes:
             state = AgentState(goal=f"Phase 2 lookup probe: {name}")

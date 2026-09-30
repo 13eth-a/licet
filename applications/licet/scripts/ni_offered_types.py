@@ -1,4 +1,4 @@
-"""read-only: dump the full scheduling-wizard inspection-type grid for records"""
+"""read only: dump the full scheduling wizard inspection type grid for records"""
 from __future__ import annotations
 
 import asyncio

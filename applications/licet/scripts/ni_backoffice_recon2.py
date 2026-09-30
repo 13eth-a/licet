@@ -1,4 +1,4 @@
-"""recon phase 2: open a null island back-office record (read-only)"""
+"""recon phase 2: open a null island back office record (read only)"""
 
 from __future__ import annotations
 

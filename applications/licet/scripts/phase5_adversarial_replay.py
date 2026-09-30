@@ -21,7 +21,7 @@ from licet.eval.phase5_fixtures import KEY, ScriptedCapabilities, goal, ready_wo
 
 
 def legacy_established(world) -> set[str]:
-    """the pre-review completion predicate, reproduced exactly"""
+    """the pre review completion predicate, reproduced exactly"""
     facts = set()
     if not world.permit_verified or not world.record_key:
         return facts

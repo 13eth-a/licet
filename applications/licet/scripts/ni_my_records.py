@@ -1,4 +1,4 @@
-"""read the logged-in citizen portal's my records grid (ground truth capture)"""
+"""read the logged in citizen portal's my records grid (ground truth capture)"""
 from __future__ import annotations
 
 import asyncio
@@ -41,8 +41,8 @@ SECTION_WORDS = ("Record Info", "Processing Status", "Inspection", "Fees",
 ROW_SPLIT_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.I | re.S)
 CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.I | re.S)
 
-# aca renders the grid's pager as an ordinary <tr> inside the same table, so a header-driven read counts
-# it as a record — its "record number" cell holds the page number
+# aca renders the grid's pager as an ordinary <tr> inside the same table, so a header driven read counts
+# it as a record its "record number" cell holds the page number
 PAGER_CELL_RE = re.compile(
     r"^\s*(?:&lt;|&gt;|<|>)*\s*(?:prev(?:ious)?|next|more)\s*"
     r"(?:&lt;|&gt;|<|>)*\s*$",
@@ -147,7 +147,7 @@ def parse_grid(html: str) -> list[dict]:
 
 async def capture_detail(page, rid: str, href: str) -> dict:
     """read one record's detail page: status, type, and section links"""
-    # grid hrefs are site-absolute (/nullisland/cap/...), not agency-relative
+    # grid hrefs are site absolute (/nullisland/cap/...), not agency relative
     url = f"{SITE}{_html.unescape(href)}"
     info: dict = {"url": url}
     try:

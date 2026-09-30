@@ -113,7 +113,7 @@ class LicetCapabilities:
             world.record_key = result.permit.ref.as_key()
             world.permit_verified = True
             world.snapshot_id = digest(result.permit.model_dump(mode="json"))
-            # bind the existing read-only retriever to the verified phase 2 ref
+            # bind the existing read only retriever to the verified phase 2 ref
             ref = result.permit.ref
             self.retrieval.record_ref = {"capID1": ref.cap_id1, "capID2": ref.cap_id2,
                 "capID3": ref.cap_id3, "module": ref.module, "agency_code": ref.agency_code}
@@ -122,7 +122,7 @@ class LicetCapabilities:
         if action in READS:
             state = world.permit or PermitState(record_number=world.permit_id, record_key=world.record_key)
             # the retrieval runner records the *settled* page identity here (phase 7): the planner's loop
-            # key and the recovery routes read where the page actually settled, not the pre-navigation url
+            # key and the recovery routes read where the page actually settled, not the pre navigation url
             self.retrieval.browser_state = world.browser_state
             outcome = await self.retrieval.retrieve_missing_sections(state, [{"section": READS[action]}])
             if state.record_key != world.record_key or state.rejected_observations:
@@ -156,7 +156,7 @@ class LicetCapabilities:
                                     if option.required is True and option.requirement_evidence_ids]
                 if required_options:
                     # the live wizard's explicit marker and complete catalog supply requirement evidence
-                    # not carried by phase 3's summary-page retrieval
+                    # not carried by phase 3's summary page retrieval
                     reasoning.next_actions = [
                         candidate for candidate in reasoning.next_actions
                         if not candidate.action.strip().casefold().startswith("complete required inspection:")
@@ -232,7 +232,7 @@ class LicetCapabilities:
                 self._busy = False
                 self.audits.extend(executor.audits)
                 if not task.cancelled():
-                    task.exception()  # consume late failure; never replay a timed-out mutation
+                    task.exception()  # consume late failure; never replay a timed out mutation
             worker.add_done_callback(finished)
             world.result = await asyncio.shield(worker)
             return Observation(world, world.result.success and world.result.verified,

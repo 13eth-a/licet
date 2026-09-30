@@ -36,7 +36,7 @@ class InspectionStatus(str, Enum):
 
 
 class Provenance(str, Enum):
-    """where a fact came from — evals score these differently"""
+    """where a fact came from evals score these differently"""
 
     PORTAL = "portal"
     DERIVED = "derived"
@@ -106,7 +106,7 @@ class Fact(BaseModel):
 
 
 class RecordRef(BaseModel):
-    """stable record identity — what a deep link is actually made of"""
+    """stable record identity what a deep link is actually made of"""
 
     cap_id1: str
     cap_id2: str
@@ -195,7 +195,7 @@ class Permit(BaseModel):
     # types the scheduling form offers, so "what inspection is next" can be computed as (required types)
     # minus (history) instead of guessed
     schedulable_inspection_types: list[str] = Field(default_factory=list)
-    # coverage/observation facts: empty-but-observed sections, loading markers, calendar scope, truncation
+    # coverage/observation facts: empty but observed sections, loading markers, calendar scope, truncation
     coverage_notes: list[Fact] = Field(default_factory=list)
     required_inspection_types: list[str] = Field(default_factory=list)
     fees: list[Fee] = Field(default_factory=list)
@@ -262,5 +262,5 @@ class Permit(BaseModel):
         ]
 
     def offered_inspection_types(self) -> list[str]:
-        """types the scheduling form offers — availability, not obligation"""
+        """types the scheduling form offers availability, not obligation"""
         return list(self.schedulable_inspection_types)

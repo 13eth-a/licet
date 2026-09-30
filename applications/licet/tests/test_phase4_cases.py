@@ -55,8 +55,8 @@ def test_refused_cases_never_touched_the_portal_at_all():
 
 def test_alternatives_are_the_nearest_dates_outside_the_window():
     constraints = DateConstraints(start=date(2026, 9, 21), end=date(2026, 9, 27), earliest=True)
-    # 09-24 is inside the window (selectable, never an "alternative"); the rest are ordered by days
-    # outside the window: 09-20 (1), 09-30 (3), 10-04 (7)
+    # 09 24 is inside the window (selectable, never an "alternative"); the rest are ordered by days
+    # outside the window: 09 20 (1), 09 30 (3), 10 04 (7)
     assert closest_alternatives(
         ["2026-09-20", "2026-09-30", "2026-09-24", "2026-10-04"], constraints, limit=3
     ) == ["2026-09-20", "2026-09-30", "2026-10-04"]

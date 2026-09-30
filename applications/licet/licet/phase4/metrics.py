@@ -1,4 +1,4 @@
-"""phase 4 mutation metrics: the numbers phase 4's zero-targets are measured by"""
+"""phase 4 mutation metrics: the numbers phase 4's zero targets are measured by"""
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -56,14 +56,14 @@ class Phase4Metrics:
     expected_selections: int = 0
     selection_matches: int = 0
 
-    # invariants — every one of these must be 0
+    # invariants every one of these must be 0
     duplicate_submissions: int = 0
     wrong_record_mutations: int = 0
     wrong_inspection_mutations: int = 0
     constraint_violations: int = 0
     unverified_successes: int = 0
 
-    # per-code detail, for diagnosing a non-zero invariant
+    # per code detail, for diagnosing a non zero invariant
     refusals: dict[str, int] = field(default_factory=dict)
     selection_stops: dict[str, int] = field(default_factory=dict)
 
@@ -71,7 +71,7 @@ class Phase4Metrics:
     def record_selection(
         self, selection: ActionSelection, *, expected: InspectionAction | None = None
     ) -> None:
-        """count one selection outcome, optionally against a known-correct target"""
+        """count one selection outcome, optionally against a known correct target"""
         self.selection_attempts += 1
         if selection.action is None:
             key = selection.status.value
@@ -265,7 +265,7 @@ class Phase4Metrics:
         return total
 
     def as_dict(self) -> dict[str, object]:
-        """counters, derived rates and the zero-target verdict, json-serializable"""
+        """counters, derived rates and the zero target verdict, json serializable"""
         snapshot: dict[str, object] = {name: getattr(self, name) for name in self._COUNTERS}
         snapshot.update(
             refusals=dict(self.refusals),

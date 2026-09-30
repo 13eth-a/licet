@@ -33,7 +33,7 @@ def row(
     applicant: str = "Eval User",
     parcel: str | None = None,
 ) -> str:
-    """one result-grid row, including the empty project name cell the parser must preserve (the my records empty-project-name trap)"""
+    """one result grid row, including the empty project name cell the parser must preserve (the my records empty project name trap)"""
     parcel_cell = f"<td>{parcel}</td>" if parcel else "<td></td>"
     cap_id = number.lstrip("0").zfill(5) if number.isdigit() else number
     return (
@@ -66,7 +66,7 @@ def results_page(
 
 
 class FakeClient:
-    """scripted ``solariclient`` stand-in: queued read_page payloads, recorded calls"""
+    """scripted ``solariclient`` stand in: queued read_page payloads, recorded calls"""
 
     def __init__(self, reads: list[dict[str, Any]], *, html: str = "") -> None:
         self.reads = list(reads)
@@ -126,7 +126,7 @@ def search_form(
     include_date: bool = True,
     text: str = "",
 ) -> dict[str, Any]:
-    """one ``read_page`` payload for a search-form page"""
+    """one ``read_page`` payload for a search form page"""
     fields = list(fields or [])
     if options is not None:
         fields = [
@@ -186,7 +186,7 @@ def detail_page(
 
 
 def gs_field(suffix: str, label: str = "") -> dict[str, Any]:
-    """one general-search-form text control, in the shape ``parse_fields`` would produce for a ``ctl00_placeholdermain_generalsearchform_*`` id"""
+    """one general search form text control, in the shape ``parse_fields`` would produce for a ``ctl00_placeholdermain_generalsearchform_*`` id"""
     return {
         "id": f"ctl00_PlaceHolderMain_generalSearchForm_{suffix}",
         "kind": "text",
@@ -195,7 +195,7 @@ def gs_field(suffix: str, label: str = "") -> dict[str, Any]:
 
 
 def apo_fields() -> list[dict[str, Any]]:
-    """the address-mode controls ni actually renders after the mode postback (live-verified: the ``txtapo_search_by_address_*`` family)"""
+    """the address mode controls ni actually renders after the mode postback (live verified: the ``txtapo_search_by_address_*`` family)"""
     return [
         gs_field("txtAPO_Search_by_Address_StreetNumber_ChildControl0"),
         gs_field("txtAPO_Search_by_Address_StreetName"),
@@ -203,7 +203,7 @@ def apo_fields() -> list[dict[str, Any]]:
 
 
 def mode_dropdown(options: list[str]) -> list[dict[str, Any]]:
-    """search-mode dropdown rendered as a field the inventory can carry"""
+    """search mode dropdown rendered as a field the inventory can carry"""
     return [
         {
             "id": f"ctl00_PlaceHolderMain_{accela.SEARCH_MODE_DROPDOWN}",
@@ -214,7 +214,7 @@ def mode_dropdown(options: list[str]) -> list[dict[str, Any]]:
 
 
 def field_for(suffix: str, label: str = "") -> dict[str, Any]:
-    """a general-search-form text control by its id suffix — the shape the runner's ``_bind_fields`` and the live ``resolve_search_field`` both target"""
+    """a general search form text control by its id suffix the shape the runner's ``_bind_fields`` and the live ``resolve_search_field`` both target"""
     return gs_field(suffix, label=label)
 
 

@@ -23,7 +23,7 @@ def record_for(permit_id: str) -> KnownRecord | None:
     )
 
 
-# scheduling ground truth (measured live 2026-09-20, scripts/ni_schedule_probe.py +
+# scheduling ground truth (measured live 2026 09 20, scripts/ni_schedule_probe.py +
 # scripts/ni_availability_sweep.py)
 SCHEDULING_GROUND_TRUTH: dict[str, dict[str, Any]] = {
     "BLD26-00467": {
@@ -147,8 +147,8 @@ PUBLIC_PROBE_RECORDS: list[KnownRecord] = [
 ]
 
 
-# null island sandbox records (agreed 2026-09-19; created via application on the citizen portal, tied to
-# the public-user test account in .env (accela_test_username; registered + login-verified 2026-09-19)
+# null island sandbox records (agreed 2026 09 19; created via application on the citizen portal, tied to
+# the public user test account in .env (accela_test_username; registered + login verified 2026 09 19)
 KNOWN_RECORDS: list[KnownRecord] = [
     KnownRecord(
         permit_id="BLD26-00467",

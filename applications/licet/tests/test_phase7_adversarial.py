@@ -1,4 +1,4 @@
-"""phase 7 adversarial recovery regressions — adversarial review"""
+"""phase 7 adversarial recovery regressions adversarial review"""
 
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ def test_the_word_mutation_alone_is_a_terminal_signal():
 
 
 def test_scenario_9_timeout_then_verified_success_never_resubmits():
-    """schedule submitted → timeout → re-read shows it succeeded: no replay"""
+    """schedule submitted → timeout → re read shows it succeeded: no replay"""
     controller = RecoveryController()
     key = "permit:P-1:rough:2026-10-01"
     assert controller.mutation_started(key)
@@ -107,12 +107,12 @@ def test_scenario_9_timeout_then_verified_success_never_resubmits():
 
 
 def test_scenario_10_proven_absent_mutation_may_be_retried_after_reconciliation():
-    """schedule submitted → timeout → re-read shows nothing: a bounded retry is safe"""
+    """schedule submitted → timeout → re read shows nothing: a bounded retry is safe"""
     controller = RecoveryController()
     key = "permit:P-1:rough:2026-10-01"
     assert controller.mutation_started(key)
 
-    # re-reading proves the mutation did not occur, which releases the key
+    # re reading proves the mutation did not occur, which releases the key
     assert controller.mutation_reconciled(key, occurred=False) is True
     assert controller.mutation_started(key)
     assert controller.stats.duplicate_mutation_attempts == 0
@@ -136,13 +136,13 @@ def test_the_global_recovery_action_budget_is_a_hard_ceiling():
     controller = RecoveryController(
         budgets=RecoveryBudgets(max_browser_retries=2, max_recovery_actions=4)
     )
-    # distinct operations so the per-sequence cap does not bind first; each sequence burns its two
+    # distinct operations so the per sequence cap does not bind first; each sequence burns its two
     # attempts failing
     for index in range(5):
         failure = controller.classify("element was detached", operation=f"click_{index}")
         run(controller.recover(failure, "re-observe", broken, validate=lambda value: value is True))
 
-    # pre-review, the guard was checked once per call and the inner loop could overshoot the ceiling; the
+    # pre review, the guard was checked once per call and the inner loop could overshoot the ceiling; the
     # budget is now a hard bound
     assert controller.stats.recovery_actions == 4
     assert any(item["event"] == "RECOVERY" and item["result"]["strategy"] == "STOP"
@@ -184,7 +184,7 @@ def test_two_anonymous_fingerprints_are_not_the_same_page():
     blank = PageFingerprint()
     other = PageFingerprint()
     assert blank.matches(other)
-    # identity-bearing comparison refuses to call two unknown pages identical
+    # identity bearing comparison refuses to call two unknown pages identical
     assert not blank.matches(other, require_identity=True)
 
 
@@ -208,7 +208,7 @@ def test_checkpoint_validation_requires_the_current_page_to_be_supplied():
     controller = RecoveryController()
     fingerprint = PageFingerprint(url="/record", record_number="P-1", active_section="Overview")
     controller.checkpoint("permit_verified", {"record": "P-1"}, fingerprint)
-    # no fingerprint supplied means the portal was not re-read; refuse to trust
+    # no fingerprint supplied means the portal was not re read; refuse to trust
     assert not controller.validate_checkpoint("permit_verified")
 
 
@@ -223,7 +223,7 @@ def test_two_consecutive_no_progress_signals_a_forced_replan():
 
 
 def test_an_oscillating_state_triggers_the_no_progress_counter():
-    """revisiting a semantic state consumes the no-progress budget"""
+    """revisiting a semantic state consumes the no progress budget"""
     controller = RecoveryController(budgets=RecoveryBudgets(max_no_progress=2))
     controller.progress_update(information={"status"}, state="A")
     assert controller.progress_update(information={"status"}, state="B") is ProgressKind.STATE_CHANGED

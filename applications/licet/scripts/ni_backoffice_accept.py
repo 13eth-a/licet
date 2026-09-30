@@ -1,4 +1,4 @@
-"""drive one back-office task to acceptance (warning: --apply writes)"""
+"""drive one back office task to acceptance (warning: apply writes)"""
 from __future__ import annotations
 
 import argparse
@@ -179,7 +179,7 @@ async def set_field(scope, name: str, value: str) -> str | None:
 
 
 async def submit_controls(page, *, exclude=None) -> list[tuple[int, str, str]]:
-    """every submit-like control visible across the page, with its frame index"""
+    """every submit like control visible across the page, with its frame index"""
     script = """() => {
         const els = [...document.querySelectorAll('a,input,button')];
         return els.filter(e => {

@@ -1,5 +1,5 @@
 # exact installed dependency closure, python 3.11 / macos
-# validated by the phase 9 fresh-environment install; not a cross-platform hash lock
+# validated by the phase 9 fresh environment install; not a cross platform hash lock
 annotated-types==0.8.0
 anyio==4.15.1
 certifi==2026.7.22

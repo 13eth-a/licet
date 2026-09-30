@@ -48,7 +48,7 @@ def sandbox_problem(url: str | None) -> str | None:
 
 
 def _environment_badge(url: str | None) -> str:
-    """prominent badge for the demo: sandbox vs live — read only vs unknown"""
+    """prominent badge for the demo: sandbox vs live read only vs unknown"""
     env = environment_from_url(url)
     if env is Environment.SANDBOX:
         return "SANDBOX  — mutations allowed only here (reversible schedule)"
@@ -58,7 +58,7 @@ def _environment_badge(url: str | None) -> str:
 
 
 def _friendly_result(stop: str | None, has_permit: bool) -> tuple[str, str]:
-    """human result title + one-line explanation for the final card"""
+    """human result title + one line explanation for the final card"""
     mapping: dict[str | None, tuple[str, str]] = {
         "goal_completed": (
             "COMPLETION DECLARED",
@@ -342,7 +342,7 @@ async def main(argv: list[str]) -> int:
                 out("  Result: MODEL UNAVAILABLE — run interrupted; inspect the log and reconcile any earlier submission before retrying.")
                 runs[case_id] = {"error": f"model failure: {exc}"}
                 continue
-            except Exception as exc:  # noqa: BLE001 - one case failing is a result
+            except Exception as exc:  # noqa: BLE001 one case failing is a result
                 out(f"  [FAIL] {type(exc).__name__}: {exc}")
                 traceback.print_exc()
                 runs[case_id] = {"error": f"{type(exc).__name__}: {exc}"}

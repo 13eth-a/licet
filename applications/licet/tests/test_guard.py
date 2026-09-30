@@ -12,8 +12,8 @@ SANDBOX_URL = "https://aca-test.accela.com/nullisland/Cap/CapDetail.aspx"
 
 
 def _state() -> AgentState:
-    # the guard refuses a state-changing action unless the observed page is a positively identified
-    # sandbox, so an authorizing fixture says which page it is on — as the adapter's own state now does
+    # the guard refuses a state changing action unless the observed page is a positively identified
+    # sandbox, so an authorizing fixture says which page it is on as the adapter's own state now does
     return AgentState(goal="Schedule the earliest available electrical inspection",
                       current_url=SANDBOX_URL)
 
@@ -73,7 +73,7 @@ def test_payment_actions_are_consequential_not_automatic():
 
 
 def test_legal_attestation_is_blocked_even_with_an_approval():
-    # prohibited means prohibited: a click-through cannot authorize signing a legal attestation on the
+    # prohibited means prohibited: a click through cannot authorize signing a legal attestation on the
     # user's behalf
     state = _state()
     state.request_approval("accept_legal_attestation", "user said yes")
@@ -90,7 +90,7 @@ def test_a_state_changing_action_needs_an_identified_sandbox():
     live.request_approval("cancel_inspection", "user said yes")
     live.grant_approval()
     assert authorize("cancel_inspection", live).decision is GuardDecision.BLOCK
-    # reads are unaffected: live read-only is the normal live mode
+    # reads are unaffected: live read only is the normal live mode
     assert authorize("read_inspection_history", unknown).decision is GuardDecision.ALLOW
     assert authorize("read_inspection_history", live).decision is GuardDecision.ALLOW
 

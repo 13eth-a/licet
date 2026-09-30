@@ -58,7 +58,7 @@ def next_actions(run: Run) -> tuple[Action, ...]:
         return (Action.DETERMINE_NEXT_INSPECTION,) if w.selection is None else (Action.STOP,)
     if not w.availability_checked:
         return (Action.CHECK_INSPECTION_AVAILABILITY,)
-    # inspection identification and preflight are read-only
+    # inspection identification and preflight are read only
     if not goal.autonomous:
         return (Action.STOP,)
     if not w.eligibility_verified or (goal.operation != "cancel" and not w.available_dates):
@@ -67,7 +67,7 @@ def next_actions(run: Run) -> tuple[Action, ...]:
 
 
 def _observed_no_availability_reason(run: Run) -> str | None:
-    """explain an empty calendar only when identity-bound calendar evidence exists"""
+    """explain an empty calendar only when identity bound calendar evidence exists"""
     availability = run.world.preflight_details.get("availability", {})
     if (not run.world.availability_checked or run.world.available_dates
             or availability.get("calendar_read") is not True
@@ -97,7 +97,7 @@ def make_plan(run: Run) -> Plan:
 
 
 def confirmation_for(run: Run) -> ConfirmationRequest | None:
-    """the scoped, single-use approval the run's pending action needs"""
+    """the scoped, single use approval the run's pending action needs"""
     proposal = run.world.proposal
     if proposal is None:
         return None
@@ -407,7 +407,7 @@ class GoalPlanner:
                               "mutation_key": operation_key(run.world) if action in MUTATIONS else None,
                               "remaining_goal": sorted(set(run.goal.success_conditions) - established(run.world, run.goal))})
             if action in MUTATIONS:
-                # regardless of provider success, the next step independently re-reads
+                # regardless of provider success, the next step independently re reads
                 run.world.verified_inspection = None
                 run.no_progress = 0
             elif action == Action.VERIFY_STATE:

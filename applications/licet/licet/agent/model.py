@@ -66,7 +66,7 @@ class ModelClient(Protocol):
 
 
 def tool_schema(definition: Any) -> dict[str, Any]:
-    """`licet/browser/tools.py` definitions -> openai function-tool schema"""
+    """`licet/browser/tools.py` definitions > openai function tool schema"""
     if isinstance(definition, dict) and definition.get("type") == "function":
         return definition
     if isinstance(definition, dict):
@@ -86,7 +86,7 @@ def tool_schema(definition: Any) -> dict[str, Any]:
 
 
 class OpenAIModel:
-    """openai-backed client"""
+    """openai backed client"""
 
     def __init__(
         self,
@@ -112,7 +112,7 @@ class OpenAIModel:
         if self._client is None:
             try:
                 from openai import AsyncOpenAI
-            except ImportError as exc:  # pragma: no cover - exercised only without the dep
+            except ImportError as exc:  # pragma: no cover exercised only without the dep
                 raise ModelError(
                     "the openai package is required for the live model: "
                     'pip install -e ".[dev]"'
@@ -149,7 +149,7 @@ class OpenAIModel:
             for attempt in range(self.max_retries + 1):
                 try:
                     response = await client.responses.create(**request)
-                except Exception as exc:  # noqa: BLE001 - classified below
+                except Exception as exc:  # noqa: BLE001 classified below
                     if attempt < self.max_retries:
                         await asyncio.sleep(1.0 * (attempt + 1))
                         continue
@@ -205,7 +205,7 @@ class OpenAIModel:
 
 
 class ScriptedModel:
-    """replays canned replies — how the planner loop is tested without a key"""
+    """replays canned replies how the planner loop is tested without a key"""
 
     def __init__(self, replies: Sequence[ModelReply | dict[str, Any]]) -> None:
         self._replies = [

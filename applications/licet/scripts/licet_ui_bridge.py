@@ -78,7 +78,7 @@ class Bridge:
     def frame(self):
         if not self.output:
             return None
-        # agent-created files only; no caller-supplied paths and no login captures
+        # agent created files only; no caller supplied paths and no login captures
         paths = list((self.output / 'screen').glob('*.jpg')) + list(self.output.glob('portal-*.png'))
         return max(paths, key=lambda p: p.stat().st_mtime_ns) if paths else None
 

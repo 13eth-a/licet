@@ -1,4 +1,4 @@
-"""the model boundary: tool-call plumbing, cost reporting, and failure modes"""
+"""the model boundary: tool call plumbing, cost reporting, and failure modes"""
 
 from __future__ import annotations
 
@@ -135,7 +135,7 @@ def test_non_object_arguments_are_rejected():
 
 
 def test_a_failing_call_raises_instead_of_returning_an_empty_plan():
-    """an empty plan reads as 'the agent chose to do nothing' — a silent wrong answer"""
+    """an empty plan reads as 'the agent chose to do nothing' a silent wrong answer"""
     model, fake = _client([RuntimeError("boom"), RuntimeError("boom"), RuntimeError("boom")], max_retries=2)
 
     with pytest.raises(ModelError, match="failed after 3 attempt"):

@@ -1,4 +1,4 @@
-"""enumerate record types offered by null island's apply flow (read-only)"""
+"""enumerate record types offered by null island's apply flow (read only)"""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def stamp_now() -> str:
 
 
 def parse_selects(html: str) -> dict[str, list[str]]:
-    """extract every <select> with its non-empty option labels"""
+    """extract every <select> with its non empty option labels"""
     selects: dict[str, list[str]] = {}
     for m in re.finditer(r"<select[^>]*>", html):
         tag = m.group(0)

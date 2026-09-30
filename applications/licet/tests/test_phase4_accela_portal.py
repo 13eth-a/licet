@@ -56,7 +56,7 @@ class FakeFrame:
 
 
 class FakeClient:
-    """a state-machine fake of the aca scheduling surface"""
+    """a state machine fake of the aca scheduling surface"""
 
     STATE_DETAIL = "detail"
     STATE_TYPES = "types"
@@ -116,7 +116,7 @@ class FakeClient:
         if self.state == self.STATE_DETAIL:
             link = "" if self.no_scheduling_link else "Schedule an Inspection"
             # the section content appears only after a section postback opened it (the summary alone does
-            # not carry the declared-empty marker)
+            # not carry the declared empty marker)
             empty = "\nYou have not added any inspections" if (self.detail_empty_marker or self.section_opened) else ""
             text = f"{header}\nInspections{empty}\n{link}".rstrip()
             if self.detail_scheduled_row:
@@ -300,7 +300,7 @@ def test_read_wrong_record_fails_closed():
 
 
 def test_read_loading_section_never_becomes_fact():
-    # a mid-load read must degrade to unknown, not "not scheduled": the fake keeps the section permanently
+    # a mid load read must degrade to unknown, not "not scheduled": the fake keeps the section permanently
     # loading so both reads report it
     portal = AccelaInspectionPortal(dispatcher_over(FakeClient(loading=True)))
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
@@ -308,7 +308,7 @@ def test_read_loading_section_never_becomes_fact():
 
 
 def test_read_falls_back_when_the_inspections_label_is_dead_but_rendered():
-    """portal integration phase 9, live 2026-09-25: null island's detail page renders the 'inspections' anchor only as a hidden wrapper, so the exact-label click fails `not_actionable`"""
+    """portal integration phase 9, live 2026 09 25: null island's detail page renders the 'inspections' anchor only as a hidden wrapper, so the exact label click fails `not_actionable`"""
     client = FakeClient(types=("Rough", "Electrical Final"), detail_types=False, detail_empty_marker=False)
     original_click = client.click
 
@@ -336,7 +336,7 @@ def test_read_falls_back_when_the_inspections_label_is_dead_but_rendered():
 
 
 def test_read_blocked_click_still_never_triggers_the_fallback():
-    """a guard-blocked (not not_actionable) click must not open the fallback route: blocked means the guard held the action, and a hold is a decision, not a selector problem"""
+    """a guard blocked (not not_actionable) click must not open the fallback route: blocked means the guard held the action, and a hold is a decision, not a selector problem"""
     client = FakeClient(types=("Rough", "Electrical Final"), detail_empty_marker=False)
     original_click = client.click
 
@@ -352,7 +352,7 @@ def test_read_blocked_click_still_never_triggers_the_fallback():
     texts = [str(click.get("text") or "").lower() for click in client.clicks]
     assert "inspection history" not in texts
     # the failure is not `not_actionable`, so no fallback; and a failed section open never invents "not
-    # scheduled" — the answer stays explicitly unknown
+    # scheduled" the answer stays explicitly unknown
     assert snapshot.status.startswith("Unknown")
 
 
@@ -433,7 +433,7 @@ def test_submit_wizard_walk_carries_acknowledging_intents():
     assert "rdInspectionType" in joined
     assert 'text="24"' in joined
     assert "8:00AM - 10:00AM" in joined
-    # the first two continue controls only advance wizard pages; the distinct confirmation-step continue
+    # the first two continue controls only advance wizard pages; the distinct confirmation step continue
     # acknowledges the scheduling commit
     continue_steps = [
         step
@@ -466,7 +466,7 @@ def test_executor_with_adapter_schedules_and_verifies():
 
 
 def test_executor_with_adapter_stops_on_unverified_submission():
-    # the portal prints no confirmation and the re-read still shows nothing scheduled: unverified, never
+    # the portal prints no confirmation and the re read still shows nothing scheduled: unverified, never
     # success
     client = FakeClient(result_text="Processing complete.")
     portal = AccelaInspectionPortal(dispatcher_over(client))

@@ -39,7 +39,7 @@ def main(output: Path) -> int:
         checks.append(dict(id=case_id, expected=expected, actual=actual,
                            passed=bool(passed), inputs=inputs))
 
-    # fields not specified in 'wanted' may be present; none forbids cross-field leakage
+    # fields not specified in 'wanted' may be present; none forbids cross field leakage
     parse_cases = [
         ('P01_live_record_format', 'Find permit BLD26-00472', {'record_number': 'BLD26-00472', 'zip_code': None}, 'record_number'),
         ('P02_labeled_short_numeric', 'permit 12345', {'record_number': '12345', 'zip_code': None}, 'record_number'),
@@ -136,7 +136,7 @@ def main(output: Path) -> int:
     client, runner, state, result = run_probe({'record_number': 'BLD-1'}, [form, grid, detail_page(number='BLD-2')])
     record('A01_found_despite_opened_mismatch', 'non-FOUND with RECORD_MISMATCH', runner_view(runner,result), result.status is not LookupStatus.FOUND)
 
-    # unique-match redirects are observed live: search need not show a grid
+    # unique match redirects are observed live: search need not show a grid
     client, runner, state, result = run_probe({'record_number': 'BLD-1'}, [form, detail_page(number='BLD-1')])
     record('A02_direct_detail_redirect', 'FOUND and identity verified', runner_view(runner,result), result.status is LookupStatus.FOUND and runner.identity_verified)
 

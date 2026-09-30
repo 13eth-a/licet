@@ -34,7 +34,7 @@ from tests.conftest import (
 
 
 def row_html(number: str, record_type: str, address: str, parcel: str | None = None) -> str:
-    """one result-grid row whose columns match the shared ``row_html`` template (date, record number, record type, project name, address, status, applicant, parcel)"""
+    """one result grid row whose columns match the shared ``row_html`` template (date, record number, record type, project name, address, status, applicant, parcel)"""
     parcel_cell = f"<td>{parcel}</td>" if parcel else "<td></td>"
     return (
         f"<tr><td>09/20/2026</td><td><a href='/detail/{number}'>{number}</a></td>"
@@ -120,7 +120,7 @@ def test_address_lookup_resolves_mode_label_and_uses_apo_fields():
 
 
 def test_exact_address_resolves_uniquely_despite_multiple_same_street_rows():
-    """the phase-2 flagship shape: several rows on the street, one matches the requested address + type; ranking must separate them above threshold"""
+    """the phase 2 flagship shape: several rows on the street, one matches the requested address + type; ranking must separate them above threshold"""
     client = FakeClient(
         [
             search_form(
@@ -446,7 +446,7 @@ def test_same_query_ten_times_returns_the_same_record_each_run():
 
 
 def test_second_run_does_not_reuse_the_first_runs_search_results():
-    """the portal re-renders search results inside one url, so a cached grid would let run 2 report run 1's record"""
+    """the portal re renders search results inside one url, so a cached grid would let run 2 report run 1's record"""
     shared = LookupMetrics()
     client = FakeClient([])
     state = AgentState(goal="stale")

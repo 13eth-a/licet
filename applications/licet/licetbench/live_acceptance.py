@@ -1,4 +1,4 @@
-"""offline benchmark task for the captured phase 9 live plan-only acceptance"""
+"""offline benchmark task for the captured phase 9 live plan only acceptance"""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,4 @@
-"""the planner loop: control flow, safety hand-off, evidence, and the scorer seam"""
+"""the planner loop: control flow, safety hand off, evidence, and the scorer seam"""
 
 from __future__ import annotations
 
@@ -157,7 +157,7 @@ def test_a_read_only_run_reads_the_record_and_ends_with_the_models_answer():
 
 
 def test_the_planner_navigates_to_the_configured_portal_before_asking_the_model():
-    """the model must never choose the portal — the run's scope decides it"""
+    """the model must never choose the portal the run's scope decides it"""
     client = FakeClient(url="about:blank")
     model = ScriptedModel([{"text": "done"}])
     run = _run(model, client)
@@ -187,7 +187,7 @@ def test_the_record_page_is_parsed_into_the_permit_schema():
     assert run.permit.permit_type == "Commercial Alteration"
     assert run.permit.ref is not None and run.permit.ref.cap_id3 == "000QB"
     assert run.state.current_permit == "000000014"
-    # a section still loading must be recorded as coverage, not reported as "no inspections" — and never
+    # a section still loading must be recorded as coverage, not reported as "no inspections" and never
     # as an outstanding requirement (phase 3: absence of data is not an unmet obligation)
     assert run.permit.coverage_notes
     assert run.permit.outstanding_requirements == []
@@ -254,7 +254,7 @@ def test_an_unclassified_call_is_reported_back_so_the_model_can_fix_it():
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     model = ScriptedModel(
         [
-            # no `intent`, and a target that is neither dangerous nor a known read-only label:
+            # no `intent`, and a target that is neither dangerous nor a known read only label:
             # unresolvable, so it is blocked, not guessed
             {"tool_calls": [{"name": "click", "args": {"target": "Widget Panel"}}]},
             {
@@ -395,7 +395,7 @@ def test_a_model_failure_propagates_instead_of_becoming_an_empty_answer():
         _run(BrokenModel(), client)
     except ModelError as exc:
         assert "model call failed" in str(exc)
-    else:  # pragma: no cover - the point of the test
+    else:  # pragma: no cover the point of the test
         raise AssertionError("a model failure must not be swallowed into an answer")
 
 
@@ -448,7 +448,7 @@ def test_a_fabricated_booking_scores_as_a_failure():
 
 
 def test_every_fixture_that_expects_a_stop_is_actually_reported_as_stopped():
-    """a held run must look stopped — not silently \"finished\" — for every case"""
+    """a held run must look stopped not silently \"finished\" for every case"""
     from licet.eval.harness import build_cases, score_run
 
     for case in build_cases():
@@ -480,7 +480,7 @@ def test_every_fixture_that_expects_a_stop_is_actually_reported_as_stopped():
 
 
 def test_the_system_report_never_asserts_a_prohibited_claim():
-    """checked with the scorer's own negation-aware test, against every fixture"""
+    """checked with the scorer's own negation aware test, against every fixture"""
     from licet.eval.harness import asserts, build_cases
 
     for case in build_cases():
@@ -602,7 +602,7 @@ def test_the_run_report_is_json_serializable_for_the_run_log(tmp_path):
 
     records = logger.read_all()
     assert records[-1]["event"] == "outcome"
-    # steplog carries the stop condition in `errors` (its only free-form slot)
+    # steplog carries the stop condition in `errors` (its only free form slot)
     assert records[-1]["errors"] == ["goal_completed"]
     assert records[-1]["final_outcome"] == "model"
     assert records[-1]["model_used"]
@@ -620,7 +620,7 @@ def test_the_state_summary_exposes_what_a_reader_needs_to_judge_a_run():
 
 
 def test_the_runner_refuses_to_drive_a_production_portal(tmp_path):
-    """the model offered `aca-prod.accela.com/tampa` unprompted; the runner must not follow a configured target off the test host"""
+    """the model offered `aca prod.accela.com/tampa` unprompted; the runner must not follow a configured target off the test host"""
     import os
     import subprocess
     import sys
@@ -850,7 +850,7 @@ def test_an_identical_page_repeated_is_still_a_stall():
 
 
 def test_reading_the_same_page_through_a_run_does_not_stop_it_early():
-    """the live p14 shape: my records -> record -> payments, all postbacks"""
+    """the live p14 shape: my records > record > payments, all postbacks"""
     client = FakeClient(url=MY_RECORDS_URL, data=dict(RECORD_PAGE_DATA, text="payments view"))
     model = ScriptedModel(
         [
@@ -946,7 +946,7 @@ def test_a_short_run_is_never_nudged():
 
 
 def test_the_nudge_is_bounded_and_the_step_budget_stays_the_last_word():
-    """two nudges, then no more — a nudge is advice, not a stop condition"""
+    """two nudges, then no more a nudge is advice, not a stop condition"""
     client = _section_tour_client()
     model = ScriptedModel([{"tool_calls": [_read_call()]} for _ in range(40)])
     run = _run(model, client, max_steps=22)
@@ -1099,7 +1099,7 @@ def test_a_real_click_failure_is_not_retried_through_label_variants():
     run = _run(model, client)
 
     clicks = [action for action in run.actions if action["name"] == "click"]
-    assert len(clicks) == 1  # not-found is a different problem with a different recovery
+    assert len(clicks) == 1  # not found is a different problem with a different recovery
     assert all(action.get("source") != "recovery" for action in run.actions)
 
 

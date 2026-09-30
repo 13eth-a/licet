@@ -1,4 +1,4 @@
-"""reviewed prompt-through-parser suite, separate from frozen component v1"""
+"""reviewed prompt through parser suite, separate from frozen component v1"""
 from dataclasses import replace, asdict
 from datetime import date
 import asyncio

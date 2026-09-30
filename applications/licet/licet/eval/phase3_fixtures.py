@@ -1,4 +1,4 @@
-"""golden-state fixtures and phase 3 eval cases"""
+"""golden state fixtures and phase 3 eval cases"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -67,7 +67,7 @@ PAGE_RECORD_KEY = "NULLISLAND/Building/REC26/00000/9F101"
 
 @dataclass(frozen=True)
 class ExtractionFixture:
-    """one per-municipality page shape and what it must extract"""
+    """one per municipality page shape and what it must extract"""
 
     fixture_id: str
     municipality: str
@@ -174,7 +174,7 @@ def _fixture_page(fixture: ExtractionFixture) -> dict[str, Any]:
 
 
 def run_extraction_fixtures() -> list[dict[str, Any]]:
-    """page payload -> adapter -> partial state, checked against each fixture"""
+    """page payload > adapter > partial state, checked against each fixture"""
     from licet.phase3 import accela_extract
     from licet.phase3.extract import extract_partial_state
     from licet.phase3.reasoning import understand
@@ -437,7 +437,7 @@ def build_cases() -> list["Phase3Case"]:
                                                rows=[{"type": "Rough Electrical", "result": "Passed"}],
                                                offered_types=[{"name": "Rough Electrical", "required": False}, {"name": "Electrical Final", "required": True}])),
                    (), (), "answered"))
-    # oracle n03: readiness without a named target or prerequisite evidence is unknown — the observed
+    # oracle n03: readiness without a named target or prerequisite evidence is unknown the observed
     # failure and its conditional candidates are reported, but the verdict stays withheld (must_not_claim
     # "ready")
     add(Phase3Case("N03-fee-not-readiness", "Is this ready for its next inspection?",
@@ -563,7 +563,7 @@ def build_cases() -> list["Phase3Case"]:
                    ("unpaid_fee",), (), None,
                    must_mention=("$100.00",),
                    must_not_claim=("$74.50",)))
-    # two same-record reads disagree: the competition must surface, never be silently decided by whichever
+    # two same record reads disagree: the competition must surface, never be silently decided by whichever
     # read landed first
     add(Phase3Case("A09-stale-fee-observation", "Are there unpaid fees?",
                    merge_partial_states(

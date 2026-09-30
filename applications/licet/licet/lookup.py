@@ -201,7 +201,7 @@ class SearchAttempt:
     fields: dict[str, str]
     reason: str
     # set on the retry built by `empty_result_retry`: the same query with the search date window widened,
-    # because an agency pre-filled window (ni: 09/18/2024→09/18/2026) can hide records that a wider search
+    # because an agency pre filled window (ni: 09/18/2024→09/18/2026) can hide records that a wider search
     # finds
     widen_dates: bool = False
 
@@ -265,12 +265,12 @@ _ORDINAL_RE = re.compile(r"\b(\d+)(?:st|nd|rd|th)\b", re.I)
 
 
 def street_name_search_form_value(value: str | None) -> str:
-    """aca's street-name field wants digits only for numbered streets (`72nd` → `72`, per the recorded ui map)"""
+    """aca's street name field wants digits only for numbered streets (`72nd` → `72`, per the recorded ui map)"""
     return _ORDINAL_RE.sub(r"\1", normalize_street_name(value))
 
 
 def empty_result_retry(attempt: SearchAttempt) -> SearchAttempt:
-    """the bounded reformulation for a search that executed and returned zero rows: same fields, but widen the pre-filled date window"""
+    """the bounded reformulation for a search that executed and returned zero rows: same fields, but widen the pre filled date window"""
     return SearchAttempt(attempt.method, dict(attempt.fields), "widen pre-filled date window", widen_dates=True)
 
 
@@ -323,14 +323,14 @@ class LookupMetrics:
 
     @classmethod
     def combine(cls, metrics: Iterable["LookupMetrics"]) -> "LookupMetrics":
-        """one aggregate over any number of per-lookup metrics"""
+        """one aggregate over any number of per lookup metrics"""
         total = cls()
         for item in metrics:
             total.merge(item)
         return total
 
     def as_dict(self) -> dict[str, Any]:
-        """counters plus derived kpis, json-serializable for run logs"""
+        """counters plus derived kpis, json serializable for run logs"""
         return {
             "attempts": self.attempts,
             "successful": self.successful,
@@ -461,7 +461,7 @@ _STREET_SUFFIXES = frozenset(_STREET_ABBREVIATIONS.values())
 
 
 def address_parts(value: str | None) -> AddressParts:
-    """parse components; a unit/zip can never become a house-number match"""
+    """parse components; a unit/zip can never become a house number match"""
     text = normalize_whitespace(value)
     if not text:
         return AddressParts()
@@ -528,7 +528,7 @@ _APPLICANT_RE = re.compile(r"\b(?:applicant|contact)\s*[:=]?\s+(.+?)(?=\s+(?:at|
 
 
 def parse_lookup_request(text: str) -> PermitLookupRequest:
-    """extract non-overlapping typed spans, rejecting unsupported composition"""
+    """extract non overlapping typed spans, rejecting unsupported composition"""
     raw = text
     if re.search(r"\b(?:not|except|excluding|instead|or|rather than)\b", raw, re.I):
         raise ValueError("invalid_lookup_input: clarify exclusions or alternatives")
@@ -578,9 +578,9 @@ def parse_lookup_request(text: str) -> PermitLookupRequest:
         + _ADDRESS_END, re.I)
     addresses = list(address_pattern.finditer(raw))
     if not addresses:
-        # "look up 123 main street", "find 123 main avenue" (discovery-002/004 wording family): no
+        # "look up 123 main street", "find 123 main avenue" (discovery 002/004 wording family): no
         # at/on/for/address keyword introduces the address, so a bare lookup verb followed by a
-        # house-number span is the address
+        # house number span is the address
         addresses = list(re.finditer(r"\b(?:look\s*up|find|locate|search(?:\s+for)?)\s+(\d+[A-Za-z]?(?:-\d+)?(?:\s+\d+/\d+)?\s+[A-Za-z][A-Za-z0-9 .,'#/-]+?)" + _ADDRESS_END, raw, re.I))
     if not addresses:
         addresses = list(re.finditer(r"\b(?:on|at)\s+([A-Za-z][A-Za-z0-9 .,'#/-]+?)" + _ADDRESS_END, raw, re.I))
@@ -590,7 +590,7 @@ def parse_lookup_request(text: str) -> PermitLookupRequest:
         match = addresses[0]
         if free(*match.span(1)):
             # sentence punctuation after a terminal address must not enter the street field: "123 main
-            # street?" normalized to "main street?" and then matched nothing (prompt-discovery-002-p029)
+            # street?" normalized to "main street?" and then matched nothing (prompt discovery 002 p029)
             parts = address_parts(match.group(1).rstrip(" .?!"))
             for field in ("street_number", "street_name", "unit", "city", "state", "zip_code"):
                 value = getattr(parts, field)
@@ -619,7 +619,7 @@ def choose_search_strategy(request: PermitLookupRequest) -> LookupMethod:
 
 
 def build_search_plan(request: PermitLookupRequest, max_attempts: int = 3) -> list[SearchAttempt]:
-    """build a narrow-to-broad bounded plan; never broaden indefinitely"""
+    """build a narrow to broad bounded plan; never broaden indefinitely"""
     request = normalize_request(request)
     method = choose_search_strategy(request)
     attempts: list[SearchAttempt] = []
@@ -652,7 +652,7 @@ def _request_summary(request: PermitLookupRequest) -> str:
 
 
 def _contains_token_sequence(haystack: str, needle: str) -> bool:
-    """contiguous whole-token containment"""
+    """contiguous whole token containment"""
     hay = normalize_street_name(haystack).split()
     need = normalize_street_name(needle).split()
     if not need:
@@ -661,14 +661,14 @@ def _contains_token_sequence(haystack: str, needle: str) -> bool:
 
 
 def _token_subset(small: str, large: str) -> bool:
-    """every token of `small` appears in `large` (order-independent)"""
+    """every token of `small` appears in `large` (order independent)"""
     small_tokens = normalize_person(small).replace(",", " ").split()
     large_tokens = set(normalize_person(large).replace(",", " ").split())
     return bool(small_tokens) and set(small_tokens) <= large_tokens
 
 
 def _type_matches(expected: str | None, actual: str | None) -> bool:
-    """permit-type equality tolerant of the portal's longer labels"""
+    """permit type equality tolerant of the portal's longer labels"""
     if not expected or not actual:
         return False
     # a trailing generic word is an explicit harmless label variant; arbitrary token subsets ("commercial"
@@ -702,7 +702,7 @@ def _applicant_only_request(request: PermitLookupRequest) -> bool:
 
 
 def _zip_codes_in(address: str | None) -> set[str]:
-    """zip codes rendered as digit-boundary tokens in an address"""
+    """zip codes rendered as digit boundary tokens in an address"""
     return set(re.findall(r"(?<!\d)(\d{5})(?:-\d{4})?(?!\d)", address or ""))
 
 
@@ -792,7 +792,7 @@ def rank_results(request: PermitLookupRequest, results: Iterable[SearchResult]) 
         result.match_reasons = reasons
         ranked.append(result)
     # deterministic: ties order by the sort key, so the same query yields the same ranking on every run
-    # (phase 2 repeated-run requirement)
+    # (phase 2 repeated run requirement)
     return sorted(
         ranked,
         key=lambda item: (-item.score, item.record_number, item.record_type or "", item.address or ""),
@@ -844,7 +844,7 @@ def verify_record_identity(expected: str, observed: str, *, expected_address: st
     return True, None, "record identity verified"
 
 
-# lightweight captured-html table parsing
+# lightweight captured html table parsing
 _TAG_RE = re.compile(r"<[^>]+>")
 _ROW_RE = re.compile(r"<tr\b([^>]*)>(.*?)</tr>", re.I | re.S)
 _CELL_RE = re.compile(r"<t[dh]\b([^>]*)>(.*?)</t[dh]>", re.I | re.S)
@@ -956,7 +956,7 @@ def lookup_not_found(result: LookupResult) -> bool:
 
 
 def classify_results_page(text: str) -> str:
-    """what a post-search page is showing, from its visible text alone"""
+    """what a post search page is showing, from its visible text alone"""
     if accela.looks_like_zero_results(text or ""):
         return "zero_results"
     if accela.has_results_table(text or ""):

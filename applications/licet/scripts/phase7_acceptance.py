@@ -1,4 +1,4 @@
-"""run seeded phase 2–7 noisy integration fixtures"""
+"""run seeded phase 2 7 noisy integration fixtures"""
 import argparse
 import asyncio
 import json

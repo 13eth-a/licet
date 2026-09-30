@@ -1,4 +1,4 @@
-"""phase 6 — portal integration lane: the portal mutation-boundary map and appointment identity"""
+"""phase 6 portal integration lane: the portal mutation boundary map and appointment identity"""
 from __future__ import annotations
 
 import asyncio
@@ -71,7 +71,7 @@ def test_attestation_is_prohibited_and_payments_consequential():
 
 
 def test_unmapped_entries_declare_no_control():
-    """an unmapped flow must not pretend to a control id the sandbox never rendered — that honesty is what the guard's fail-closed answer relies on"""
+    """an unmapped flow must not pretend to a control id the sandbox never rendered that honesty is what the guard's fail closed answer relies on"""
     for entry in accela.MUTATION_BOUNDARIES:
         if "UNMAPPED" in str(entry["evidence"]):
             assert entry["control"] is None, entry
@@ -235,7 +235,7 @@ def test_adapter_refuses_to_bind_without_controls():
 
 
 def test_engine_refuses_targeted_mutation_without_appointment_id():
-    """the end-to-end reason the parser exists: the real engine stops an id-less cancel even in a sandbox with every other condition satisfied"""
+    """the end to end reason the parser exists: the real engine stops an id less cancel even in a sandbox with every other condition satisfied"""
     engine = _engine(Environment.SANDBOX)
     decision = engine.decide(ProposedAction(
         "CANCEL_INSPECTION", permit_id="BLD26-00467", target="Rough Electrical",
@@ -252,12 +252,12 @@ def test_engine_allows_targeted_mutation_with_the_bound_id():
         inspection_type="Rough Electrical", inspection_id="gv$ctl02$lnkCancel",
     )
     # the observed identity is the adapter's snapshot: it asserts the same appointment id the read bound,
-    # so the approval scope and the observation check the same target (the p2 fail-closed rule)
+    # so the approval scope and the observation check the same target (the p2 fail closed rule)
     decision = engine.decide(action, observed_identity=RecordIdentity(
         permit_id="BLD26-00467", inspection_type="Rough Electrical",
         inspection_id="gv$ctl02$lnkCancel",
     ))
-    # consequential tier: not auto-allowed; it must demand a scoped confirmation
+    # consequential tier: not auto allowed; it must demand a scoped confirmation
     assert decision.requires_confirmation
     assert decision.confirmation is not None
     assert decision.confirmation.inspection_id == "gv$ctl02$lnkCancel"

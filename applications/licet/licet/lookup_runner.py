@@ -81,7 +81,7 @@ class LookupTrace:
 
 @dataclass(frozen=True)
 class _Observed:
-    """one postback-settled look at the results page"""
+    """one postback settled look at the results page"""
 
     read: dict[str, Any]
     rows: list[SearchResult]
@@ -136,7 +136,7 @@ class LookupRunner:
             return ""
         try:
             return await content() or ""
-        except Exception:  # noqa: BLE001 - a dead frame must not kill the lookup
+        except Exception:  # noqa: BLE001 a dead frame must not kill the lookup
             return ""
 
     async def _step(

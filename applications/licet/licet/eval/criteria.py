@@ -1,4 +1,4 @@
-"""evaluation criteria — what a run is scored on, and how each is checked"""
+"""evaluation criteria what a run is scored on, and how each is checked"""
 
 from __future__ import annotations
 

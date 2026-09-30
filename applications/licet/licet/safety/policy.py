@@ -87,7 +87,7 @@ ACTION_RISKS: dict[str, ActionRisk] = {
     "BYPASS_AUTHENTICATION": ActionRisk.PROHIBITED,
     "OVERRIDE_AUTHORIZATION": ActionRisk.PROHIBITED,
     "MUTATE_LIVE_RECORD": ActionRisk.PROHIBITED,
-    # dispatcher-side verbs whose canonical equivalent is above, plus the navigation/session/ui verbs the
+    # dispatcher side verbs whose canonical equivalent is above, plus the navigation/session/ui verbs the
     # dispatcher can emit
     "NAVIGATE": ActionRisk.READ_ONLY,
     "LOGIN": ActionRisk.READ_ONLY,
@@ -111,11 +111,11 @@ ACTION_RISKS: dict[str, ActionRisk] = {
     "WITHDRAW_APPLICATION": ActionRisk.PROHIBITED,
 }
 
-# mutations that act on one already-existing appointment
+# mutations that act on one already existing appointment
 _TARGETED_MUTATIONS = frozenset({"CANCEL_INSPECTION", "RESCHEDULE_INSPECTION"})
 
 _MUTATIONS = frozenset(name for name, risk in ACTION_RISKS.items() if risk > ActionRisk.READ_ONLY)
-# the last six are policy-level prohibited intents, not executable mutations, but keeping them in the
+# the last six are policy level prohibited intents, not executable mutations, but keeping them in the
 # vocabulary lets the engine produce an explicit deny
 _EXECUTABLE_MUTATIONS = frozenset({
     "SCHEDULE_INSPECTION", "RESCHEDULE_INSPECTION", "CANCEL_INSPECTION",
@@ -178,7 +178,7 @@ class ProposedAction:
 
 @dataclass(frozen=True)
 class UserConstraints:
-    """immutable run-wide permissions"""
+    """immutable run wide permissions"""
 
     read_only: bool = False
     allow_scheduling: bool = True
@@ -425,7 +425,7 @@ class MutationDecision:
 
 
 class MutationLedger:
-    """run-local idempotency ledger"""
+    """run local idempotency ledger"""
 
     def __init__(self, max_mutations: int = 2) -> None:
         if max_mutations < 1:
@@ -545,7 +545,7 @@ class SafetyAuditLog:
 
 def safety_panel(decision: PolicyDecision, action: ProposedAction, *,
                  environment: Environment, permit_id: str | None = None) -> str:
-    """the one-screen debug/demo view of a single policy decision"""
+    """the one screen debug/demo view of a single policy decision"""
     return "\n".join((
         f"Environment: {Environment(environment).value}",
         f"Permit: {permit_id or action.permit_id or '-'}",
@@ -584,7 +584,7 @@ def detect_environment(source: Any, *, sandbox_hosts: Iterable[str] = ("aca-test
 
 
 class PolicyEngine:
-    """central deterministic planner -> policy -> executor decision point"""
+    """central deterministic planner > policy > executor decision point"""
 
     def __init__(self, *, environment: Environment = Environment.UNKNOWN,
                  constraints: UserConstraints | None = None,
@@ -601,7 +601,7 @@ class PolicyEngine:
         self.metrics = metrics
         self.run_id, self.user_goal, self._now = run_id, user_goal, now or (lambda: datetime.now(timezone.utc))
         self._current_pre_action_state: Any = None
-        # issued-and-spent approvals, by id
+        # issued and spent approvals, by id
         self._consumed_confirmations: set[str] = set()
 
     def decide(self, action: ProposedAction | str, *, permit_id: str | None = None,
@@ -630,7 +630,7 @@ class PolicyEngine:
                                   "TARGET_INSPECTION_UNIDENTIFIED")
         if action.mutates_state:
             # action completeness, not identity: a proposal that needs a phone number is refused here
-            # whether or not the record was re-verified
+            # whether or not the record was re verified
             missing = [field for field in action.required_inputs if not (required_inputs or {}).get(field)]
             if missing:
                 return self._decision(action, False, False, risk, "MISSING_REQUIRED_INPUT: " + ", ".join(missing), "MISSING_REQUIRED_INPUT")

@@ -46,7 +46,7 @@ def test_permit_roundtrip_full():
 
 
 def _row_use_permit() -> Permit:
-    """bld26-00472, as captured from my records + the detail deep link"""
+    """bld26 00472, as captured from my records + the detail deep link"""
     return Permit(
         permit_id="BLD26-00472",
         address="91 Commerce Ave, 00001 United States",
@@ -75,7 +75,7 @@ def test_record_ref_builds_the_verified_deep_link():
 
 
 def test_display_id_is_not_identity():
-    """commercial alteration renders 000000014 while others render bld26-004xx"""
+    """commercial alteration renders 000000014 while others render bld26 004xx"""
     commercial = RecordRef(
         cap_id1="REC26", cap_id2="00000", cap_id3="000QB", display_id="000000014"
     )
@@ -144,7 +144,7 @@ def test_missing_inspections_is_the_next_inspection_answer():
     assert permit.offered_inspection_types() == [
         "Mechanical Final", "Building Final", "Electrical Final"
     ]
-    # offered-but-unseen types are options, never obligations
+    # offered but unseen types are options, never obligations
     catalog_only = Permit(
         permit_id="BLD26-00470",
         address="87 Commerce Ave",

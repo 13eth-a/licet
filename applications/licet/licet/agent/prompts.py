@@ -13,7 +13,7 @@ MAX_OBSERVATION_FIELDS = 60
 MAX_FIELD_OPTIONS = 12
 MAX_FRAMES = 6
 # a control's value is a field's *content*, not a place to put a document: aca's maskededit wrapper hides
-# 143-character ids, and `__viewstate` values run to 98,000 characters
+# 143 character ids, and `__viewstate` values run to 98,000 characters
 MAX_FIELD_VALUE_CHARS = 160
 # hard ceiling for one page summary, so an unforeseen aca page shape cannot blow the context budget again:
 # the summary is trimmed to fit whatever happens
@@ -116,7 +116,7 @@ _FINISH = """\
   report a booking, payment, submission or cancellation you did not confirm by
   re-reading the portal after taking it."""
 
-# sent mid-run when observations keep teaching us nothing new (see `agentstate.note_facts`)
+# sent mid run when observations keep teaching us nothing new (see `agentstate.note_facts`)
 CONVERGENCE_NUDGE = (
     "Convergence check: your last {stale} observations of this record returned no "
     "new facts. You have already read off the portal: {facts}. You have "

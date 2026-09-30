@@ -1,4 +1,4 @@
-"""action risk classification — the core safety boundary for licet"""
+"""action risk classification the core safety boundary for licet"""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ class RiskLevel(str, Enum):
     PROHIBITED = "prohibited"
 
 
-# automatic: read-only or easily-reversible actions
+# automatic: read only or easily reversible actions
 _AUTOMATIC_ACTIONS = {
     "search_permit",
     "search_records",
@@ -40,7 +40,7 @@ _AUTOMATIC_ACTIONS = {
     "report_export",
 }
 
-# confirmation required: consequential or hard-to-reverse actions
+# confirmation required: consequential or hard to reverse actions
 _CONFIRMATION_REQUIRED_ACTIONS = {
     "cancel_inspection",
     "submit_payment",
@@ -54,7 +54,7 @@ _CONFIRMATION_REQUIRED_ACTIONS = {
     "withdraw_application",
 }
 
-# never allowed, with or without a human click-through
+# never allowed, with or without a human click through
 _PROHIBITED_ACTIONS = {
     "accept_legal_attestation",
 }
@@ -105,7 +105,7 @@ def classify(action: str) -> RiskLevel:
         return RiskLevel.CONFIRMATION_REQUIRED
     if action in _AUTOMATIC_ACTIONS:
         return RiskLevel.AUTOMATIC
-    # unknown actions default to requiring confirmation — never default-allow
+    # unknown actions default to requiring confirmation never default allow
     return RiskLevel.CONFIRMATION_REQUIRED
 
 

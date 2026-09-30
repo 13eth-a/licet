@@ -1,4 +1,4 @@
-"""human-attestation handoff: the agent pauses, the human accepts"""
+"""human attestation handoff: the agent pauses, the human accepts"""
 from __future__ import annotations
 
 import asyncio
@@ -70,7 +70,7 @@ class HandoffReport:
 
 
 def is_attestation_disclaimer_url(url: str) -> bool:
-    """true for aca's apply-flow disclaimer page"""
+    """true for aca's apply flow disclaimer page"""
     return DISCLAIMER_PATH_MARKER in urlparse(url or "").path.casefold()
 
 
@@ -82,7 +82,7 @@ def disclaimer_frames(page: Any) -> list[Any]:
 
 
 def is_disclaimer_page(page: Any) -> bool:
-    """true while the page (top-level or any frame) is the disclaimer"""
+    """true while the page (top level or any frame) is the disclaimer"""
     return (is_attestation_disclaimer_url(str(getattr(page, "url", "") or ""))
             or bool(disclaimer_frames(page)))
 

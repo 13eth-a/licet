@@ -1,4 +1,4 @@
-"""read-only: dump one back-office record's header status + workflow tasks + inspections"""
+"""read only: dump one back office record's header status + workflow tasks + inspections"""
 from __future__ import annotations
 
 import argparse

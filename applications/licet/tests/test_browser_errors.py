@@ -30,7 +30,7 @@ def test_retry_classification_drives_recovery():
     assert tool_error("Timeout 30000ms exceeded").retryable
     rate_limited = tool_error("Error 1015 you are being rate limited")
     assert rate_limited.needs_cooldown and not rate_limited.retryable
-    # auth failures need re-login, not a retry
+    # auth failures need re login, not a retry
     auth = tool_error("Please login to continue")
     assert auth.needs_reauth and not auth.retryable
     assert not tool_error("no element matches '#nope'").retryable

@@ -29,7 +29,7 @@ from licet.phase5.state import World, operation_key  # noqa: E402
 _SETTLED_RESULTS = {"PASSED", "FAILED"}
 _SETTLED_LIFECYCLES = {"COMPLETED", "CLOSED", "CANCELLED", "CANCELED"}
 
-# read-only forward-calendar search ceiling, shared with the citizen capacity query so the two layers
+# read only forward calendar search ceiling, shared with the citizen capacity query so the two layers
 # cannot disagree
 MAX_CALENDAR_WINDOWS = 36
 
@@ -75,7 +75,7 @@ def options_from_types(names: tuple[str, ...]) -> tuple[InspectionOption, ...]:
 
 
 def evidence_for_types(names: tuple[str, ...], record_key: str) -> dict[str, Evidence]:
-    """compatibility helper for contexts built from a known offered-type list"""
+    """compatibility helper for contexts built from a known offered type list"""
     return {
         f"portal-option:{name}": Evidence(
             id=f"portal-option:{name}", section="inspections",
@@ -159,7 +159,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         self.last_catalog["declared_count"] = total
         if total is None or total < 0 or total > 200:
             # keep "the wizard never opened" separate from "it opened and declared nothing": the generic
-            # message sent the 2026-09-30 investigation three layers off target, to the page the wizard
+            # message sent the 2026 09 30 investigation three layers off target, to the page the wizard
             # was supposed to have replaced
             self.last_catalog["failure"] = (
                 "wizard_not_open"
@@ -376,7 +376,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         return dates
 
     async def _select_date(self, selected_date, date_page):
-        """re-find a future date after execution reopens the wizard at its first month"""
+        """re find a future date after execution reopens the wizard at its first month"""
         from datetime import date
         if not selected_date:
             raise RuntimeError("executor selected no date")
@@ -440,7 +440,7 @@ class LiveCapabilities:
     async def close(self) -> None:
         try:
             await self.session.close()
-        except Exception:  # noqa: BLE001 - teardown must never mask a result
+        except Exception:  # noqa: BLE001 teardown must never mask a result
             pass
 
 

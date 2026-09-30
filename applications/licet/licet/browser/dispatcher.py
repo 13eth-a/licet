@@ -27,14 +27,14 @@ TOOL_DEFAULT_ACTIONS: dict[str, str] = {
     "wait": "wait",
 }
 
-# actions whose own success flag is not trusted: the dispatcher re-reads the portal instead of the planner
+# actions whose own success flag is not trusted: the dispatcher re reads the portal instead of the planner
 # having to remember to, matching `docs/architecture.md`'s "verify outcome" stage
 VERIFY_AFTER_ACTIONS: frozenset[str] = frozenset(
     {"schedule_inspection", "reschedule_inspection"}
     | {action for action in KNOWN_ACTIONS if classify(action) is RiskLevel.CONFIRMATION_REQUIRED}
 )
 
-# read-only ui labels that look risky to a substring match but are not
+# read only ui labels that look risky to a substring match but are not
 BENIGN_TARGETS: dict[str, str] = {
     "inspections": "read_record",
     "payments": "read_record",
@@ -52,7 +52,7 @@ BENIGN_TARGETS: dict[str, str] = {
     "logout": "logout",
 }
 
-# dangerous phrases -> semantic action
+# dangerous phrases > semantic action
 DANGEROUS_PHRASES: tuple[tuple[str, str], ...] = (
     ("withdraw", "withdraw_application"),
     ("cancel", "cancel_inspection"),
@@ -286,7 +286,7 @@ class ToolDispatcher:
         if verification is not None:
             outcome["verification"] = verification.as_dict()
             if not verification.ok:
-                # a state-changing action is not a success merely because the provider accepted the click
+                # a state changing action is not a success merely because the provider accepted the click
                 verification_error = verification.error or ToolError(
                     BrowserError.UNKNOWN, "post-action verification failed"
                 )
@@ -323,7 +323,7 @@ class ToolDispatcher:
                     "url": outcome.get("url"),
                     "error": outcome.get("error"),
                     "authorization": outcome.get("authorization"),
-                    # solariclient's bounded post-action verifier lives inside toolresult.data; retain
+                    # solariclient's bounded post action verifier lives inside toolresult.data; retain
                     # only its compact diagnostics, not the dom snapshot or full provider payload
                     "action_verification": (outcome.get("data") or {}).get("verification"),
                     "failure_screenshot": outcome.get("screenshot_path"),
@@ -406,7 +406,7 @@ class ToolDispatcher:
         )
 
     def _sync_position(self, state: AgentState, result: ToolResult) -> None:
-        """keep flow position in state — urls alone cannot express it"""
+        """keep flow position in state urls alone cannot express it"""
         # the url of the page actually being driven
         url = result.url or (result.data or {}).get("url")
         if url:
@@ -420,8 +420,8 @@ class ToolDispatcher:
             return
         if _is_regression(state, position):
             # a click inside the scheduling dialog cannot refine the step (every step shares
-            # `capdetail.aspx?istoshowinspection=yes`, which only says `select_record`), so a url-only
-            # position must not overwrite the content-derived one
+            # `capdetail.aspx?istoshowinspection=yes`, which only says `select_record`), so a url only
+            # position must not overwrite the content derived one
             return
         state.enter_flow(position.flow, position.step, position.page_number)
 

@@ -70,7 +70,7 @@ def test_every_candidate_task_is_safe_and_verified_where_expected():
     for task in variants:
         result = grade_task(task)
         assert result.safe, task.id
-        # a candidate task that declares success or partial_success must have a verified final state — the
+        # a candidate task that declares success or partial_success must have a verified final state the
         # same invariant the core suite enforces
         if result.outcome in {Outcome.SUCCESS.value, Outcome.PARTIAL_SUCCESS.value}:
             assert result.final_state_verified, task.id
@@ -79,7 +79,7 @@ def test_every_candidate_task_is_safe_and_verified_where_expected():
 def test_variant_suite_isolation_and_determinism():
     first = run_tasks(select_tasks(suite="variants"), seed=0)
     second = run_tasks(select_tasks(suite="variants"), seed=99, shuffle=True)
-    # same per-task outcome regardless of order/seed; no cross-task contamination
+    # same per task outcome regardless of order/seed; no cross task contamination
     by_id_first = {r.task_id: r for r in first}
     by_id_second = {r.task_id: r for r in second}
     assert set(by_id_first) == set(by_id_second)
@@ -90,7 +90,7 @@ def test_variant_suite_isolation_and_determinism():
 
 def test_second_catalogue_does_not_share_mutable_state():
     first = {task.id: task for task in build_all_variant_tasks()}
-    # variant goldens are immutable like the core ones: the in-place mutation this test used to perform is
+    # variant goldens are immutable like the core ones: the in place mutation this test used to perform is
     # now refused outright, so the next catalogue cannot inherit it whatever the caller does
     if first:
         sample_id = next(iter(first))
@@ -193,7 +193,7 @@ def test_safety_and_recovery_variant_suites_are_comprehensive():
 
 
 def test_data_only_variant_sets_are_recorded_not_auto_passing():
-    # lookup / date / vague / hostile / portal-injection sets are hand-auditable data, not benchmarktasks
+    # lookup / date / vague / hostile / portal injection sets are hand auditable data, not benchmarktasks
     assert len(LOOKUP_TEXT_VARIANTS) == 12
     assert len(DATE_TEXT_VARIANTS) == 10
     assert len(CALENDAR_VARIANTS) == 5

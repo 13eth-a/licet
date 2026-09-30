@@ -1,4 +1,4 @@
-"""phase 4 runner: reasoning output -> policy -> executor -> verified result"""
+"""phase 4 runner: reasoning output > policy > executor > verified result"""
 from __future__ import annotations
 
 import datetime as _dt
@@ -26,7 +26,7 @@ class ActionRequest:
     existing_inspection_id: str | None = None
     constraints: tuple[str, ...] = ()
     confirmed: bool = False
-    # the scoped, single-use approval for a consequential action
+    # the scoped, single use approval for a consequential action
     approval: ConfirmationRequest | None = None
     required_inputs: dict[str, str] | None = None
     date_window_start: str | None = None
@@ -57,7 +57,7 @@ def _dates(request: ActionRequest, reference: _dt.date | None) -> DateConstraint
 
 
 def preview(request: ActionRequest, reference: _dt.date | None = None) -> dict[str, Any]:
-    """the human-readable proposed action, with the date window made concrete"""
+    """the human readable proposed action, with the date window made concrete"""
     constraints = _dates(request, reference)
     return {
         "proposed_action": request.action_type,
@@ -137,7 +137,7 @@ class Phase4ActionRunner:
         eligible_types: list[str] | tuple[str, ...] = (),
         available_dates: list[str] | tuple[str, ...] = (),
     ) -> InspectionActionResult:
-        """preview -> policy -> execute"""
+        """preview > policy > execute"""
         constraints = _dates(request, reference)
         action = InspectionAction(
             action_type=request.action_type,

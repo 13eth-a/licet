@@ -1,4 +1,4 @@
-"""client tests driven by a fake page — no live solari session needed"""
+"""client tests driven by a fake page no live solari session needed"""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ class FakeLocator:
         if effect:
             effect(self.page)
         error = config.get("click_error")
-        # a force-click is the fallback that usually works; it only fails when the test says the element
+        # a force click is the fallback that usually works; it only fails when the test says the element
         # is genuinely unusable
         if error and (not force or config.get("force_fails", False)):
             raise RuntimeError(error)
@@ -382,8 +382,8 @@ def test_select_falls_back_to_value_when_label_is_unavailable():
 
 
 def test_select_fails_when_readback_is_empty():
-    # select_option() can succeed (no exception) on a disabled/no-op aca option and still leave the
-    # control blank — that must not read as success
+    # select_option() can succeed (no exception) on a disabled/no op aca option and still leave the
+    # control blank that must not read as success
     page = FakePage(locators={"ddl": {"value_sequence": [""] * 100}})
     result = asyncio.run(_client(page).select(Target(selector="ddl"), "Search by Address"))
 
@@ -421,7 +421,7 @@ def test_read_page_flags_popup_and_login_frames():
 
 
 def test_read_page_flags_a_half_rendered_section():
-    """aca sections load over ajax; a mid-load read claims there is nothing"""
+    """aca sections load over ajax; a mid load read claims there is nothing"""
     page = FakePage(text="Inspections | Loading... | Post")
     data = asyncio.run(_client(page).read_page()).data
     assert data["loading"] == ["loading..."]
@@ -566,7 +566,7 @@ def test_page_text_refines_flow_position_on_read_page():
     assert result.data["flow"] == {"flow": "schedule_inspection", "step": "select_type", "page": None}
 
 
-# the live planner run on 2026-09-20 authenticated fine and still reported `authenticated=false`, because
+# the live planner run on 2026 09 20 authenticated fine and still reported `authenticated=false`, because
 # the sso postback leaves the url on login.aspx for a moment
 
 
@@ -769,7 +769,7 @@ def test_verification_deadline_also_bounds_a_hung_observation():
 
 
 def test_click_waits_for_delayed_transition_without_replaying():
-    """the transition lands on a later observation, not after a wall-clock delay"""
+    """the transition lands on a later observation, not after a wall clock delay"""
 
     class LateTransitionPage(FakePage):
         def __init__(self, **kwargs) -> None:
@@ -833,7 +833,7 @@ def test_postback_select_does_not_succeed_on_value_change_alone():
 
 
 def test_postback_select_waits_for_delayed_document_replacement():
-    """the document replacement lands *after* the first observation, not after a wall-clock delay — a sleep here raced the 20ms verification deadline under full-suite load and failed intermittently (2026-09-20)"""
+    """the document replacement lands *after* the first observation, not after a wall clock delay a sleep here raced the 20ms verification deadline under full suite load and failed intermittently (2026 09 20)"""
 
     class LatePostbackPage(FakePage):
         def __init__(self, **kwargs) -> None:

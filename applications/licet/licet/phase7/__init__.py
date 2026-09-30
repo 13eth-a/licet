@@ -1,4 +1,4 @@
-"""phase 7 recovery, robustness, and failure-handling primitives"""
+"""phase 7 recovery, robustness, and failure handling primitives"""
 
 from licet.phase7.portal import (
     PageIdentity,

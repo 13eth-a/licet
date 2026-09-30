@@ -20,7 +20,7 @@ class BrowserError(str, Enum):
     INPUT_FAILED = "input_failed"
     NAVIGATION_TIMEOUT = "navigation_timeout"
     UNEXPECTED_MODAL = "unexpected_modal"
-    # matched the dom but is not actionable (hidden, zero-size, or a dead-but-rendered nav item with
+    # matched the dom but is not actionable (hidden, zero size, or a dead but rendered nav item with
     # `active: false`)
     AMBIGUOUS_TARGET = "ambiguous_target"
     NAVIGATION_FAILED = "navigation_failed"

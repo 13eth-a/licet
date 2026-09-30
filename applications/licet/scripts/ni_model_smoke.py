@@ -255,7 +255,7 @@ async def main() -> int:
     ):
         try:
             await coroutine
-        except Exception as exc:  # noqa: BLE001 - a case crashing is a result, not a traceback
+        except Exception as exc:  # noqa: BLE001 a case crashing is a result, not a traceback
             check(name, False, f"raised {type(exc).__name__}: {str(exc)[:200]}")
 
     hard_failures = [result for result in RESULTS if not result["ok"] and result["hard"]]

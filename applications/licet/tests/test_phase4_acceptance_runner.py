@@ -1,4 +1,4 @@
-"""phase 4 acceptance-runner regression: the planning halves, offline"""
+"""phase 4 acceptance runner regression: the planning halves, offline"""
 from __future__ import annotations
 
 import asyncio
@@ -34,7 +34,7 @@ def test_build_request_carries_type_date_and_window():
     assert request.permit_id == "BLD26-00469" and request.inspection_type == "Rough"
     assert request.date_instruction == "next week"
     assert request.date_window_start == "2026-09-23" and request.date_window_end == "2026-09-30"
-    assert request.allow_alternatives is True  # advisory dates, never auto-selected
+    assert request.allow_alternatives is True  # advisory dates, never auto selected
 
 
 def test_build_request_treats_none_as_no_date_instruction():

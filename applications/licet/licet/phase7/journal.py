@@ -1,4 +1,4 @@
-"""crash-safe mutation quarantine for real portal sessions"""
+"""crash safe mutation quarantine for real portal sessions"""
 import sqlite3
 from pathlib import Path
 

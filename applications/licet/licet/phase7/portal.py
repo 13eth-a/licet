@@ -1,4 +1,4 @@
-"""portal-aware recovery: what aca just did, and what may be done about it"""
+"""portal aware recovery: what aca just did, and what may be done about it"""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ UNSETTLED_FINDINGS = frozenset({
 })
 
 # findings that end the run rather than invite any recovery attempt: a dead session cannot be
-# re-authenticated by clicking through, and a modal whose acceptance mutates something belongs to policy,
+# re authenticated by clicking through, and a modal whose acceptance mutates something belongs to policy,
 # never to recovery
 TERMINAL_FINDINGS = frozenset({
     PortalFinding.SESSION_EXPIRED,
@@ -74,8 +74,8 @@ class PageIdentity:
         flow = flow or {}
         record = observation.get("record_number") or observation.get("permit_id")
         if not record:
-            # the record identity that actually addresses the page is in the capdetail url's capid1/2/3 —
-            # stable across aca's display-label reformatting, and present even when the header text failed
+            # the record identity that actually addresses the page is in the capdetail url's capid1/2/3
+            # stable across aca's display label reformatting, and present even when the header text failed
             # to parse
             ref = accela.parse_ref_from_url(url)
             record = "/".join(ref[key] for key in ("capID1", "capID2", "capID3")) if ref else None
@@ -99,7 +99,7 @@ class PageIdentity:
         )
 
     def key(self) -> str:
-        """the loop-key component: stable for the same settled page, distinct for any other page, and never containing live-render tokens"""
+        """the loop key component: stable for the same settled page, distinct for any other page, and never containing live render tokens"""
         parts = (self.url_path or "?", self.record_number or "-", self.flow or "-",
                  self.step or "-")
         return "|".join(parts)
@@ -111,7 +111,7 @@ class PageIdentity:
 
 @dataclass(frozen=True)
 class PortalState:
-    """one observation through the portal-weirdness lens"""
+    """one observation through the portal weirdness lens"""
 
     findings: tuple[PortalFinding, ...]
     identity: PageIdentity
@@ -141,7 +141,7 @@ class PortalState:
 
     @property
     def unsettled(self) -> bool:
-        """true when the observation is mid-render: not evidence of anything"""
+        """true when the observation is mid render: not evidence of anything"""
         return any(finding in UNSETTLED_FINDINGS for finding in self.findings)
 
     def as_dict(self) -> dict[str, Any]:
@@ -252,7 +252,7 @@ def settled_browser_state(observation: Mapping[str, Any] | None,
     state = PortalState.from_observation(observation)
     identity = state.identity
     # the planner's loop key reads active_section first: the flow step is the finest position aca exposes,
-    # and a step change is exactly what a url-only key cannot see inside a postback wizard
+    # and a step change is exactly what a url only key cannot see inside a postback wizard
     return {
         "url": observation.get("url"),
         "active_section": identity.step,
@@ -265,7 +265,7 @@ def settled_browser_state(observation: Mapping[str, Any] | None,
 
 
 def identity_from_world(world: Any) -> str:
-    """the settled page-state string for `loop_observed`, from a phase 5 world"""
+    """the settled page state string for `loop_observed`, from a phase 5 world"""
     browser_state = getattr(world, "browser_state", None) or {}
     section = browser_state.get("active_section")
     if section:

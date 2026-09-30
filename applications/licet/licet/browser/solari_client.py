@@ -1,4 +1,4 @@
-"""async, aca-aware browser client over the solari (playwright) page api"""
+"""async, aca aware browser client over the solari (playwright) page api"""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ def _selector_text(value: str) -> str:
 
 
 def _safe_diagnostic(value: str | None, *, limit: int = 240) -> str | None:
-    """bound free-form browser diagnostics and redact urls/credential values"""
+    """bound free form browser diagnostics and redact urls/credential values"""
     if not value:
         return value
     value = re.sub(r"https?://[^\s'\"<>]+", "[url]", value)
@@ -45,7 +45,7 @@ ALLOWED_INCLUDES = frozenset((*DEFAULT_INCLUDES, "html"))
 # observe live dom properties: serialized html does not include current values, checked state, or native
 # select state
 def _safe_diagnostic(value: str | None, *, limit: int = 240) -> str | None:
-    """bound free-form browser diagnostics and redact urls/credential values"""
+    """bound free form browser diagnostics and redact urls/credential values"""
     if not value:
         return value
     value = re.sub(r"https?://[^\s'\"<>]+", "[url]", value)
@@ -161,7 +161,7 @@ class Target:
 
 @dataclass
 class TargetDiagnostics:
-    """why a target did not resolve — the difference the planner needs"""
+    """why a target did not resolve the difference the planner needs"""
 
     searched: list[str] = field(default_factory=list)
     hidden: list[str] = field(default_factory=list)
@@ -211,7 +211,7 @@ class ToolResult:
 
 
 class SolariClient:
-    """per-page operations"""
+    """per page operations"""
 
     def __init__(
         self,
@@ -241,7 +241,7 @@ class SolariClient:
         return frames or [self.page]
 
     async def _neutralize_mask(self) -> None:
-        """hide the overlay that eats clicks; best-effort per frame"""
+        """hide the overlay that eats clicks; best effort per frame"""
         for frame in self._frames():
             try:
                 await frame.evaluate(accela.MASK_NEUTRALIZER_JS)
@@ -372,7 +372,7 @@ class SolariClient:
                             f"ACA error page at {url} (check the URL shape, not just the host)",
                         ),
                     )
-                # login/session notices are js-dialog text and do not redirect
+                # login/session notices are js dialog text and do not redirect
                 if "login" not in (self._url() or "").lower():
                     visible = await _page_text(self.page)
                     notices = accela.detect_notices(visible)
@@ -388,7 +388,7 @@ class SolariClient:
                             ),
                         )
                 return ToolResult(ok=True, url=self._url(), attempts=attempt)
-            except Exception as exc:  # noqa: BLE001 - classified immediately
+            except Exception as exc:  # noqa: BLE001 classified immediately
                 last = tool_error(str(exc))
                 if last.retryable and attempt < self.max_attempts:
                     await asyncio.sleep(0.4 * attempt)
@@ -738,7 +738,7 @@ class SolariClient:
             "url": self._url(),
             "text": visible[:max_text],
             "truncated": len(visible) > max_text,
-            # a half-rendered ajax section reads as "you have not added any inspections"; flag it so that
+            # a half rendered ajax section reads as "you have not added any inspections"; flag it so that
             # is never reported as fact
             "loading": accela.detect_loading(visible),
             "flow": (
@@ -795,7 +795,7 @@ class SolariClient:
         return ToolResult(ok=True, url=self._url(), data={"path": path})
 
     async def login(self, username: str, password: str) -> ToolResult:
-        """civicid sso login — the credential form is an iframe, not page html"""
+        """civicid sso login the credential form is an iframe, not page html"""
         nav = await self.navigate(accela.LOGIN_URL)
         if not nav.ok:
             return nav
@@ -833,7 +833,7 @@ class SolariClient:
         )
 
     async def _await_login(self, *, attempts: int = 8, poll_ms: int = 700) -> tuple[str, str]:
-        """wait for the post-login landing page rather than for one url change"""
+        """wait for the post login landing page rather than for one url change"""
         url = self._url() or ""
         text = ""
         for attempt in range(attempts):

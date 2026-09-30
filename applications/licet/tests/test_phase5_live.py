@@ -23,7 +23,7 @@ from tests.test_phase4_accela_portal import FakeClient, FakeFrame
 
 
 class CatalogClient(FakeClient):
-    """html-backed frame fake: the production client parses radio label markers from markup"""
+    """html backed frame fake: the production client parses radio label markers from markup"""
 
     async def read_page(self, *, include=None, max_text=4000):
         from licet.browser.solari_client import ToolResult
@@ -370,7 +370,7 @@ def _month_strip(start_year: int, start_month: int, count: int):
 
 
 def test_calendar_search_pages_past_the_old_twelve_window_ceiling_into_2027():
-    """the 2026-09-30 capacity run stopped at sep-nov 2026 and said nothing about 2027+"""
+    """the 2026 09 30 capacity run stopped at sep nov 2026 and said nothing about 2027+"""
     portal, dates, clicks = _scan_windows(_month_strip(2026, 9, 20), max_windows=20)
 
     assert not dates

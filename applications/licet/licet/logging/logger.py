@@ -1,4 +1,4 @@
-"""structured, append-only event logging for every agent step"""
+"""structured, append only event logging for every agent step"""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _SAFE_ID = re.compile(r"[^A-Za-z0-9_.-]+")
 
 
 def new_run_id(prefix: str = "run") -> str:
-    """return a unique, filename-safe run id for traces and screenshots"""
+    """return a unique, filename safe run id for traces and screenshots"""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     safe_prefix = _SAFE_ID.sub("-", prefix).strip("-") or "run"
     return f"{safe_prefix}-{stamp}-{uuid.uuid4().hex[:8]}"
@@ -39,7 +39,7 @@ class StepLog:
 
 
 class RunLogger:
-    """append steplog entries for one run to a utf-8 jsonl file"""
+    """append steplog entries for one run to a utf 8 jsonl file"""
 
     def __init__(self, run_id: str, log_dir: Path = LOG_DIR) -> None:
         if not run_id or "/" in run_id or "\\" in run_id:
@@ -80,7 +80,7 @@ class RunLogger:
             stream.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
     def log_event(self, event: str, **fields: Any) -> None:
-        """append one named, domain-agnostic event record"""
+        """append one named, domain agnostic event record"""
         record = {
             "event": event,
             "run_id": self.run_id,
@@ -91,7 +91,7 @@ class RunLogger:
             stream.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
 
     def summary(self) -> dict[str, Any]:
-        """return aggregate primitive-action metrics for this run"""
+        """return aggregate primitive action metrics for this run"""
         return {action: dict(values) for action, values in self.metrics.items()}
 
     def read_all(self) -> list[dict[str, Any]]:

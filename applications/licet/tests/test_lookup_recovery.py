@@ -1,4 +1,4 @@
-"""search-recovery and field-binding gap tests for phase 2"""
+"""search recovery and field binding gap tests for phase 2"""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ from tests.test_lookup_runner import row_html
 
 
 def test_wrong_zip_returns_zero_then_broadens_to_street_only():
-    """a query that over-constrains with a bad zip returns nothing; the runner's plan drops the zip and tries the street alone before concluding not_found"""
+    """a query that over constrains with a bad zip returns nothing; the runner's plan drops the zip and tries the street alone before concluding not_found"""
     client = FakeClient(
         [
             search_form(
@@ -49,7 +49,7 @@ def test_wrong_zip_returns_zero_then_broadens_to_street_only():
                 fields=apo_fields(),
                 text="No records found.",
             ),
-            # attempt 2: street number + name, no zip → still nothing on this fake, so the street-only
+            # attempt 2: street number + name, no zip → still nothing on this fake, so the street only
             # fallback also returns nothing
             search_form(
                 fields=apo_fields(),
@@ -77,7 +77,7 @@ def test_wrong_zip_returns_zero_then_broadens_to_street_only():
 
 
 def test_unit_in_query_is_dropped_before_searching():
-    """a query that includes \"apt 4\" must be searched as the base address, never with the unit typed into the street-name field (spec: avoid overfilling)"""
+    """a query that includes \"apt 4\" must be searched as the base address, never with the unit typed into the street name field (spec: avoid overfilling)"""
     client = FakeClient(
         [
             search_form(
@@ -139,7 +139,7 @@ def test_overfilled_form_is_reformulated_before_broadening():
 
 
 def test_empty_page_with_no_table_is_parse_failure_not_zero_results():
-    """a results page with no table header at all is not \"no records found\" — the search may not have executed. classify_results_page distinguishes them"""
+    """a results page with no table header at all is not \"no records found\" the search may not have executed. classify_results_page distinguishes them"""
     from licet.lookup import classify_results_page
 
     assert classify_results_page("") == "parse_failed"
@@ -163,7 +163,7 @@ def test_form_that_returns_no_fields_is_form_failure():
 
 
 def test_duplicate_rows_across_pages_are_deduped_before_ranking():
-    """the same record re-rendered on page 2 must not inflate the candidate set and manufacture ambiguity where there is one record"""
+    """the same record re rendered on page 2 must not inflate the candidate set and manufacture ambiguity where there is one record"""
     client = FakeClient(
         [
             search_form(
@@ -250,7 +250,7 @@ def test_address_mode_drops_the_gs_family_and_only_apo_is_filled():
             search_form(
                 fields=mode_dropdown(["Permit Number", "Search by Address"]),
             ),
-            # post-postback: only apo fields rendered
+            # post postback: only apo fields rendered
             search_form(fields=apo_fields()),
             search_results(
                 row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way"),
@@ -259,7 +259,7 @@ def test_address_mode_drops_the_gs_family_and_only_apo_is_filled():
     )
     request = PermitLookupRequest(street_number="77", street_name="licet eval way")
     runner, result, _state = run(request, client)
-    # the runner resolved the mode, re-read the form, and filled only what was there
+    # the runner resolved the mode, re read the form, and filled only what was there
     assert result.status is LookupStatus.FAILED
     assert result.error_code is LookupErrorCode.IDENTITY_UNVERIFIED
     typed_targets = [
@@ -267,20 +267,20 @@ def test_address_mode_drops_the_gs_family_and_only_apo_is_filled():
         for name, args in client.calls
         if name == "type"
     ]
-    # the apo fields list used by this test contains only apo-family controls; the runner should fill
+    # the apo fields list used by this test contains only apo family controls; the runner should fill
     # those and not invent any gs ones
     assert any("txtAPO" in t for t in typed_targets)
 
 
 def test_mode_postback_form_replacement_is_re_read_not_cached():
-    """r6: the search-mode dropdown auto-postbacks and replaces the whole form"""
+    """r6: the search mode dropdown auto postbacks and replaces the whole form"""
     client = FakeClient(
         [
             search_form(
                 fields=mode_dropdown(["Permit Number", "Search by Address"])
                 + [gs_field("txtGSPermitNumber")],
             ),
-            # post-postback: the form was replaced; only the apo family exists
+            # post postback: the form was replaced; only the apo family exists
             search_form(fields=apo_fields()),
             search_results(
                 row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way"),
@@ -307,7 +307,7 @@ def test_attempt_with_no_matching_fields_is_skipped_not_submitted():
     client = FakeClient(
         [
             search_form(fields=[], options=["Permit Number"]),
-            # a parcel-mode form that did not render — the parcel field is absent
+            # a parcel mode form that did not render the parcel field is absent
             search_form(fields=[], options=["Permit Number", "Search by Address"]),
         ]
     )
@@ -326,8 +326,8 @@ def test_attempt_with_no_matching_fields_is_skipped_not_submitted():
 
 
 def test_type_action_dropped_when_field_suffix_absent_from_form():
-    """a type action whose comma-grouped selector matches no field in the fresh inventory is dropped"""
-    # only the street-number field rendered; the street-name action is dropped
+    """a type action whose comma grouped selector matches no field in the fresh inventory is dropped"""
+    # only the street number field rendered; the street name action is dropped
     client = FakeClient(
         [
             search_form(
@@ -347,13 +347,13 @@ def test_type_action_dropped_when_field_suffix_absent_from_form():
             state,
         )
     )
-    # with only the street-number field present, the runner still submitted a search (the street-number
-    # type action survived), but the page returned no grid — so this is a parse failure, not a form
+    # with only the street number field present, the runner still submitted a search (the street number
+    # type action survived), but the page returned no grid so this is a parse failure, not a form
     # failure
     type_calls = [
         args for name, args in client.calls if name == "type"
     ]
-    # only the street-number action was dispatched; the street-name action was dropped because its field
+    # only the street number action was dispatched; the street name action was dropped because its field
     # was absent from the form
     assert len(type_calls) == 1
     assert "StreetNumber" in type_calls[0].get("target", "")
@@ -404,7 +404,7 @@ def test_compact_normalization_is_idempotent(raw, normalized):
 
 
 def test_lookup_trace_report_contains_the_lbrate_stages():
-    """the trace is the run-log artifact; it must carry goal, parsed, each search attempt, and result with the ranked matches"""
+    """the trace is the run log artifact; it must carry goal, parsed, each search attempt, and result with the ranked matches"""
     client = FakeClient(
         [
             search_form(fields=[gs_field("txtGSPermitNumber")]),
@@ -427,7 +427,7 @@ def test_lookup_trace_report_contains_the_lbrate_stages():
 
 
 def test_lookup_metrics_snapshot_is_serializable_for_the_run_log():
-    """lookupmetrics.as_dict must be json-serializable, because it is persisted to the run log and consumed by the eval harness"""
+    """lookupmetrics.as_dict must be json serializable, because it is persisted to the run log and consumed by the eval harness"""
     import json
 
     metrics = LookupMetrics(
@@ -447,7 +447,7 @@ def test_lookup_metrics_snapshot_is_serializable_for_the_run_log():
 
 
 def test_metrics_combine_is_additive_not_average():
-    """two runners with different attempt counts must combine by summing raw counters, so a 1-attempt lookup cannot outweigh a 10-attempt one"""
+    """two runners with different attempt counts must combine by summing raw counters, so a 1 attempt lookup cannot outweigh a 10 attempt one"""
     first = LookupMetrics(
         attempts=10,
         successful=9,
@@ -472,7 +472,7 @@ def test_metrics_combine_is_additive_not_average():
 
 
 def test_wrong_record_rate_denes_wrong_record_selection():
-    """the metric that matters most: a found lookup whose opened record did not match the selection is counted as a wrong record and produces a non-zero rate"""
+    """the metric that matters most: a found lookup whose opened record did not match the selection is counted as a wrong record and produces a non zero rate"""
     shared = LookupMetrics()
     client = FakeClient(
         [

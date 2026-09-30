@@ -96,7 +96,7 @@ class InspectionSnapshot:
 
     @property
     def is_pending(self) -> bool:
-        """an in-flight request the portal has accepted but not yet scheduled"""
+        """an in flight request the portal has accepted but not yet scheduled"""
         return self.status.strip().lower() in {"requested", "pending"}
 
     @property

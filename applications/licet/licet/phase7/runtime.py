@@ -53,7 +53,7 @@ async def recover_read(planner, run, action, observation):
     async def attempt():
         nonlocal candidate
         world = deepcopy(checkpoint)
-        # route implementations must finish by re-reading through the ordinary capability
+        # route implementations must finish by re reading through the ordinary capability
         counter = getattr(planner.capabilities, 'browser_action_count', lambda: 0)
         before_actions = counter()
         try:

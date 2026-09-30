@@ -43,7 +43,7 @@ def legacy_execution_allowed(action: InspectionAction, *, confirmed: bool = Fals
 
 
 def legacy_identity_verified(action: ProposedAction, observed: RecordIdentity) -> bool:
-    """the pre-review `verify_identity`, reproduced verbatim"""
+    """the pre review `verify_identity`, reproduced verbatim"""
     if not action.permit_id or not observed.permit_id or action.permit_id != observed.permit_id:
         return False
     if action.record_key and action.record_key != observed.record_key:
@@ -60,7 +60,7 @@ def legacy_identity_verified(action: ProposedAction, observed: RecordIdentity) -
 
 
 def legacy_confirmation_granted(action: InspectionAction) -> bool:
-    """the pre-review executor minted its own approval from the action"""
+    """the pre review executor minted its own approval from the action"""
     minted = ConfirmationRequest(action_type=action.action_type, permit_id=action.permit_id,
                                  target=action.inspection_type or "", consequence="legacy")
     return legacy_execution_allowed(action, confirmed=True) and minted is not None
@@ -176,7 +176,7 @@ def counterexamples():
         f"{result.error_code.value if result.error_code else 'SUBMITTED'} (submits={len(portal.submits)})",
         "approval scope must name the permit it approves")
 
-    # d1 — a cancellation that never named its target
+    # d1 a cancellation that never named its target
     engine = PolicyEngine(environment=Environment.SANDBOX)
     decision = engine.decide(ProposedAction("CANCEL_INSPECTION", permit_id=PERMIT, target=TYPE,
                                             inspection_type=TYPE),

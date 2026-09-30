@@ -148,7 +148,7 @@ def _raise_script(pid: int) -> str:
 
 
 def automation_chrome_pid(ps_output: str) -> int | None:
-    """pick the driver's chrome out of `ps -eo pid=,command=` output"""
+    """pick the driver's chrome out of `ps eo pid=,command=` output"""
     for line in ps_output.splitlines():
         if "Google Chrome" not in line or "user-data-dir" not in line:
             continue
@@ -162,7 +162,7 @@ def automation_chrome_pid(ps_output: str) -> int | None:
 
 def surface_window(*, run: Callable[..., Any] | None = None,
                    platform: str | None = None) -> bool:
-    """best-effort: raise the driven chrome and post a notification"""
+    """best effort: raise the driven chrome and post a notification"""
     plat = sys.platform if platform is None else platform
     if not plat.startswith("darwin"):
         return False

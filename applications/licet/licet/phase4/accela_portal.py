@@ -15,7 +15,7 @@ from licet.phase3 import accela_extract
 from licet.phase4.actions import InspectionAction, InspectionSnapshot
 from licet.safety.policy import Environment, detect_environment, environment_from_url
 
-# a citizen-portal inspection row shape aca renders on detail pages: "electrical final | scheduled |
+# a citizen portal inspection row shape aca renders on detail pages: "electrical final | scheduled |
 # 09/24/2026"
 _SETTLE_ATTEMPTS = 3
 _READ_ATTEMPTS = 2
@@ -30,7 +30,7 @@ _UNMAPPED_REASONS: dict[str, str] = {
     "reschedule_inspection": "reschedule flow is not mapped on this portal; refusing to improvise",
 }
 
-# this literal shape is the adapter's fallback — same row, date preserved
+# this literal shape is the adapter's fallback same row, date preserved
 _SCHEDULED_ROW_RE = re.compile(
     r"^(?P<type>[^|]+?)\s*\|\s*(?P<status>Scheduled|Requested|Cancelled|Canceled|Completed|Passed|Failed|Pending)"
     r"(?:\s*\|\s*(?P<date>\d{1,2}/\d{1,2}/\d{4}))?\s*$",
@@ -185,7 +185,7 @@ class AccelaInspectionPortal:
         return observation
 
     async def _wait(self, *, until_present: str | None = None, until_absent: str | None = None, seconds: int = 6) -> None:
-        """settle the page, re-asking a bounded number of times on a timeout"""
+        """settle the page, re asking a bounded number of times on a timeout"""
         args: dict[str, Any] = {"seconds": seconds}
         if until_present:
             args["until_present"] = until_present
@@ -216,7 +216,7 @@ class AccelaInspectionPortal:
         return str(obs.record_header.get("permit_id") or "")
 
     async def _open_schedule_wizard(self, obs: PortalObservation) -> bool:
-        """open aca's schedule wizard through its handler-bearing control"""
+        """open aca's schedule wizard through its handler bearing control"""
         ref = self.record_ref if isinstance(self.record_ref, dict) else None
         if ref and all(ref.get(key) for key in ("capID1", "capID2", "capID3")):
             opened = await self._do(ToolCall(
@@ -312,7 +312,7 @@ class AccelaInspectionPortal:
     async def submit_inspection_action_async(
         self, action: InspectionAction, *, portal_type: str, selected_date: str | None = None
     ) -> str | None:
-        """drive the scheduling wizard for one already-authorized action"""
+        """drive the scheduling wizard for one already authorized action"""
         kind = action.action_type.casefold().strip()
 
         # the deepest line of defence, and the only line that sees the real browser
@@ -371,7 +371,7 @@ class AccelaInspectionPortal:
         if confirmation:
             return confirmation
         # no confirmation number printed: a scheduled row for the type is the portal's own acknowledgement
-        # (verification is the executor's independent re-read anyway)
+        # (verification is the executor's independent re read anyway)
         for row in result.inspection_rows:
             if portal_type.casefold() in str(row.get("type") or "").casefold() and "schedul" in str(row.get("status") or "").lower():
                 return None
@@ -407,8 +407,8 @@ class AccelaInspectionPortal:
         )
         if outcome.get("success"):
             return
-        # bounded element-lookup retry: the grid paginates via postback, so the control id can differ
-        # after a re-render
+        # bounded element lookup retry: the grid paginates via postback, so the control id can differ
+        # after a re render
         for _ in range(_TYPE_SELECT_ATTEMPTS - 1):
             refreshed = await self._read()
             retry_id = control_for(portal_type, refreshed.fields)
@@ -422,14 +422,14 @@ class AccelaInspectionPortal:
         raise RuntimeError(f"inspection type '{portal_type}' could not be selected in the wizard")
 
     async def _continue(self) -> None:
-        """advance a non-commit wizard page without labeling it as a schedule"""
+        """advance a non commit wizard page without labeling it as a schedule"""
         outcome = await self._do(ToolCall("click", {"target": "Continue", "by": "text", "intent": "navigate"}))
         if not outcome.get("success"):
             raise RuntimeError("Continue did not advance the wizard")
         await self._wait(until_absent="Please wait...", seconds=8)
 
     async def _select_date(self, selected_date: str | None, date_page: PortalObservation) -> None:
-        """click the chosen day in the implied 3-month strip, then a time"""
+        """click the chosen day in the implied 3 month strip, then a time"""
         if not selected_date:
             raise RuntimeError("executor selected no date; refusing to pick one arbitrarily")
         day = _dt.date.fromisoformat(selected_date)
@@ -463,7 +463,7 @@ class AccelaInspectionPortal:
 
     @staticmethod
     def _pick_time(selectable_times: str) -> str:
-        """the first listed time-range label (deterministic, portal-spelled)"""
+        """the first listed time range label (deterministic, portal spelled)"""
         for line in selectable_times.splitlines():
             line = line.strip()
             if line:
@@ -495,7 +495,7 @@ class AccelaInspectionPortal:
 
     @staticmethod
     def _appointment_id(obs: PortalObservation, row: dict[str, str]) -> str | None:
-        """the appointment's own id for one row, from its per-row action control"""
+        """the appointment's own id for one row, from its per row action control"""
         scheduled = [
             candidate for candidate in obs.inspection_rows
             if "schedul" in str(candidate.get("status") or "").lower()
@@ -539,7 +539,7 @@ class AccelaInspectionPortal:
 
 
 def _require_no_running_loop() -> None:
-    """guard for the sync bridge: checked *before* a coroutine is created, so a misuse raises instead of leaking an un-awaited coroutine warning"""
+    """guard for the sync bridge: checked *before* a coroutine is created, so a misuse raises instead of leaking an un awaited coroutine warning"""
     try:
         asyncio.get_running_loop()
     except RuntimeError:

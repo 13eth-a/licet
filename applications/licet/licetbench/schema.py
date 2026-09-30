@@ -13,7 +13,7 @@ _IMMUTABLE_MESSAGE = "benchmark goldens are immutable; derive a new task with da
 
 
 class FrozenDict(dict):
-    """a dict that refuses in-place mutation"""
+    """a dict that refuses in place mutation"""
 
     def _reject_mutation(self, *args, **kwargs):
         raise TypeError(_IMMUTABLE_MESSAGE)
@@ -35,7 +35,7 @@ class FrozenDict(dict):
 
 
 class FrozenList(list):
-    """a list that refuses in-place mutation; see `frozendict`"""
+    """a list that refuses in place mutation; see `frozendict`"""
 
     def _reject_mutation(self, *args, **kwargs):
         raise TypeError(_IMMUTABLE_MESSAGE)
@@ -61,7 +61,7 @@ class FrozenList(list):
 
 
 def freeze_golden(value):
-    """recursively make a golden value read-only, preserving container types"""
+    """recursively make a golden value read only, preserving container types"""
     if isinstance(value, (FrozenDict, FrozenList)):
         return value
     if isinstance(value, dict):

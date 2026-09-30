@@ -125,7 +125,7 @@ async def find_button(page, sels: tuple[str, ...]):
 
 
 async def missing_required(page) -> list[str]:
-    """extract control ids from aca validation-panel skipto links"""
+    """extract control ids from aca validation panel skipto links"""
     import html as _h
     found: list[str] = []
     for f in list(page.frames):
@@ -264,7 +264,7 @@ async def handle_contact_page(page, stamp: str) -> bool:
             continue
     out(f"contact dialog: filled {filled} fields")
 
-    # save the contact — the dialog iframe (contactaddnew.aspx) has its own save/continue button
+    # save the contact the dialog iframe (contactaddnew.aspx) has its own save/continue button
     # (ctl00_phpopup_btnsave)
     saved = False
     for f in list(page.frames):
@@ -384,7 +384,7 @@ async def main() -> int:
                 except Exception as exc:
                     out(f"contact handler failed: {exc!r}")
 
-            # capedit page: pre-fill the known required fields before continue
+            # capedit page: pre fill the known required fields before continue
             if "CapEdit" in url:
                 for cid, val in TEST_DATA.items():
                     if await fill_control(page, cid, val):
@@ -401,7 +401,7 @@ async def main() -> int:
                         await radio.check(timeout=6000)
                     except Exception:
                         await radio.click(timeout=6000)
-                    # note: do not call selectnode() manually — check() already fires the onclick handler,
+                    # note: do not call selectnode() manually check() already fires the onclick handler,
                     # and a second invocation can toggle aca's internal selection state off
                     checked = await radio.is_checked()
                     out(f"radio 'Sign - Temporary' checked={checked}")

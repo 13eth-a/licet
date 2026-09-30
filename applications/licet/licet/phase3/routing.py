@@ -1,4 +1,4 @@
-"""question routing for targeted, read-only section retrieval"""
+"""question routing for targeted, read only section retrieval"""
 from __future__ import annotations
 
 import re
@@ -23,8 +23,8 @@ _ROUTES = (
 
 _NO_TOUR_PATTERNS = ("what did the inspector say", "did the inspector", "what failed", "what passed")
 
-# "what should happen next?" is a blocker question with next-step framing: it needs the same
-# explicit-prerequisite evidence as "what is blocking?"
+# "what should happen next?" is a blocker question with next step framing: it needs the same
+# explicit prerequisite evidence as "what is blocking?"
 _NEXT_QUESTION_PATTERN = r"\b(what|which)\s+(should|needs? to|has to|must)\b|\bwhat's next\b|\bwhat is next\b"
 
 
@@ -42,8 +42,8 @@ def route_question(question: str, state: PermitState | None = None) -> Route:
             if state is not None and route.sections[0] == Section.OVERVIEW.value and state.status:
                 return Route(route.sections, "the requested status is already available", route.stop_when)
             return route
-    # an evidence-in-hand question never forces a tour: if its own route already matched, this line is
-    # unreachable; it only fires for questions whose phrasing mentions "inspector"-type evidence in hand
+    # an evidence in hand question never forces a tour: if its own route already matched, this line is
+    # unreachable; it only fires for questions whose phrasing mentions "inspector" type evidence in hand
     if any(pattern in text for pattern in _NO_TOUR_PATTERNS):
         return Route((Section.INSPECTIONS.value,), "the requested evidence is already in hand", "the cited inspection evidence is quoted")
     return Route((Section.OVERVIEW.value,), "record identity and overview are the minimum available evidence", "the overview has been read")

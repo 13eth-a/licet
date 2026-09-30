@@ -20,7 +20,7 @@ CAPEDIT_CONTACT_URL = (
 
 
 class RecordingClient:
-    """a solariclient stand-in that records what actually reached the browser"""
+    """a solariclient stand in that records what actually reached the browser"""
 
     def __init__(
         self,
@@ -267,7 +267,7 @@ def test_a_live_page_refuses_an_approved_scheduling_click_without_touching_the_b
     state = _state(current_url=client.page.url)
     scheduled = {"name": "click", "args": {"target": "Schedule Inspection", "by": "text",
                                               "intent": "schedule_inspection"}}
-    # held first, then explicitly approved by a human: a live record stays read-only, because the grant
+    # held first, then explicitly approved by a human: a live record stays read only, because the grant
     # never outranks the environment
     asyncio.run(ToolDispatcher(client).execute(scheduled, state))
     state.request_approval("schedule_inspection", "user said yes")
@@ -513,7 +513,7 @@ def test_dispatcher_writes_every_step_to_the_run_logger(tmp_path):
 
 
 def test_dispatcher_without_a_logger_is_unchanged(tmp_path):
-    """logging is opt-in: no logger, no files, same behaviour"""
+    """logging is opt in: no logger, no files, same behaviour"""
     client = RecordingClient()
     outcome = asyncio.run(
         ToolDispatcher(client).execute({"name": "read_page", "args": {}}, _state())

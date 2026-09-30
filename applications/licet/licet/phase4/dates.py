@@ -80,7 +80,7 @@ def _parsed_dates(available: list[str] | tuple[str, ...]) -> list[tuple[dt.date,
 
 
 def _is_selectable(value: dt.date, constraints: DateConstraints) -> bool:
-    """whether selection may pick this day: inside the window, and — when the user named an exact day — exactly that day"""
+    """whether selection may pick this day: inside the window, and when the user named an exact day exactly that day"""
     if not constraints.allows(value):
         return False
     return constraints.preferred is None or value == constraints.preferred
@@ -126,7 +126,7 @@ def available_dates_from_calendar(months: object, *, reference: dt.date | None =
 
 
 def within_constraints(value: dt.date, constraints: DateConstraints) -> bool:
-    """public form of the selection predicate, for callers checking a date they did not choose (e.g. verifying a portal-reported appointment date)"""
+    """public form of the selection predicate, for callers checking a date they did not choose (e.g. verifying a portal reported appointment date)"""
     return _is_selectable(value, constraints)
 
 

@@ -1,4 +1,4 @@
-"""the planner loop: goal -> model -> one classified tool call -> observation"""
+"""the planner loop: goal > model > one classified tool call > observation"""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ from licet.safety.guard import GuardDecision
 from licet.schema.extract import permit_from_page
 from licet.schema.permit import Permit
 
-# dead-but-rendered section wrappers — the portal integration lane's root-cause finding
+# dead but rendered section wrappers the portal integration lane's root cause finding
 # (docs/phase9/portal_read_root_cause.md): the portal renders a section control but never shows it
 # ("present but not visible")
 _DEAD_WRAPPER_LABEL_VARIANTS: dict[str, tuple[str, ...]] = {
@@ -44,7 +44,7 @@ _DEAD_WRAPPER_LABEL_VARIANTS: dict[str, tuple[str, ...]] = {
 
 
 def _is_dead_wrapper_failure(outcome: Mapping[str, Any]) -> bool:
-    """the present-but-not-visible shape only: a decision or a real failure is not"""
+    """the present but not visible shape only: a decision or a real failure is not"""
     if outcome.get("success") or outcome.get("blocked"):
         return False
     error = outcome.get("error") or {}
@@ -68,7 +68,7 @@ TERMINAL_ERROR_KINDS = frozenset(
         BrowserError.AUTH_REQUIRED,
         BrowserError.SESSION_TIMEOUT,
         BrowserError.RATE_LIMITED,
-        # these are not useful in-loop retries: the url is malformed or the portal explicitly gated the page
+        # these are not useful in loop retries: the url is malformed or the portal explicitly gated the page
         BrowserError.PORTAL_ERROR,
         BrowserError.GATED,
         BrowserError.NAVIGATION_FAILED,
@@ -84,7 +84,7 @@ MAX_CONVERGENCE_NUDGES = 2
 
 @dataclass
 class AgentRun:
-    """one goal, start to stop — and the `runrecord` the scorer consumes"""
+    """one goal, start to stop and the `runrecord` the scorer consumes"""
 
     goal: str
     prompt_id: str | None = None
@@ -105,7 +105,7 @@ class AgentRun:
 
     @property
     def stop_condition_value(self) -> str | None:
-        """the plain string form — `str(stop_condition)` on a str-enum is not it"""
+        """the plain string form `str(stop_condition)` on a str enum is not it"""
         return self.stop_condition.value if self.stop_condition else None
 
     def run_record(self) -> RunRecord:
@@ -120,7 +120,7 @@ class AgentRun:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        """json-serializable run report, for the run log and the cli"""
+        """json serializable run report, for the run log and the cli"""
         return {
             "goal": self.goal,
             "prompt_id": self.prompt_id,
@@ -217,7 +217,7 @@ class Planner:
                 run.stop_condition = stop
                 break
 
-            # old page detail is dead weight: a run that reads six pages would otherwise re-send all six
+            # old page detail is dead weight: a run that reads six pages would otherwise re send all six
             # on every turn (see prompts.py)
             prune_observations(messages)
             if (
@@ -424,7 +424,7 @@ class Planner:
         flow = data.get("flow") or {}
         # the dispatcher has already refreshed the flow position for this result, so fall back to it: a
         # click's own data carries no flow, and without the step the stall detector cannot tell a wizard
-        # step apart from a no-op
+        # step apart from a no op
         step = str(flow.get("step") or "") or state.flow_step
         state.observe_page(
             outcome.get("url"), page=step, signature=_fingerprint(observation)
@@ -529,7 +529,7 @@ def _fingerprint(observation: Mapping[str, Any]) -> str | None:
 
 
 def _facts_from(run: AgentRun) -> list[str]:
-    """up to a few portal facts the report may cite — read, never inferred"""
+    """up to a few portal facts the report may cite read, never inferred"""
     permit = run.permit
     if permit is None:
         return []

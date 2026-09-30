@@ -1,4 +1,4 @@
-"""phase 7 portal-weirdness tests (portal integration)"""
+"""phase 7 portal weirdness tests (portal integration)"""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def test_stale_result_table_is_never_a_fact():
     from licet.browser.accela import declares_no_inspections, detect_empty_table
 
     text = "Inspections | No data available in table"
-    # the declared-empty vocabulary does not claim the grid is empty
+    # the declared empty vocabulary does not claim the grid is empty
     assert not declares_no_inspections(text)
     assert detect_empty_table(text)
     assert PortalFinding.EMPTY_TABLE_PENDING_ROWS in PortalState.from_observation(
@@ -144,7 +144,7 @@ def test_popup_open_is_reported():
 
 
 def test_wrong_page_is_relational_not_absolute():
-    """wrong-page needs the record the run verified to compare against"""
+    """wrong page needs the record the run verified to compare against"""
     other = "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&capID1=REC26&capID2=00000&capID3=00099"
     state = PortalState.from_observation(
         {"url": other, "text": "Record Detail", "expected_record_number": "REC26/00000/00014"}
@@ -186,7 +186,7 @@ def test_wizard_step_change_changes_the_key_even_though_the_url_does_not():
 
 
 def test_display_label_churn_does_not_change_record_identity():
-    """000000014 and bld26-00472 are spellings, not identities: capids are"""
+    """000000014 and bld26 00472 are spellings, not identities: capids are"""
     ref = accela.parse_ref_from_url(DETAIL)
     assert ref["capID1"] == "REC26"
     identity = PageIdentity.from_observation({"url": DETAIL, "text": "Record BLD26-00472"})
@@ -329,7 +329,7 @@ def test_planner_session_modal_downgrades_a_read_failure_to_a_stop():
     assert route_event["route"]["terminal"] is True
     assert route_event["route"]["strategy"] == "STOP"
     # the terminal route was recorded and the observation downgraded (the fixture *returns* a failed
-    # observation, so there is no failure event — the failed step trace entry carries the message instead)
+    # observation, so there is no failure event the failed step trace entry carries the message instead)
     step_event = next(t for t in result.trace if t.get("action") == Action.READ_PERMIT_STATE.value)
     assert step_event["message"] == (
         "session expiry rendered as a modal: re-authentication is a user action, "
@@ -338,7 +338,7 @@ def test_planner_session_modal_downgrades_a_read_failure_to_a_stop():
 
 
 def test_planner_unsettled_page_is_not_treated_as_a_hard_failure():
-    """a read fails on a still-rendering page: the observation is marked evidence-free (message carries the settle route) instead of terminal"""
+    """a read fails on a still rendering page: the observation is marked evidence free (message carries the settle route) instead of terminal"""
     from licet.phase5.state import Action
 
     class _LoadingCap(_PortalScripted):
@@ -396,7 +396,7 @@ def test_route_from_result_round_trips_strategies():
         assert route.finding is finding and not route.terminal
     stop = route_from_result(RecoveryResult(False, "STOP", error="session expired"))
     assert stop.terminal and stop.finding is PortalFinding.SESSION_EXPIRED
-    # controller-internal strategies do not invent a portal route
+    # controller internal strategies do not invent a portal route
     assert route_from_result(RecoveryResult(False, "RECONCILE_MUTATION_STATE")) is None
 
 

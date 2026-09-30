@@ -1,4 +1,4 @@
-"""phase 1: map the citizen-portal application wizard (read-only, no submit)"""
+"""phase 1: map the citizen portal application wizard (read only, no submit)"""
 from __future__ import annotations
 
 import asyncio
@@ -190,7 +190,7 @@ async def main() -> int:
             if btn is None:
                 out("no Continue button — wizard end or unexpected page; stopping walk")
                 break
-            # read-only: if this page contains the final submit/agree control, stop here instead of continuing
+            # read only: if this page contains the final submit/agree control, stop here instead of continuing
             body = ""
             for f in list(page.frames):
                 try:

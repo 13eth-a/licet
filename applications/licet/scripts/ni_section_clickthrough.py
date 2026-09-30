@@ -1,4 +1,4 @@
-"""live section click-through on a record detail page — read-only"""
+"""live section click through on a record detail page read only"""
 
 from __future__ import annotations
 
@@ -137,7 +137,7 @@ async def main() -> int:
                 )
             else:
                 # the portal renders this link without making it actionable; the contract is that we say
-                # so precisely, never not_found and never a silent no-op
+                # so precisely, never not_found and never a silent no op
                 found.check(
                     f"'{label}' opens or is reported dead-but-rendered",
                     clicked or error.get("kind") == "not_actionable",
@@ -178,7 +178,7 @@ async def main() -> int:
                 "screenshot": str(shot),
             }
 
-            # sections are not per-view: check that another section is still reachable from inside this one
+            # sections are not per view: check that another section is still reachable from inside this one
             if index + 1 < len(SECTIONS):
                 other = SECTIONS[index + 1][0]
                 probe = await dispatcher.execute(
@@ -237,7 +237,7 @@ async def main() -> int:
             "no approval was granted during this run",
         )
 
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         found.check("run completed without exception", False, repr(exc))
     finally:
         try:

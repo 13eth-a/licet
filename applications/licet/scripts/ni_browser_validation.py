@@ -1,4 +1,4 @@
-"""read-only phase 1 acceptance: search -> known record -> inspections"""
+"""read only phase 1 acceptance: search > known record > inspections"""
 from __future__ import annotations
 
 import argparse
@@ -46,7 +46,7 @@ async def main(runs: int, inject_click_timeout: bool = False, verification_timeo
         auth = await asyncio.wait_for(client.authenticate(), 120)
         check("authenticated", auth.ok and auth.data.get("authenticated"))
         if inject_click_timeout:
-            # controlled adapter fault after a real, read-only search click
+            # controlled adapter fault after a real, read only search click
             resolve = client._resolve
             report["injected_timeout"] = {"kind": "after_search_click", "dispatches": 0}
 

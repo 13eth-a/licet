@@ -1,4 +1,4 @@
-"""probe both scheduling surfaces (read-only): back-office schedule form and citizen-portal inspection side door"""
+"""probe both scheduling surfaces (read only): back office schedule form and citizen portal inspection side door"""
 from __future__ import annotations
 
 import asyncio

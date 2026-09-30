@@ -1,4 +1,4 @@
-"""phase 2-6 flagship integration, executed against fake i/o"""
+"""phase 2 6 flagship integration, executed against fake i/o"""
 from __future__ import annotations
 
 import asyncio
@@ -110,8 +110,8 @@ def test_flagship_task_completes_in_a_sandbox_without_paying():
     assert run.world.verified_inspection is not None
     assert run.world.verified_inspection.record_key == run.world.record_key
 
-    # the no-spend constraint: no payment action was ever part of the run, and a payment proposal is
-    # refused by the same instruction the run was started with — the $74.50 fee remains unpaid
+    # the no spend constraint: no payment action was ever part of the run, and a payment proposal is
+    # refused by the same instruction the run was started with the $74.50 fee remains unpaid
     assert all("pay" not in action.action_type for action in portal.submits)
     engine = PolicyEngine(environment=Environment.SANDBOX,
                           constraints=UserConstraints.from_text(GOAL))

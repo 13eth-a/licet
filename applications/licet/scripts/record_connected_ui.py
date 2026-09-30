@@ -1,4 +1,4 @@
-"""record one real ui-triggered, plan-only accela run"""
+"""record one real ui triggered, plan only accela run"""
 import asyncio
 import json
 import os

@@ -1,4 +1,4 @@
-"""noisy phase 2–7 integration: real runtime and policy, fake external i/o"""
+"""noisy phase 2 7 integration: real runtime and policy, fake external i/o"""
 import asyncio
 from copy import deepcopy
 from dataclasses import replace
@@ -17,7 +17,7 @@ from licet.phase7.recovery import RecoveryController, RecoveryBudgets
 KEY = 'NULLISLAND/Building/REC26/00000/00014'
 CASES = ('read_timeout', 'home', 'loading', 'modal', 'wrong_page', 'tab',
          'session', 'outage', 'lost_submit', 'unknown_submit', 'wrong_record', 'preflight_timeout',
-         # r1: the stale-but-plausible read this portal actually produces
+         # r1: the stale but plausible read this portal actually produces
          'pending_rows')
 
 # what each injection actually exercises
@@ -87,7 +87,7 @@ async def noisy_run(case, seed=0, journal=None, validate_outcome=True):
                     world.record_key = 'FOREIGN'
                     return Observation(world)
                 if case == 'pending_rows':
-                    # r1: the observation the portal really produces mid-load
+                    # r1: the observation the portal really produces mid load
                     world.browser_state = settled_browser_state({
                         'url': detail['url'],
                         'text': 'Inspections\nYou have not added any inspections.\nLoading...',
@@ -117,7 +117,7 @@ async def noisy_run(case, seed=0, journal=None, validate_outcome=True):
         if case in {'lost_submit','unknown_submit'}:
             assert len(portal.submits) == 1
         if case == 'pending_rows':
-            # the stale-empty grid is never taken as a fact: the run re-settled and scheduled the real
+            # the stale empty grid is never taken as a fact: the run re settled and scheduled the real
             # inspection rather than concluding that the record has no inspections to schedule
             assert result.world.verified_inspection is not None
             assert result.world.verified_inspection.record_key == KEY
@@ -134,7 +134,7 @@ def test_noisy_real_runtime(case, seed):
 
 
 def test_pending_rows_grid_is_not_evidence_and_recovery_re_settles():
-    """r1: a mid-load read is not evidence, whatever it appears to say"""
+    """r1: a mid load read is not evidence, whatever it appears to say"""
     observation = {
         'url': 'https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building',
         'text': 'Inspections\nYou have not added any inspections.\nLoading...',
@@ -145,7 +145,7 @@ def test_pending_rows_grid_is_not_evidence_and_recovery_re_settles():
     assert 'empty_table_pending_rows' in {finding.value for finding in state.findings}
     route = route_recovery(state)
     assert route is not None and not route.terminal
-    # non-terminal and re-settling: the only route for an observation that is not yet evidence, as opposed
+    # non terminal and re settling: the only route for an observation that is not yet evidence, as opposed
     # to a stop or an invented reading of it
     assert route.finding.value == 'empty_table_pending_rows'
     assert route.strategy == 'WAIT_FOR_SETTLE'

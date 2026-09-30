@@ -1,4 +1,4 @@
-"""register the ni public-user account end-to-end (write op — one-shot)"""
+"""register the ni public user account end to end (write op one shot)"""
 from __future__ import annotations
 
 import asyncio
@@ -45,7 +45,7 @@ def save_html(tag: str, html: str, stamp: str) -> str:
 
 
 async def set_angular_value(page, selector: str, value: str) -> None:
-    """fill an angular-controlled input without clicking: focus + type"""
+    """fill an angular controlled input without clicking: focus + type"""
     loc = page.locator(selector).first
     await loc.focus()
     await page.keyboard.type(value, delay=45)

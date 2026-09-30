@@ -1,4 +1,4 @@
-"""phase 4 mutation-safety regressions (adversarial review portion)"""
+"""phase 4 mutation safety regressions (adversarial review portion)"""
 from datetime import date
 
 import pytest
@@ -105,7 +105,7 @@ def test_matching_record_key_proceeds_and_is_kept_in_the_audit():
 
 def test_portal_that_declines_to_assert_a_record_key_cannot_authorize():
     # this used to be a documented residual: a portal returning no observed record key left only the
-    # displayed-permit check
+    # displayed permit check
     portal = Portal(snap(record_key=None), after=snap(status="Scheduled", scheduled_date="2026-09-24", record_key=None))
     result = InspectionActionExecutor(portal).execute(
         schedule(record_key=RECORD_KEY), eligible_types=["Rough Electrical"], available_dates=["2026-09-24"]

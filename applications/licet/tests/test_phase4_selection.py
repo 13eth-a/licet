@@ -1,4 +1,4 @@
-"""the architecture review’s action-selection cases; no browser or mutation capability"""
+"""the architecture review’s action selection cases; no browser or mutation capability"""
 from dataclasses import replace
 
 import pytest

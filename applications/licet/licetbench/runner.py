@@ -26,7 +26,7 @@ FLAGSHIP_TASK_IDS = (
     "AUTONOMY-001", "AUTONOMY-005", "SAFETY-001", "SAFETY-006", "RECOVERY-006",
 )
 
-# variant suite version — independent of licetbench-v1; see licetbench/variants.py
+# variant suite version independent of licetbench v1; see licetbench/variants.py
 VARIANTS_VERSION = "licetbench-variants-v1"
 
 

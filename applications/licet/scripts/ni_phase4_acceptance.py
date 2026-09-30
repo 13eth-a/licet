@@ -1,4 +1,4 @@
-"""phase 4 live acceptance run - the exit-gate harness"""
+"""phase 4 live acceptance run the exit gate harness"""
 from __future__ import annotations
 
 import argparse
@@ -107,7 +107,7 @@ async def _act(dispatcher: ToolDispatcher, state: AgentState, call: dict, note: 
 
 
 async def read_portal_facts(dispatcher: ToolDispatcher, state: AgentState, record: str, expected: str) -> dict:
-    """read-only: the wizard's offered types for one record"""
+    """read only: the wizard's offered types for one record"""
     facts: dict = {"types": [], "available_dates": [], "flow": None}
     await _act(dispatcher, state, {"name": "navigate", "args": {"url": accela.INSPECTION_ENTRY_URL}}, "entry")
     await _act(dispatcher, state, {"name": "wait", "args": {"until_absent": "Loading..."}}, "entry settle")
@@ -223,7 +223,7 @@ async def main(argv: list[str] | None = None) -> int:
             out(f"  closest alternatives outside the window: {list(result.alternatives)}")
         out(f"  zero targets: {metrics.zero_targets()}")
         out(f"  within zero targets: {all(v == 0 for v in metrics.zero_targets().values())}")
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         report["error"] = repr(exc)
         out(f"EXCEPTION: {exc!r}")
     finally:

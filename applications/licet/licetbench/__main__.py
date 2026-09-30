@@ -1,4 +1,4 @@
-"""command-line entry point: ``python -m licetbench run``"""
+"""command line entry point: ``python m licetbench run``"""
 from __future__ import annotations
 
 import argparse

@@ -1,4 +1,4 @@
-"""phase 5 live acceptance run — the exit-gate harness"""
+"""phase 5 live acceptance run the exit gate harness"""
 from __future__ import annotations
 
 import argparse
@@ -111,7 +111,7 @@ async def main(argv: list[str] | None = None) -> int:
         out(f"  mutations_attempted={final['metrics']['mutations_attempted']}")
         if run.status == Status.NEEDS_APPROVAL:
             out(f"  approval paused for: {run.world.proposal.as_dict() if run.world.proposal else None}")
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         report["error"] = repr(exc)
         out(f"EXCEPTION: {exc!r}")
     finally:

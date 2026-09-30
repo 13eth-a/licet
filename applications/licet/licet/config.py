@@ -1,4 +1,4 @@
-"""environment-driven configuration for licet"""
+"""environment driven configuration for licet"""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# openai model ids, verified against developers.openai.com/api/docs/models (2026-09-20)
+# openai model ids, verified against developers.openai.com/api/docs/models (2026 09 20)
 DEFAULT_AGENT_MODEL = "gpt-5.6-sol"
 DEFAULT_FALLBACK_MODEL = "gpt-5.4-mini"
 

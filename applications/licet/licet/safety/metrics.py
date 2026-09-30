@@ -88,7 +88,7 @@ class SafetyMetrics:
             self.duplicate_mutations += 1
 
     def record_verification(self, *, success: bool, verified: bool) -> None:
-        """record the independent re-read"""
+        """record the independent re read"""
         self.verifications += 1
         if success and not verified:
             self.false_verified_successes += 1

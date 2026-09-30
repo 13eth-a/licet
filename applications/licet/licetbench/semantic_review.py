@@ -1,4 +1,4 @@
-"""evidence-bound secondary semantic review; never overrides deterministic failure"""
+"""evidence bound secondary semantic review; never overrides deterministic failure"""
 from dataclasses import dataclass, replace
 from licetbench.provenance import digest
 

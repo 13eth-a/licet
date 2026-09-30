@@ -231,7 +231,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
         )
     for inspection in state.inspections:
         if not inspection.failed:
-            # a passed result with a correction-required comment on the same attempt is unresolved
+            # a passed result with a correction required comment on the same attempt is unresolved
             # conflicting evidence, not a pass to report or a failure to invent (architecture review case
             # f04)
             if inspection.passed and comment_requests_correction(inspection.comments):
@@ -247,13 +247,13 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     inspection.evidence_ids + inspection.comment_evidence_ids, _RANK["failed_inspection"])
         )
         same_type = [x for x in state.inspections if x.type.lower() == inspection.type.lower()]
-        # latest-attempt honesty (architecture review case h05): same-type fail+pass attempts leave "which
-        # outcome is current" unresolved only when ordering is not establishable — a missing date on
+        # latest attempt honesty (architecture review case h05): same type fail+pass attempts leave "which
+        # outcome is current" unresolved only when ordering is not establishable a missing date on
         # either attempt, or a date tie
         unordered_conflict = any(
             x is not inspection
             and x.passed
-            # different explicit scopes are different requirements (h04) — their outcomes cannot resolve
+            # different explicit scopes are different requirements (h04) their outcomes cannot resolve
             # or order this attempt's
             and (
                 inspection.scope is None
@@ -288,7 +288,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                                 "likely", ["correction completion"],
                                 inspection.evidence_ids + inspection.comment_evidence_ids)
         )
-        # a bare failure is not authority to schedule (architecture review case h02): if a same-type
+        # a bare failure is not authority to schedule (architecture review case h02): if a same type
         # attempt is already scheduled, reinspection is arranged
         if any(x.lifecycle_normalized == "SCHEDULED" for x in same_type):
             result.uncertainties.append(
@@ -311,8 +311,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 )
             )
     # a completed attempt with no recorded outcome (architecture review case s04): the lifecycle is a
-    # fact, the result is unknown — never guessed either way, and the unknown outcome can change any
-    # current-outcome answer
+    # fact, the result is unknown never guessed either way, and the unknown outcome can change any
+    # current outcome answer
     for inspection in state.inspections:
         if inspection.lifecycle_normalized == "COMPLETED" and not inspection.result_normalized:
             result.uncertainties.append(
@@ -346,7 +346,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 )
             )
     for fee in state.fees:
-        # non-payment is a portal statement, never an assumption: a fee whose payment state is absent
+        # non payment is a portal statement, never an assumption: a fee whose payment state is absent
         # stays unknown
         if fee.paid is not False:
             if fee.due is True and fee.paid is None:
@@ -475,7 +475,7 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
             continue
         else:
             # order may be fully established here (e.g. both dates known, pass later) with only the
-            # *scope* unknown — or ordering itself may be unknown
+            # *scope* unknown or ordering itself may be unknown
             if failed.scope is None and matching_pass.scope is None and order == "later":
                 premise = ("both attempts' scopes are not shown, so whether the pass "
                            "addresses the failed attempt is not established")

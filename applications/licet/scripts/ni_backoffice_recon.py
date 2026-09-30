@@ -1,4 +1,4 @@
-"""read-only recon of the null island back office (classic admin) via solari"""
+"""read only recon of the null island back office (classic admin) via solari"""
 
 from __future__ import annotations
 

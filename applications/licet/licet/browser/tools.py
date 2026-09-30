@@ -12,7 +12,7 @@ TOOL_NAMES = ("navigate", "click", "type", "select", "read_page", "wait", "scree
 
 @dataclass(frozen=True)
 class BrowserResult:
-    """provider-independent result contract for a browser action"""
+    """provider independent result contract for a browser action"""
 
     success: bool
     action: str

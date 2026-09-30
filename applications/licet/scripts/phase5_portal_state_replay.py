@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""phase 5 portal-state replay (portal integration review)"""
+"""phase 5 portal state replay (portal integration review)"""
 from __future__ import annotations
 
 import argparse
@@ -35,7 +35,7 @@ from datetime import datetime as _legacy_datetime  # noqa: E402
 
 
 def legacy_normalize_date(value):
-    """the pre-review adapter kept dates raw; only the extractor's money parse knew about currency"""
+    """the pre review adapter kept dates raw; only the extractor's money parse knew about currency"""
     text = str(value or "").strip()
     for fmt in _LEGACY_DATE_FORMATS:
         try:
@@ -46,7 +46,7 @@ def legacy_normalize_date(value):
 
 
 def legacy_inspection_table_dates(text: str) -> list[dict]:
-    """pre-review table path: dates stayed raw mm/dd/yyyy (h02), a 'due date' column defeated fees header recognition, and a result word in the status column produced no result (h06)"""
+    """pre review table path: dates stayed raw mm/dd/yyyy (h02), a 'due date' column defeated fees header recognition, and a result word in the status column produced no result (h06)"""
     rows = []
     fields = None
     for line in text.splitlines():
@@ -68,7 +68,7 @@ def legacy_inspection_table_dates(text: str) -> list[dict]:
 
 
 def legacy_text_rows(text: str) -> list[dict]:
-    """pre-review text path: the trailing date token was dropped entirely (h02b)"""
+    """pre review text path: the trailing date token was dropped entirely (h02b)"""
     rows = []
     for line in str(text or "").splitlines():
         line = line.strip()
@@ -102,7 +102,7 @@ def _legacy_result(text: str):
 
 
 def legacy_inspection_coverage(text: str, rows: list) -> str:
-    """pre-review: rows -> complete, regardless of a declared-empty marker (h05)"""
+    """pre review: rows > complete, regardless of a declared empty marker (h05)"""
     from licet.browser import accela
     if rows:
         return "complete"
@@ -112,7 +112,7 @@ def legacy_inspection_coverage(text: str, rows: list) -> str:
 
 
 def case_h02_mmdd_dates():
-    """real aca dates must reach the iso-consuming ordering logic"""
+    """real aca dates must reach the iso consuming ordering logic"""
     from licet.phase3.rules import _attempt_order
     from licet.phase3.state import Inspection
 
@@ -120,8 +120,8 @@ def case_h02_mmdd_dates():
             "Rough Electrical | Completed | Failed | 09/18/2026\n"
             "Rough Electrical | Completed | Passed | 09/20/2026")
     legacy_rows = legacy_inspection_table_dates(text)
-    # the pre-review tree kept mm/dd/yyyy in permitstate; _attempt_order only parses iso, so a real
-    # later-pass was reported as order "unknown"
+    # the pre review tree kept mm/dd/yyyy in permitstate; _attempt_order only parses iso, so a real
+    # later pass was reported as order "unknown"
     legacy = [
         r.get("completed_date") for r in legacy_rows
     ] + [

@@ -32,7 +32,7 @@ class InspectionPortal(Protocol):
 
 
 class InspectionActionExecutor:
-    """browser-independent workflow; the adapter owns accela clicks/forms"""
+    """browser independent workflow; the adapter owns accela clicks/forms"""
 
     def __init__(self, portal: InspectionPortal, *, policy_engine: PolicyEngine | None = None,
                  environment: Environment | None = None, constraints=None,
@@ -81,7 +81,7 @@ class InspectionActionExecutor:
         if action.existing_inspection_id and before.inspection_id != action.existing_inspection_id:
             return self._failure(action, ActionErrorCode.STATE_MISMATCH, "verified inspection does not match requested inspection", before=before)
         if kind in {"schedule", "schedule_inspection"} and (before.is_scheduled or before.is_pending):
-            # idempotency: an existing appointment or an accepted in-flight request already produces the
+            # idempotency: an existing appointment or an accepted in flight request already produces the
             # desired outcome; submitting again duplicates it. "not scheduled" is requestable and is not
             # blocked
             return self._failure(action, ActionErrorCode.INSPECTION_ALREADY_SCHEDULED, "inspection is already scheduled or has an in-flight request", before=before)
@@ -144,7 +144,7 @@ class InspectionActionExecutor:
                 return self._failure(action, code, "no available date satisfies the user's constraints",
                                      before=before, alternatives=alternatives)
             if kind in {"reschedule", "reschedule_inspection"} and selected == before.scheduled_date:
-                # a same-date reschedule is indistinguishable from a no-op, so a verified "old date
+                # a same date reschedule is indistinguishable from a no op, so a verified "old date
                 # changed to new date" result is impossible
                 return self._failure(action, ActionErrorCode.RESCHEDULE_FAILED, "requested date equals the current scheduled date; no change to verify", before=before)
         proposed = replace(before, scheduled_date=selected or before.scheduled_date,
@@ -205,7 +205,7 @@ class InspectionActionExecutor:
     @staticmethod
     def _matches(kind: str, proposed: InspectionSnapshot, observed: InspectionSnapshot,
                  action: InspectionAction | None = None) -> bool:
-        """whether the re-read state is the outcome the authorized action requested"""
+        """whether the re read state is the outcome the authorized action requested"""
         if observed.permit_id != proposed.permit_id or observed.inspection_type.casefold() != proposed.inspection_type.casefold():
             return False
         if action is not None:

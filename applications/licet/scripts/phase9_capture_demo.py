@@ -1,4 +1,4 @@
-"""capture one plan-only flagship using the unchanged product capabilities"""
+"""capture one plan only flagship using the unchanged product capabilities"""
 from __future__ import annotations
 import asyncio
 import json

@@ -1,4 +1,4 @@
-"""end-to-end phase 4 workflow and metrics regressions"""
+"""end to end phase 4 workflow and metrics regressions"""
 from dataclasses import replace
 
 from licet.eval import phase4_fixtures as fixtures

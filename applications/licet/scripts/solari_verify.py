@@ -55,7 +55,7 @@ MASK_CSS = ".ACA_MaskDiv, #divGlobalLoadingMask { display: none !important; }"
 
 
 async def neutralize_loading_mask(page) -> None:
-    """aca's global loading mask (a silverlight-era overlay iframe) stays in the dom 'hidden' but still intercepts pointer events, breaking clicks (live-verified 2026-09-18)"""
+    """aca's global loading mask (a silverlight era overlay iframe) stays in the dom 'hidden' but still intercepts pointer events, breaking clicks (live verified 2026 09 18)"""
     try:
         await page.add_style_tag(content=MASK_CSS)
     except Exception:
@@ -63,7 +63,7 @@ async def neutralize_loading_mask(page) -> None:
 
 
 async def safe_click(page, selector: str, timeout: int = 8000) -> None:
-    """click the first match, with a short normal attempt then force (bypasses the overlay hit-target check and postback races)"""
+    """click the first match, with a short normal attempt then force (bypasses the overlay hit target check and postback races)"""
     loc = page.locator(selector).first
     try:
         await loc.click(timeout=timeout)
@@ -233,7 +233,7 @@ async def main() -> int:
             )
             if street_sel:
                 field, term = street_sel, "Main"
-            else:  # nothing street-like — wildcard the permit number instead
+            else:  # nothing street like wildcard the permit number instead
                 field, term = PERMIT_INPUT, "%"
                 mode += f" → no street field (saw {input_ids[:6]}…); fell back to permit wildcard"
             await safe_click(page, field)

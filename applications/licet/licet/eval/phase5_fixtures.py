@@ -628,7 +628,7 @@ def planner_scenarios():
         expected_status=Status.SUCCESS,
         expected_actions=["FIND_PERMIT", "READ_PERMIT_STATE", "DETERMINE_BLOCKERS", "DETERMINE_NEXT_INSPECTION", "CHECK_INSPECTION_AVAILABILITY", "SCHEDULE_INSPECTION", "VERIFY_STATE"],
         expected_remaining=(),
-        # the no-replay guard means the mutation is submitted exactly once, so there is no duplicate
+        # the no replay guard means the mutation is submitted exactly once, so there is no duplicate
         # action even though the fixture would refuse one
         assert_metrics=dict(duplicate_action_rate=0.0, mutations_attempted=1),
     ))

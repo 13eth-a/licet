@@ -1,4 +1,4 @@
-"""question-specific deterministic interpretation before any model reasoning"""
+"""question specific deterministic interpretation before any model reasoning"""
 from __future__ import annotations
 
 import hashlib
@@ -65,8 +65,8 @@ def understand(state: PermitState, question: str, *, snapshot_id: str = "snapsho
         word in lowered
         for word in ("document", "documents", "plan", "plans", "attachment", "attachments", "upload", "uploads")
     )
-    # blocker/readiness/next-step questions route through conditions + history; that is the same relevance
-    # signal the missing-section cases use
+    # blocker/readiness/next step questions route through conditions + history; that is the same relevance
+    # signal the missing section cases use
     blocker_relevant = Section.CONDITIONS.value in route.sections and Section.HISTORY.value in route.sections
     if inspection_relevant:
         for inspection in state.inspections:
@@ -84,7 +84,7 @@ def understand(state: PermitState, question: str, *, snapshot_id: str = "snapsho
                     _claim(FactKind.FACT, f'The scheduling form marks {fact.value} as (required).', fact.evidence_ids, "explicit_requirement")
                 )
 
-    # a complete observed-empty section supports "no entries shown" — a positive claim about coverage, not
+    # a complete observed empty section supports "no entries shown" a positive claim about coverage, not
     # about requirements and never about a global "no blockers" (checklist/u01/u05)
     for section, relevant in (
         (Section.INSPECTIONS.value, inspection_relevant),
@@ -108,7 +108,7 @@ def understand(state: PermitState, question: str, *, snapshot_id: str = "snapsho
             )
         )
 
-    # a stale-overview contradiction (overview issued + dated explicit expiration event, oracle s03): a
+    # a stale overview contradiction (overview issued + dated explicit expiration event, oracle s03): a
     # conflict the sources themselves do not resolve
     if (
         state.status_normalized == "ISSUED"
@@ -124,7 +124,7 @@ def understand(state: PermitState, question: str, *, snapshot_id: str = "snapsho
             "expiration event; no renewal evidence resolves them (possible stale overview)"
         )
 
-    # rejected foreign observations are data-hygiene events the answer must surface (oracle u04): evidence
+    # rejected foreign observations are data hygiene events the answer must surface (oracle u04): evidence
     # was refused, so say so explicitly
     for rejection in state.rejected_observations:
         if rejection not in result.contradictions:

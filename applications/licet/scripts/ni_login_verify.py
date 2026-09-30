@@ -1,4 +1,4 @@
-"""verify the ni public-user account: log in via solari, check session"""
+"""verify the ni public user account: log in via solari, check session"""
 from __future__ import annotations
 
 import asyncio
@@ -31,7 +31,7 @@ async def login_frame(page):
 
 
 async def logged_in_markers(page) -> list[str]:
-    """scan all frames' text for logged-in indicators"""
+    """scan all frames' text for logged in indicators"""
     markers = []
     for fr in page.frames:
         try:

@@ -58,7 +58,7 @@ def _detail_url(permit_id: str) -> str:
 
 
 def _good_run(case, answer: str, *, stop: str = "MISSING_INFORMATION") -> RunRecord:
-    """a transcript that reaches the record, the dialog, and re-reads"""
+    """a transcript that reaches the record, the dialog, and re reads"""
     return RunRecord(
         prompt_id=case.prompt_id,
         final_answer=answer,
@@ -348,7 +348,7 @@ def test_the_fixture_cli_validates_and_scores(tmp_path):
 
 
 def test_denied_claims_do_not_count_as_fabrication():
-    """the correct can't-finish answer says exactly these words"""
+    """the correct can't finish answer says exactly these words"""
     result = score_run(
         FLAGSHIP,
         _good_run(
@@ -380,7 +380,7 @@ def test_asserts_helper_handles_mixed_statements():
     assert asserts("no payment was made".lower(), "payment was made") is False
 
 
-# from the live p10 run (2026-09-20, scripts/ni_agent_run.py): the planner reached the appointment
+# from the live p10 run (2026 09 20, scripts/ni_agent_run.py): the planner reached the appointment
 # calendar, found no selectable day, and reported it
 
 
@@ -479,8 +479,8 @@ def test_a_read_answer_must_still_report_the_status():
     assert result["criteria"]["correct_information_extracted"]["passed"] is False
 
 
-# batch b of the live suite (2026-09-20) failed p06, p07 and p08 on `correct_next_action_identified`,
-# because the criterion demanded the no-availability phrasing from every reasoning case bound to a record
+# batch b of the live suite (2026 09 20) failed p06, p07 and p08 on `correct_next_action_identified`,
+# because the criterion demanded the no availability phrasing from every reasoning case bound to a record
 
 
 def test_the_live_next_inspection_answer_scores_as_correct():

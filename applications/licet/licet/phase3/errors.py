@@ -24,8 +24,8 @@ class Phase3ErrorCode(str, Enum):
     # a conclusion's premise is missing; abstain instead of guessing
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
 
-    # a substantive status word maps to no agency-supported label; the raw value is preserved, never
-    # substring-guessed (architecture review review p1 #2)
+    # a substantive status word maps to no agency supported label; the raw value is preserved, never
+    # substring guessed (architecture review review p1 #2)
     UNSUPPORTED_STATUS = "UNSUPPORTED_STATUS"
 
     FOREIGN_RECORD_EVIDENCE = "FOREIGN_RECORD_EVIDENCE"
@@ -41,7 +41,7 @@ SECTION_ERROR_CODES: dict[str, Phase3ErrorCode] = {
 
 
 class Phase3Error(Exception):
-    """a phase 3 failure carrying its machine-readable code and provenance"""
+    """a phase 3 failure carrying its machine readable code and provenance"""
 
     def __init__(self, code: Phase3ErrorCode | str, message: str, *, section: str | None = None) -> None:
         self.code = Phase3ErrorCode(code) if not isinstance(code, Phase3ErrorCode) else code

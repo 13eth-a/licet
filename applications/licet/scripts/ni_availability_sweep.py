@@ -1,4 +1,4 @@
-"""is anything actually bookable? — read-only availability sweep"""
+"""is anything actually bookable? read only availability sweep"""
 
 from __future__ import annotations
 
@@ -253,7 +253,7 @@ async def main() -> int:
         )
         out(f"  any bookable date on this sandbox: {report['any_bookable']}")
         out("nothing was confirmed or scheduled")
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         report["error"] = repr(exc)
         out(f"EXCEPTION: {exc!r}")
     finally:

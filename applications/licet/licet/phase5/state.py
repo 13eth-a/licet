@@ -1,4 +1,4 @@
-"""run-local semantic planner contracts"""
+"""run local semantic planner contracts"""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field

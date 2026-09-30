@@ -1,4 +1,4 @@
-"""read-only: which agency / inspection type can actually be scheduled?"""
+"""read only: which agency / inspection type can actually be scheduled?"""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def stamp_now() -> str:
 
 
 class Progress:
-    """append-and-fsync checkpoint log; survives a hard interruption"""
+    """append and fsync checkpoint log; survives a hard interruption"""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -193,7 +193,7 @@ async def frame_next(frame) -> bool:
 
 
 async def click_next_page(page, progress: Progress) -> bool:
-    """best-effort pagination: 'load more' / 'next' navigation only"""
+    """best effort pagination: 'load more' / 'next' navigation only"""
     for label in ("Load More", "Next", "Next »", "More"):
         for scope in (page, *page.frames):
             try:
@@ -222,7 +222,7 @@ async def click_next_page(page, progress: Progress) -> bool:
 
 
 def classify_row(cells: list[str]) -> dict:
-    """best-effort extraction; the raw cells are always retained"""
+    """best effort extraction; the raw cells are always retained"""
     joined = " | ".join(cells)
     record = None
     match = _RECORD_RE.search(joined)

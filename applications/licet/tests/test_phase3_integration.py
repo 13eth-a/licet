@@ -1,4 +1,4 @@
-"""phase 3 integration: aca adapter, read-only retrieval, renderer, errors"""
+"""phase 3 integration: aca adapter, read only retrieval, renderer, errors"""
 from __future__ import annotations
 
 import asyncio
@@ -186,7 +186,7 @@ def test_runner_drives_benign_clicks_and_merges_observations():
     # the only click is the section's benign label; the guard resolved it
     clicks = [call for call in client.calls if call[0] == "click"]
     assert clicks and "Inspections" in clicks[0][1]["target"]
-    # the observation actually landed in the state: the text-line rows validated against the
+    # the observation actually landed in the state: the text line rows validated against the
     # lifecycle/result vocabularies, and the wizard's (required) marker became a fact
     assert state.coverage["inspections"].status == CoverageStatus.PARTIAL
     assert state.inspections and state.inspections[0].failed
@@ -208,7 +208,7 @@ def test_runner_fails_closed_without_record_identity():
 
 
 class HiddenWrapperClient(RetrievalFakeClient):
-    """fakes the live 2026-09-25 failure shape: the exact-label anchor exists in the dom but is never visible, so the click reports `not_actionable` — the dead-but-rendered wrapper the click-through script documented"""
+    """fakes the live 2026 09 25 failure shape: the exact label anchor exists in the dom but is never visible, so the click reports `not_actionable` the dead but rendered wrapper the click through script documented"""
 
     def __init__(self, url: str, reads: list[dict]) -> None:
         super().__init__(url, reads)
@@ -258,7 +258,7 @@ def test_runner_falls_back_when_exact_label_is_dead_but_rendered():
 
 
 def test_runner_reports_unavailable_after_all_label_variants_fail():
-    """when every variant is dead-but-rendered, the section stays failed and the loop does not grow an unbounded click budget"""
+    """when every variant is dead but rendered, the section stays failed and the loop does not grow an unbounded click budget"""
     client = HiddenWrapperClient(RECORD_URL, [dict(RECORD_PAGE_DATA, text="Record 000000014: Commercial Alteration")])
     client.section_opened = True  # never lets a section click succeed
 
@@ -323,7 +323,7 @@ def test_runner_refuses_a_non_benign_section_click(monkeypatch):
 
 
 def test_runner_never_emits_mutation_intents():
-    """every dispatcher call the runner builds must be a read-path action"""
+    """every dispatcher call the runner builds must be a read path action"""
     client = RetrievalFakeClient(RECORD_URL, [dict(RECORD_PAGE_DATA)])
     dispatcher = _dispatch(client)
     state = PermitState(record_key="k")
@@ -360,7 +360,7 @@ def test_run_retrieval_sync_wrapper():
 
 
 def test_runner_rejects_a_state_keyed_to_a_different_record():
-    """the merge guard still applies to retrieval: no cross-record leakage"""
+    """the merge guard still applies to retrieval: no cross record leakage"""
     client = RetrievalFakeClient(RECORD_URL, [dict(RECORD_PAGE_DATA)])
     state = PermitState(record_key="NULLISLAND/Building/REC26/00000/OTHER")
     outcome = run_retrieval(
@@ -426,7 +426,7 @@ def test_renderer_partial_answer_names_the_missing_section():
 
 
 def test_flagship_pipeline_over_real_page_shapes():
-    """the phase 3 flagship on adapter-shaped inputs, end to end"""
+    """the phase 3 flagship on adapter shaped inputs, end to end"""
     key = "NULLISLAND/Building/REC26/00000/9F001"
     overview = accela_extract.overview_observation(
         dict(RECORD_PAGE_DATA, url=RECORD_URL.replace("000QB", "9F001"),

@@ -1,4 +1,4 @@
-"""find the real apply-flow url on ni's citizen portal (read-only)"""
+"""find the real apply flow url on ni's citizen portal (read only)"""
 from __future__ import annotations
 
 import asyncio

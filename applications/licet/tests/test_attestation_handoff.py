@@ -1,4 +1,4 @@
-"""offline tests for the human-attestation handoff"""
+"""offline tests for the human attestation handoff"""
 from __future__ import annotations
 
 import asyncio
@@ -151,7 +151,7 @@ def test_sync_probe_and_async_notify_are_both_supported():
 
 
 def test_a_pre_satisfied_control_is_not_reported_as_human_acceptance():
-    """ni ships its agree box pre-ticked, so 'checked' proves nobody's action"""
+    """ni ships its agree box pre ticked, so 'checked' proves nobody's action"""
     clock = FakeClock()
     notified: list[int] = []
 
@@ -336,7 +336,7 @@ def test_adapter_can_be_told_not_to_advance():
 
 
 def test_adapter_does_not_advance_a_pre_ticked_portal_default():
-    """the live ni page renders its agree box already ticked and self-advances"""
+    """the live ni page renders its agree box already ticked and self advances"""
     page, frame, box = _disclaimer_page()
     box.checked = True
 
@@ -375,7 +375,7 @@ def test_adapter_treats_navigating_past_the_disclaimer_as_satisfied():
 
 
 def test_portal_default_opt_in_permits_continuation_without_relabelling_it():
-    """the opt-in changes what the caller may do, not what happened"""
+    """the opt in changes what the caller may do, not what happened"""
     page, frame, box = _disclaimer_page()
     box.checked = True
 
@@ -400,7 +400,7 @@ def test_portal_default_opt_in_is_not_granted_by_default():
         timeout_s=30, allow_portal_default=True,
     ))
 
-    # a caller that did not ask for the opt-in still may not continue
+    # a caller that did not ask for the opt in still may not continue
     assert report.permits_continuation() is False
     assert frame.continue_clicks == 1
 
@@ -429,13 +429,13 @@ def test_continuation_is_gated_on_what_the_run_actually_observed():
         SafetyStopCondition.LEGAL_ATTESTATION, "")
 
     assert waited.permits_continuation() is True
-    # nothing in the run supports the operator having been involved, so only the explicit opt-in carries it
+    # nothing in the run supports the operator having been involved, so only the explicit opt in carries it
     assert portal_default.permits_continuation() is False
     assert portal_default.permits_continuation(allow_portal_default=True) is True
 
 
 def test_adapter_keeps_waiting_when_only_the_box_rerenders():
-    # a re-render that drops the checkbox while the page is still the disclaimer must not be mistaken for
+    # a re render that drops the checkbox while the page is still the disclaimer must not be mistaken for
     # acceptance
     page, frame, box = _disclaimer_page()
     clock = FakeClock()

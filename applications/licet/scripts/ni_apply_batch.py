@@ -1,4 +1,4 @@
-"""batch-apply licet eval record types on the ni citizen portal (final)"""
+"""batch apply licet eval record types on the ni citizen portal (final)"""
 from __future__ import annotations
 
 import asyncio
@@ -53,7 +53,7 @@ APPS = [
     ("Building/Residential/Mechanical/NA", "res_mech",
      "Licet eval application - residential mechanical for testing",
      "95", "Commerce Ave", "00001"),
-    # 2026-09-29: further record types, confirmed present in the live citizen catalog
+    # 2026 09 29: further record types, confirmed present in the live citizen catalog
     # (logs/ni_backoffice/inventory/*_catalog.json) and added to widen the availability search
     ("Building/Residential/Alteration/NA", "res_alt",
      "Licet eval application - residential alteration for testing",
@@ -111,7 +111,7 @@ POPUP_VALS = (
     ("zip", "00001"),
     ("conteducationname", "Eval Course 101"),
     ("educationname", "Eval Course 101"),
-    ("classhours", "8"),  # must beat 'txtclass' (longest-first match)
+    ("classhours", "8"),  # must beat 'txtclass' (longest first match)
     ("txtclass", "Beginner"),
     ("completeddate", "01152026"),  # masked date: type digits only
     ("provider", "Licet Eval Testing LLC"),
@@ -236,7 +236,7 @@ async def type_field(page, el, val: str, masked: bool) -> None:
 
 
 async def fill_required_empty(page, app_fields: dict[str, str]) -> int:
-    """pre-fill empty required text/masked fields on the current page"""
+    """pre fill empty required text/masked fields on the current page"""
     filled = 0
     for f in list(page.frames):
         try:
@@ -272,7 +272,7 @@ async def fill_required_empty(page, app_fields: dict[str, str]) -> int:
 
 async def fill_control_generic(page, cid: str,
                                app_fields: dict[str, str]) -> bool:
-    """fill a validation-flagged control we have no hardcoded value for"""
+    """fill a validation flagged control we have no hardcoded value for"""
     for f in list(page.frames):
         try:
             loc = f.locator(f"[id='{cid}']")
@@ -408,7 +408,7 @@ async def fill_popup_round(page) -> int:
             break
         if val is None:
             continue
-        # skip only if already correct: non-masked with content, or masked whose digits already match the
+        # skip only if already correct: non masked with content, or masked whose digits already match the
         # target
         if not masked and cur:
             continue
@@ -569,7 +569,7 @@ async def wait_no_popup(page, tries: int = 8) -> bool:
 
 async def click_control(page, sels: str | tuple[str, ...], *,
                         timeout_ms: int = 8000, attempts: int = 3) -> bool:
-    """click a control, re-resolving it — and its frame — on every attempt"""
+    """click a control, re resolving it and its frame on every attempt"""
     selectors = (sels,) if isinstance(sels, str) else sels
     for _ in range(attempts):
         await wait_no_popup(page)
@@ -811,7 +811,7 @@ async def run_one_application(page, app: dict) -> str | None:
             out(f"  RECORD ID CAPTURED: {altid}")
             return altid
 
-        # stall detection: same url three consecutive steps -> give up
+        # stall detection: same url three consecutive steps > give up
         stall = stall + 1 if url == prev_url else 0
         if stall >= 3:
             out("  stalled 3 rounds on same page — aborting")

@@ -35,7 +35,7 @@ def _coverage(data: Mapping[str, Any], section: str, has_rows: bool) -> Coverage
     except ValueError:
         status = CoverageStatus.PARSE_FAILED
     note = _norm(data.get("coverage_note"))
-    # coverage honesty (architecture review review p1 #5): a declared-complete section that is still
+    # coverage honesty (architecture review review p1 #5): a declared complete section that is still
     # rendering, or whose source text was cut off, is only a partial view
     if data.get("loading") and status == CoverageStatus.COMPLETE:
         status = CoverageStatus.PARTIAL
@@ -72,7 +72,7 @@ def normalize_permit_status(raw: str | None) -> str | None:
 def normalize_lifecycle(raw: str | None) -> str | None:
     text = (raw or "").strip().lower()
     if not text:
-        # no status shown at all is unknown lifecycle — never fabricated into "pending" (pending is a
+        # no status shown at all is unknown lifecycle never fabricated into "pending" (pending is a
         # claim the portal must make)
         return None
     if text in {"not scheduled", "awaiting", "pending"}:
@@ -188,7 +188,7 @@ def extract_partial_state(observation: Mapping[str, Any], *, section: str | Sect
 
 
 def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitState:
-    """merge same-record observations without replacing known data with blanks"""
+    """merge same record observations without replacing known data with blanks"""
     for part in partials:
         if base.record_key and part.record_key and base.record_key != part.record_key:
             base.rejected_observations.append(
@@ -205,7 +205,7 @@ def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitSta
         base.evidence.update(part.evidence)
         base.coverage.update(part.coverage)
         # facts are shared observations when their evidence agrees; when the evidence differs, keep both
-        # so competing values stay visible (the contract forbids last-write-wins on same-field facts)
+        # so competing values stay visible (the contract forbids last write wins on same field facts)
         for fact in part.facts:
             if not any(
                 x.field == fact.field and x.value == fact.value
@@ -223,7 +223,7 @@ def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitSta
     return base
 
 
-# scalar fields whose disagreement between two same-record reads is a real conflict the answer must surface
+# scalar fields whose disagreement between two same record reads is a real conflict the answer must surface
 _CONFLICT_FIELDS = {
     "paid", "due", "status", "result", "amount", "balance", "required",
     "downloadable", "completed_date", "scheduled_date", "lifecycle_normalized",

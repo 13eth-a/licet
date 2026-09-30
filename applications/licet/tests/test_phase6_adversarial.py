@@ -125,7 +125,7 @@ def test_unclassified_portal_cannot_reschedule():
      snap(status="Scheduled", scheduled_date=DATE)),
 ])
 def test_live_portal_blocks_every_supported_mutation(action, before):
-    # every pre-check passes, so the *only* thing standing between this action and a live municipal record
+    # every pre check passes, so the *only* thing standing between this action and a live municipal record
     # is the environment gate
     portal = Portal(before)
     portal.environment = Environment.LIVE_READ_ONLY
@@ -145,7 +145,7 @@ def test_policy_refuses_a_cancellation_that_names_no_target_inspection():
 
 
 def test_sandbox_declared_explicitly_still_schedules():
-    # positive control: the fail-closed default must not break a declared sandbox
+    # positive control: the fail closed default must not break a declared sandbox
     portal = Portal(snap(), after=snap(status="Scheduled", scheduled_date=DATE))
     result = executor(portal).execute(schedule(), eligible_types=[TYPE], available_dates=[DATE])
     assert result.success and result.verified
@@ -158,7 +158,7 @@ def test_sandbox_declared_explicitly_still_schedules():
     "https://sandbox.aca-test.accela.com/record",
 ])
 def test_a_non_sandbox_host_is_never_classified_as_sandbox(url):
-    # never sandbox: an impostor host must fail towards read-only, not towards "safe to mutate"
+    # never sandbox: an impostor host must fail towards read only, not towards "safe to mutate"
     assert environment_from_url(url) is not Environment.SANDBOX
     assert environment_from_url("https://aca-test.accela.com/anything") is Environment.SANDBOX
 
@@ -233,7 +233,7 @@ def test_bound_approval_authorizes_exactly_one_execution():
     portal = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     first = executor(portal).execute(cancel(), eligible_types=[TYPE], approval=approval)
     assert first.success and len(portal.submits) == 1
-    # a second, independent executor whose pre-checks all pass again: the only thing refusing it is the
+    # a second, independent executor whose pre checks all pass again: the only thing refusing it is the
     # spent approval itself
     again = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     second = executor(again).execute(cancel(), eligible_types=[TYPE], approval=approval)
@@ -579,7 +579,7 @@ def test_capabilities_refuse_a_live_portal_even_with_an_approval():
 
 
 class RecordingCapabilities:
-    """planner-level double that records exactly what the planner passed down"""
+    """planner level double that records exactly what the planner passed down"""
 
     def __init__(self):
         self.calls = []
@@ -818,7 +818,7 @@ def test_the_primitive_layer_refuses_every_mutation_outside_a_sandbox(action, ur
     state.request_approval(action, "user said yes")
     state.grant_approval()
     assert authorize(action, state).decision is GuardDecision.BLOCK
-    # reads stay open in every environment: live read-only is the normal mode
+    # reads stay open in every environment: live read only is the normal mode
     assert authorize("read_inspection_history", state).decision is GuardDecision.ALLOW
 
 

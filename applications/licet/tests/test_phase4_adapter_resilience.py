@@ -1,4 +1,4 @@
-"""phase 4 adapter resilience: bounded retries and fail-closed unmapped flows"""
+"""phase 4 adapter resilience: bounded retries and fail closed unmapped flows"""
 from __future__ import annotations
 
 import pytest
@@ -136,7 +136,7 @@ def test_a_reschedule_commit_intent_is_acknowledged_not_relabelled():
 
 
 def test_a_benign_intent_still_cannot_bypass_the_commit_point():
-    # adding reschedule to the acknowledging set must not reopen the hole: a non-committing intent on the
+    # adding reschedule to the acknowledging set must not reopen the hole: a non committing intent on the
     # confirm step still resolves to the commit
     resolution = resolve_action(
         ToolCall("click", {"target": "Continue", "by": "text",

@@ -1,4 +1,4 @@
-"""null island aca knowledge as data — the reconciliation artefact"""
+"""null island aca knowledge as data the reconciliation artefact"""
 
 from __future__ import annotations
 
@@ -27,11 +27,11 @@ INSPECTION_ENTRY_URL = (
 
 
 def search_url(module: str = DEFAULT_MODULE) -> str:
-    """the record-search page"""
+    """the record search page"""
     return f"{PORTAL_ROOT}/Cap/CapHome.aspx?TabName=Home&module={module}"
 
 
-# selecting a search mode is an auto-postback that swaps the whole form: on ni choosing "search by
+# selecting a search mode is an auto postback that swaps the whole form: on ni choosing "search by
 # address" makes `txtgsstreetname` and even `txtgspermitnumber` vanish
 SEARCH_MODE_DROPDOWN = "ctl00_PlaceHolderMain_ddlSearchType"
 SEARCH_BUTTON_TEXT = "Search"
@@ -71,7 +71,7 @@ def search_mode_option(labels: Iterable[str], method: str) -> str | None:
 
 
 def resolve_search_field(fields: Iterable[object], kind: str) -> str | None:
-    """the id of the search-form control for `kind`, from a *fresh* inventory"""
+    """the id of the search form control for `kind`, from a *fresh* inventory"""
     suffixes = SEARCH_FIELD_SUFFIXES.get(kind, ())
     for field in fields:
         control_id = str(field.get("id") or "") if isinstance(field, dict) else str(getattr(field, "id", "") or "")
@@ -83,7 +83,7 @@ def resolve_search_field(fields: Iterable[object], kind: str) -> str | None:
     return None
 
 
-# an "address" search can return zero rows purely because the agency pre-fills a narrow date window (ni:
+# an "address" search can return zero rows purely because the agency pre fills a narrow date window (ni:
 # 09/18/2024→09/18/2026) that hides older sandbox data
 SEARCH_DATE_START_SUFFIX = "txtGSStartDate"
 SEARCH_DATE_START_WIDENED = "01/01/1990"
@@ -99,7 +99,7 @@ ZERO_RESULT_MARKERS: tuple[str, ...] = (
 )
 RESULTS_TABLE_HEADER_MARKER = "record number"
 RECORD_DETAIL_URL_MARKER = "capdetail.aspx"
-# pagination is postback-based: "next" fires __dopostback and the url does not change, so "more pages" is
+# pagination is postback based: "next" fires __dopostback and the url does not change, so "more pages" is
 # read from the grid footer text
 PAGINATION_NEXT_TEXT = "Next"
 
@@ -116,7 +116,7 @@ def has_results_table(html: str) -> bool:
 LOGIN_FRAME_MARKER = "login-panel"
 
 
-# `#divgloballoadingmask` is a silverlight-era overlay iframe that stays in the dom "hidden" yet
+# `#divgloballoadingmask` is a silverlight era overlay iframe that stays in the dom "hidden" yet
 # intercepts pointer events after every postback
 MASK_SELECTOR = "#divGlobalLoadingMask"
 MASK_NEUTRALIZER_JS = (
@@ -124,7 +124,7 @@ MASK_NEUTRALIZER_JS = (
     " if (el) el.style.setProperty('display', 'none', 'important'); }"
 )
 
-# `#btnsearch` keeps a `buttondisabled` class no matter what; force-clicking it is what fires the search,
+# `#btnsearch` keeps a `buttondisabled` class no matter what; force clicking it is what fires the search,
 # so button styling is advisory only
 FORCE_CLICK_FALLBACK = True
 
@@ -134,13 +134,13 @@ MASKED_CLASS_MARKER = "masked"
 POPUP_ID_PREFIX = "ctl00_phPopup_"
 
 # the validation panel enumerates missing controls; unescape before matching because dom serialization
-# html-encodes the quotes inside onclick attributes
+# html encodes the quotes inside onclick attributes
 VALIDATION_TARGET_RE = re.compile(r"skipTo\(\s*['\"]([^'\"]+)", re.I)
 # targets whose id contains this are the error *labels*, not the controls
 VALIDATION_LABEL_MARKER = "v_a_l_i_d"
 
 # sections that load over ajax after the page `load` event (observed on the record detail's inspections
-# section, 2026-09-20)
+# section, 2026 09 20)
 LOADING_MARKERS: tuple[str, ...] = ("loading...", "loading…", "please wait")
 
 # message text that arrives as a js notice dialog, not a redirect
@@ -170,7 +170,7 @@ def login_succeeded(url: str, text: str = "") -> bool:
 
 @dataclass(frozen=True)
 class FlowPosition:
-    """where in a multi-step flow we are"""
+    """where in a multi step flow we are"""
 
     flow: str
     step: str
@@ -179,7 +179,7 @@ class FlowPosition:
 
 @dataclass(frozen=True)
 class Flow:
-    """a multi-step flow and the step that commits it"""
+    """a multi step flow and the step that commits it"""
 
     name: str
     steps: tuple[str, ...]
@@ -194,7 +194,7 @@ APPLY_FLOW = Flow(
     commit_action="submit_application",
 )
 
-# verified live to the calendar (2026-09-20)
+# verified live to the calendar (2026 09 20)
 SCHEDULE_FLOW = Flow(
     name="schedule_inspection",
     steps=("select_record", "select_type", "select_date", "select_time", "confirm"),
@@ -226,7 +226,7 @@ def schedule_step(text: str) -> str | None:
 
 
 def locate(url: str, text: str = "") -> FlowPosition | None:
-    """best-effort flow position from a url, refined by the visible text"""
+    """best effort flow position from a url, refined by the visible text"""
     if not url:
         return None
     path = url.split("?")[0].lower()
@@ -277,7 +277,7 @@ def detail_url(
 
 
 def inspection_detail_url(ref: dict[str, str]) -> str:
-    """verified record's read-only inspection view, observed in p13's live trace"""
+    """verified record's read only inspection view, observed in p13's live trace"""
     return detail_url(
         ref["capID1"], ref["capID2"], ref["capID3"],
         module=ref.get("module", DEFAULT_MODULE),
@@ -485,13 +485,13 @@ def parse_inspection_types(fields: list[object]) -> list[InspectionTypeOption]:
 
 
 def inspection_type_total(text: str) -> int | None:
-    """declared total from `available inspection types (18)` — spans all pages"""
+    """declared total from `available inspection types (18)` spans all pages"""
     match = INSPECTION_TYPE_COUNT_RE.search(text or "")
     return int(match.group("count")) if match else None
 
 
 # days are `<td class="calendardayinactive aca_linkbutton" title="cannot schedule inspection on this
-# date">1</td>` — cells, not anchors, so resolving a date by link text is impossible
+# date">1</td>` cells, not anchors, so resolving a date by link text is impossible
 CALENDAR_CONTAINER_ID = "_calendar_calendar"
 CALENDAR_DAY_CLASS_MARKER = "calendarday"
 CALENDAR_INACTIVE_CLASS = "calendardayinactive"
@@ -562,7 +562,7 @@ def parse_calendar(html: str) -> list[CalendarMonth]:
 
 
 def selectable_times_text(html: str) -> str:
-    """text of `lblavaliabletimes` (aca's spelling) — empty until a day is picked"""
+    """text of `lblavaliabletimes` (aca's spelling) empty until a day is picked"""
     match = _ID_SPAN_RE.search(_html.unescape(html or ""))
     return _text(match.group(1)) if match else ""
 
@@ -587,13 +587,13 @@ SCHEDULE_LINK_LABELS: tuple[str, ...] = (
     "Schedule an Inspection",
 )
 # null island renders the schedule opener as a clickable <div onclick=...>, with the label in a nested
-# <span>; it is not an anchor despite its link-like presentation
+# <span>; it is not an anchor despite its link like presentation
 SCHEDULE_LINK_CONTROL_ID = "lnkInspectionSchedule"
-# note the opener lives inside the record-tabs menu, which aca renders as a *collapsed dropdown*
-# (`a[data-control="tab-inspections"]` sits in a `nav-bar > selected > dropdown-menu > li` chain and
+# note the opener lives inside the record tabs menu, which aca renders as a *collapsed dropdown*
+# (`a[data control="tab inspections"]` sits in a `nav bar > selected > dropdown menu > li` chain and
 # measures 0x0)
 
-# the popup's month tables share this id fragment (verified capture 2026-09-20):
+# the popup's month tables share this id fragment (verified capture 2026 09 20):
 # ctl00_phpopup_calendar_calendar1/2/3
 CALENDAR_TABLE_ID_MARKER = "calendar_calendar"
 
@@ -671,7 +671,7 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "control": POPUP_CONTINUE_ID, "label": "Continue",
         "action": "schedule_inspection", "risk": "reversible",
         "mutates": True, "commit": True,
-        # live-captured: the popup's continue is disabled (postback parked in href_disabled) until a date
+        # live captured: the popup's continue is disabled (postback parked in href_disabled) until a date
         # and time are chosen, so a stray click on an uncompleted wizard cannot commit
         "evidence": "live capture 2026-09-20; disabled until date+time chosen",
     },
@@ -689,7 +689,7 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "mutates": False, "commit": False,
         "evidence": "live capture 2026-09-20; clicking a day only fills lblAvaliableTimes",
     },
-    # -- cancellation (unmapped: no owned record ever held a scheduled inspection, so the per-row controls
+    # cancellation (unmapped: no owned record ever held a scheduled inspection, so the per row controls
     # never rendered on this sandbox)
     {
         "flow": "cancel_inspection", "step": "confirm",
@@ -698,7 +698,7 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "mutates": True, "commit": True,
         "evidence": "UNMAPPED on NI: per-row control shape never rendered/captured",
     },
-    # -- payments (unmapped on ni: the apply flow's review step carries no payment gate, and no owned
+    # payments (unmapped on ni: the apply flow's review step carries no payment gate, and no owned
     # record has been driven to the payments section's controls
     {
         "flow": "payments", "step": "pay",
@@ -708,7 +708,7 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "evidence": "UNMAPPED on NI; dispatcher catches these labels by phrase, "
                     "not by a mapped control id",
     },
-    # -- legal attestation (mapped: the apply flow's disclaimer step
+    # legal attestation (mapped: the apply flow's disclaimer step
     {
         "flow": "apply_application", "step": "disclaimer",
         "control": "apply disclaimer agree checkbox", "label": "I agree",
@@ -741,14 +741,14 @@ def mutation_boundaries() -> tuple[dict[str, object], ...]:
     return MUTATION_BOUNDARIES
 
 
-# the citizen detail page renders each existing inspection row with its own per-row controls
+# the citizen detail page renders each existing inspection row with its own per row controls
 # (`edit`/`cancel` style action links), which aca addresses by the appointment's own id inside the
 # postback target
 _ROW_POSTBACK_KEY_RE = re.compile(r"__doPostBack\(['\"]([^'\"]+)", re.I)
 
 
 def parse_inspection_row_controls(html: str) -> list[dict[str, str]]:
-    """per-appointment action controls observed in the inspections section html"""
+    """per appointment action controls observed in the inspections section html"""
     html = _html.unescape(html or "")
     controls: list[dict[str, str]] = []
     for match in re.finditer(
@@ -902,7 +902,7 @@ def detect_notices(text: str) -> list[str]:
 
 
 def detect_loading(text: str) -> list[str]:
-    """loading markers still present, i.e. a section is only half-rendered"""
+    """loading markers still present, i.e. a section is only half rendered"""
     lowered = (text or "").lower()
     return [marker for marker in LOADING_MARKERS if marker in lowered]
 
@@ -912,7 +912,7 @@ def is_loading(text: str) -> bool:
 
 
 def has_postback_history(html: str) -> bool:
-    """true when back-navigation would resubmit a webforms postback"""
+    """true when back navigation would resubmit a webforms postback"""
     marker = (html or "").lower()
     return "__viewstate" in marker or "__dopostback" in marker
 
@@ -928,7 +928,7 @@ EMPTY_TABLE_MARKERS: tuple[str, ...] = (
     "0 of 0",
 )
 
-# aca renders unexpected dialogs as bootstrap-style modals
+# aca renders unexpected dialogs as bootstrap style modals
 MODAL_TEXT_MARKERS: tuple[str, ...] = (
     "dialog", "modal", "please confirm", "are you sure", "warning",
 )
@@ -956,7 +956,7 @@ NEW_TAB_URL_MARKERS: tuple[str, ...] = (
 
 
 def detect_empty_table(text: str) -> list[str]:
-    """in-flight or empty grid wordings still visible in the page text"""
+    """in flight or empty grid wordings still visible in the page text"""
     lowered = (text or "").lower()
     return [marker for marker in EMPTY_TABLE_MARKERS if marker in lowered]
 
@@ -975,7 +975,7 @@ def detect_modal(text: str) -> dict[str, object] | None:
 
 
 def detect_session_modal(text: str) -> str | None:
-    """a session-expiry *modal* (no redirect) — session handling without navigation"""
+    """a session expiry *modal* (no redirect) session handling without navigation"""
     lowered = (text or "").lower()
     return next((m for m in SESSION_MODAL_MARKERS if m in lowered), None)
 
@@ -1004,7 +1004,7 @@ def detect_weirdness(
     loading: Iterable[str] | None = None,
     notices: Iterable[str] | None = None,
 ) -> tuple[str, ...]:
-    """the portal-weirdness findings for one observation, in stable order"""
+    """the portal weirdness findings for one observation, in stable order"""
     findings: list[str] = []
     session_modal = detect_session_modal(text)
     if session_modal:

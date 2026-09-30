@@ -57,7 +57,7 @@ def _page(**overrides):
 def test_permit_from_page_reads_the_header_and_identity():
     permit = permit_from_page(_page())
 
-    assert permit.permit_id == "000000014"  # not a bld26- id: per-type format
+    assert permit.permit_id == "000000014"  # not a bld26 id: per type format
     assert permit.permit_type == "Commercial Alteration"
     assert permit.status == "Submitted"
     assert permit.status_normalized is PermitStatus.SUBMITTED
@@ -102,7 +102,7 @@ def test_permit_from_page_keeps_the_portal_status_text_and_parses_the_date():
 
     assert permit.status == "Submitted"
     assert permit.expiration_date == dt.date(2026, 1, 31)
-    # expiration on a submitted record is agency config — the schema keeps both the raw status and the
+    # expiration on a submitted record is agency config the schema keeps both the raw status and the
     # date so "is it expired?" cannot be silently wrong
     assert permit.issued_date is None
 

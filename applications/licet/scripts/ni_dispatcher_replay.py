@@ -1,4 +1,4 @@
-"""replay the licet dispatcher against a live solari session — read-only"""
+"""replay the licet dispatcher against a live solari session read only"""
 
 from __future__ import annotations
 
@@ -209,7 +209,7 @@ async def main() -> int:
             f"kind={outcome['error'] and outcome['error']['kind']}",
         )
 
-    except Exception as exc:  # noqa: BLE001 - report, do not mask
+    except Exception as exc:  # noqa: BLE001 report, do not mask
         replay.check("replay completed without exception", False, repr(exc))
     finally:
         try:

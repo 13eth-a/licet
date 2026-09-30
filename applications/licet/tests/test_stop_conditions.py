@@ -93,7 +93,7 @@ def test_repeated_failure_stops_on_third_attempt_of_same_key():
 
 
 def test_success_resets_the_failure_counter():
-    """retry-then-succeed must not keep counting toward the stop condition"""
+    """retry then succeed must not keep counting toward the stop condition"""
     state = _state()
     state.current_page = "record_details"
     args = {"selector": "#continue"}

@@ -61,7 +61,7 @@ def render_uncertainties(result: ReasoningResult) -> list[str]:
 
 
 def render_answer(result: ReasoningResult) -> str:
-    """the full structured answer, question-shaped"""
+    """the full structured answer, question shaped"""
     sections: list[str] = []
 
     if result.answerability == "conflicting":

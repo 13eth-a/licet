@@ -1,11 +1,11 @@
-"""evidence-bounded presentation helpers for plan-only acceptance reports"""
+"""evidence bounded presentation helpers for plan only acceptance reports"""
 from __future__ import annotations
 
 from typing import Any
 
 
 def live_plan_only_summary(report: dict[str, Any]) -> dict[str, Any]:
-    """summarize independently recorded read-only progress without overclaiming"""
+    """summarize independently recorded read only progress without overclaiming"""
     trace = report.get("trace", [])
     preflight = report.get("preflight", {})
     details = preflight.get("details", {})

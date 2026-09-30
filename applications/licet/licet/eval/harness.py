@@ -145,7 +145,7 @@ def validate_fixtures() -> list[FixtureProblem]:
                 )
             )
 
-        # an expectation the environment cannot produce is a fixture bug, not an agent failure — this is
+        # an expectation the environment cannot produce is a fixture bug, not an agent failure this is
         # the check phase 0 was missing
         if prompt.category == "action" and prompt.record:
             truth = SCHEDULING_GROUND_TRUTH.get(prompt.record)
@@ -193,7 +193,7 @@ def _placeholders(template: str) -> list[str]:
 
 
 def _record_haystack(case: EvalCase) -> tuple[str, str]:
-    """the record's id and its record-specific capid3"""
+    """the record's id and its record specific capid3"""
     if case.record is None:
         return "", ""
     cap3 = str((case.record.expected_state.get("capids") or {}).get("capID3") or "")
@@ -240,7 +240,7 @@ _DENIES_AVAILABILITY: tuple[str, ...] = (
 )
 
 
-# keyword scoring cannot tell "nothing was booked" from "i booked it", and the correct can't-finish answer
+# keyword scoring cannot tell "nothing was booked" from "i booked it", and the correct can't finish answer
 # *should* be allowed to say the former
 _NEGATION_RE = re.compile(
     r"\b(no|not|nothing|none|never|cannot|can't|unable|didn't|did not|wasn't|isn't|without|"
@@ -254,7 +254,7 @@ _CLAUSE_BREAK_RE = re.compile(r"[.;:!?]|\bbut\b|,\s*")
 
 
 def asserts(answer_lower: str, claim_lower: str) -> bool:
-    """true when `claim` appears un-negated at least once"""
+    """true when `claim` appears un negated at least once"""
     start = 0
     while True:
         index = answer_lower.find(claim_lower, start)
@@ -304,7 +304,7 @@ def score_run(case: EvalCase, run: RunRecord) -> dict[str, Any]:
             "synthetic case: no record should be selected",
         )
 
-    # correct_information_extracted — facts must match portal state
+    # correct_information_extracted facts must match portal state
     status = (case.record.expected_status if case.record else "") or ""
     wants_status = bool(status) and any(
         part.lower() == status.lower() for part in case.answer_must_mention
@@ -326,7 +326,7 @@ def score_run(case: EvalCase, run: RunRecord) -> dict[str, Any]:
         + ("; contradicts ground truth" if contradicts else ""),
     )
 
-    # correct_next_action_identified — each part is declared by the fixture: a scheduling prompt owes the
+    # correct_next_action_identified each part is declared by the fixture: a scheduling prompt owes the
     # availability verdict, and a "what is next" prompt owes the required inspection type
     truth = case.scheduling_truth or {}
     checks: list[tuple[bool, str]] = []
@@ -377,7 +377,7 @@ def score_run(case: EvalCase, run: RunRecord) -> dict[str, Any]:
     else:
         record("correct_browser_action_executed", True, "synthetic case")
 
-    # result_verified — "re-read state instead of assuming success"
+    # result_verified "re read state instead of assuming success"
     reads = [i for i, a in enumerate(run.actions) if a.get("name") == "read_page"]
     writes = [
         i
@@ -442,7 +442,7 @@ def score_run(case: EvalCase, run: RunRecord) -> dict[str, Any]:
 def aggregate_lookup_metrics(
     metrics_by_case: dict[str, LookupMetrics],
 ) -> LookupMetrics:
-    """suite-level retrieval kpis, summed over the cases that ran lookups"""
+    """suite level retrieval kpis, summed over the cases that ran lookups"""
     return LookupMetrics.combine(metrics_by_case.values())
 
 
@@ -485,7 +485,7 @@ def score_runs(
 
 
 def explain_case(prompt_id: str) -> str:
-    """human-readable expectation for one case — used in run logs and reports"""
+    """human readable expectation for one case used in run logs and reports"""
     case = next((c for c in build_cases() if c.prompt_id == prompt_id), None)
     if case is None:
         return f"{prompt_id}: unknown case"

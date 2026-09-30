@@ -1,4 +1,4 @@
-"""one-off solari exploration: discover usable test records on null island"""
+"""one off solari exploration: discover usable test records on null island"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ load_dotenv()
 
 BASE = "https://aca-test.accela.com/nullisland"
 MODULES = ["Building", "Enforcement"]
-# result rows on aca grids are postback links, not capid hrefs — count any anchor inside the results area
+# result rows on aca grids are postback links, not capid hrefs count any anchor inside the results area
 # and look for text markers instead
 START = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSStartDate"
 END = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSEndDate"

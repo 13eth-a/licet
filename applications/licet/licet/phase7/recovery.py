@@ -81,7 +81,7 @@ class PageFingerprint:
     def matches(self, other: "PageFingerprint", *, include_text: bool = True,
                 require_identity: bool = False) -> bool:
         # two observations that both failed to establish *which* page this is (no url, no record number)
-        # must not be treated as the same page: an all-none identity is missing evidence, not a match
+        # must not be treated as the same page: an all none identity is missing evidence, not a match
         if require_identity:
             if self.url is None and self.record_number is None:
                 return False
@@ -274,7 +274,7 @@ _MUTATION_OPERATION_VERBS = (
 
 
 def _mutation_risk(*, mutation: bool, operation: str, text: str) -> bool:
-    """true when a failure touches a state-changing operation"""
+    """true when a failure touches a state changing operation"""
     if mutation:
         return True
     if any(verb in operation.lower() for verb in _MUTATION_OPERATION_VERBS):
@@ -284,7 +284,7 @@ def _mutation_risk(*, mutation: bool, operation: str, text: str) -> bool:
 
 def classify_failure(error: Any, *, operation: str = "", mutation: bool = False,
                      evidence: Mapping[str, Any] | None = None) -> Failure:
-    """classify strings, toolerror-like objects, and semantic exceptions"""
+    """classify strings, toolerror like objects, and semantic exceptions"""
     message = str(getattr(error, "message", error) or "")
     kind = str(getattr(getattr(error, "kind", None), "value", getattr(error, "kind", ""))).lower()
     text = f"{kind} {message}".lower()
@@ -343,7 +343,7 @@ class RecoveryController:
         self._mutation_retries: Counter[str] = Counter()
 
     def begin_run(self) -> None:
-        """start isolated per-run budgets, observations and metrics"""
+        """start isolated per run budgets, observations and metrics"""
         self.stats = RecoveryStats()
         self.trace.clear()
         self.checkpoints.clear()
@@ -369,7 +369,7 @@ class RecoveryController:
         return point
 
     def validate_checkpoint(self, name: str, fingerprint: PageFingerprint | None = None) -> bool:
-        """a checkpoint is reusable only with fresh, identity-bearing evidence"""
+        """a checkpoint is reusable only with fresh, identity bearing evidence"""
         point = self.checkpoints.get(name)
         stored = point.fingerprint if point else None
         identity_known = bool(stored and (stored.url or stored.record_number))
@@ -436,7 +436,7 @@ class RecoveryController:
         return True
 
     def mutation_reconciled(self, operation_key: str, *, occurred: bool | None) -> bool:
-        """reconcile a reserved mutation after re-reading the portal"""
+        """reconcile a reserved mutation after re reading the portal"""
         if occurred is not False:
             self.stats.mutation_reconciliations += 1
             self._trace("MUTATION_RECONCILED", operation_key=operation_key, occurred=occurred)

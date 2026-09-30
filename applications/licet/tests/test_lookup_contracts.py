@@ -1,4 +1,4 @@
-"""regressions for the phase 2 the architecture review’s unsafe-success cases"""
+"""regressions for the phase 2 the architecture review’s unsafe success cases"""
 import asyncio
 import json
 

@@ -1,4 +1,4 @@
-"""read-only targeted retrieval for phase 3"""
+"""read only targeted retrieval for phase 3"""
 from __future__ import annotations
 
 import asyncio
@@ -11,7 +11,7 @@ from licet.phase3 import accela_extract
 from licet.phase3.extract import extract_partial_state, merge_partial_states
 from licet.phase3.state import PermitState, Section
 
-# clicking these labels is how a record-detail section postback is opened
+# clicking these labels is how a record detail section postback is opened
 _SECTION_CLICK_LABELS: dict[str, str] = {
     "inspections": "Inspections",
     "fees": "Payments",
@@ -35,7 +35,7 @@ _SECTION_LABEL_VARIANTS: dict[str, tuple[str, ...]] = {
 
 @dataclass
 class RetrievalOutcome:
-    """what one targeted-retrieval pass did, for the run log and tests"""
+    """what one targeted retrieval pass did, for the run log and tests"""
 
     sections_requested: list[str] = field(default_factory=list)
     sections_retrieved: list[str] = field(default_factory=list)
@@ -52,7 +52,7 @@ class RetrievalOutcome:
 
 
 class Phase3RetrievalRunner:
-    """bounded, read-only section retrieval through the tooldispatcher"""
+    """bounded, read only section retrieval through the tooldispatcher"""
 
     def __init__(
         self,
@@ -99,7 +99,7 @@ class Phase3RetrievalRunner:
                 continue
             observation = accela_extract.observation_for(section, data)
             if observation.get("coverage") == "loading":
-                # aca renders "loading..." first; one best-effort settle and reread, then accept what is there
+                # aca renders "loading..." first; one best effort settle and reread, then accept what is there
                 await self._settle(outcome)
                 data = await self._read_current(outcome)
                 if data is not None:
@@ -118,7 +118,7 @@ class Phase3RetrievalRunner:
         return outcome
 
     def _record_browser_state(self, data: dict[str, Any]) -> None:
-        """fold one settled read into the caller's browser-state dict"""
+        """fold one settled read into the caller's browser state dict"""
         from licet.phase7.portal import settled_browser_state
 
         merged = settled_browser_state(data)
@@ -132,7 +132,7 @@ class Phase3RetrievalRunner:
                 self._state_shim(),
             )
             outcome.actions.append({"wait": "until_absent=Loading...", "ok": True})
-        except Exception:  # noqa: BLE001 - settle is best-effort by design
+        except Exception:  # noqa: BLE001 settle is best effort by design
             outcome.actions.append({"wait": "until_absent=Loading...", "ok": False})
 
     async def _read_section(self, section: str, outcome: RetrievalOutcome) -> dict[str, Any] | None:
@@ -148,7 +148,7 @@ class Phase3RetrievalRunner:
             outcome.actions.append({"navigate": url, "ok": bool(result.get("success"))})
             if not result.get("success"):
                 return None
-            # the record url already carries `istoshowinspection=` (the inspection-context deep link,
+            # the record url already carries `istoshowinspection=` (the inspection context deep link,
             # verified in the ui map), so the first settled read may already show the section
             data = await self._read_current(outcome)
             if data is not None:
@@ -198,7 +198,7 @@ class Phase3RetrievalRunner:
             if result.get("success"):
                 provenance = str((result.get("resolution") or {}).get("provenance") or "")
                 if provenance != "benign_target":
-                    # the guard resolved this label to something other than a read-record target
+                    # the guard resolved this label to something other than a read record target
                     outcome.actions.append(
                         {"click": candidate, "ok": False, "refused": "not a benign section target"}
                     )
@@ -214,7 +214,7 @@ class Phase3RetrievalRunner:
             last_variant = index + 1 >= len(_SECTION_LABEL_VARIANTS.get(section, (label,)))
             if not not_actionable or last_variant:
                 return None
-            # present-but-not-visible on a non-final variant: the portal is rendering a dead wrapper for
+            # present but not visible on a non final variant: the portal is rendering a dead wrapper for
             # this label
         return None
 
@@ -260,7 +260,7 @@ class Phase3RetrievalRunner:
 
 
 def record_ref_from_url(url: str) -> dict[str, str] | None:
-    """capid1/2/3 + module + agency out of a capdetail url (runner re-entry)"""
+    """capid1/2/3 + module + agency out of a capdetail url (runner re entry)"""
     parsed = parse_ref_from_url(url or "")
     return parsed or None
 

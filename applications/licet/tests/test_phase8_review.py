@@ -84,7 +84,7 @@ def test_prompt_suite_keeps_every_reviewed_golden_intact():
     results = run_tasks(tasks)
     assert all(result.expectation_met for result in results)
     by_id = {result.task_id: result for result in results}
-    # the four language-handling failures fixed after the architecture review review, plus the ambiguity
+    # the four language handling failures fixed after the architecture review review, plus the ambiguity
     # case that must stay a safe stop (goldens were never weakened)
     for task_id in ("PROMPT-003", "PROMPT-006",
                     "PROMPT-DISCOVERY-002-P029", "PROMPT-DISCOVERY-004-P032"):

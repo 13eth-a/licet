@@ -1,4 +1,4 @@
-"""tests for the apply flow's local, operator-visible browser"""
+"""tests for the apply flow's local, operator visible browser"""
 from __future__ import annotations
 
 import asyncio
@@ -245,7 +245,7 @@ class FakeRun:
 
 
 def test_automation_pid_skips_the_operators_chrome_and_helper_children():
-    """both processes are called \"google chrome\" — the throwaway profile is the only thing that separates the driven one from the operator's own"""
+    """both processes are called \"google chrome\" the throwaway profile is the only thing that separates the driven one from the operator's own"""
     assert ab.automation_chrome_pid(PS) == 26571
 
 

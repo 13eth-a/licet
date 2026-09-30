@@ -1,4 +1,4 @@
-"""full read-only inventory of null island records (all modules)"""
+"""full read only inventory of null island records (all modules)"""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ async def goto_bounded(page, url: str) -> None:
 
 
 def parse_rows(html: str, module: str) -> list[dict]:
-    """extract grid rows: alt id, capid triple, status, record-type column"""
+    """extract grid rows: alt id, capid triple, status, record type column"""
     rows: list[dict] = []
     for tr in re.split(r"<tr[\s>]", html):
         c1 = re.search(r'name="value\(CAPID1,\d+\)"[^>]*value="([^"]*)"', tr)

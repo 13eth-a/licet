@@ -1,4 +1,4 @@
-"""phase 4 coordinator: the end-to-end entry point"""
+"""phase 4 coordinator: the end to end entry point"""
 from __future__ import annotations
 
 import datetime as _dt
@@ -14,7 +14,7 @@ from licet.phase4.selection import ActionSelection, SelectionContext, select_ins
 
 
 class InspectionPortal(Protocol):
-    """structural stand-in for the adapter, so the coordinator stays offline-testable"""
+    """structural stand in for the adapter, so the coordinator stays offline testable"""
 
     def read_inspection_state(self, permit_id: str, inspection_type: str | None = None, inspection_id: str | None = None): ...
     def submit_inspection_action(self, action: InspectionAction, *, portal_type: str, selected_date: str | None = None): ...
@@ -22,7 +22,7 @@ class InspectionPortal(Protocol):
 
 @dataclass(frozen=True)
 class WorkflowOutcome:
-    """the single result of one end-to-end attempt, whatever stage stopped it"""
+    """the single result of one end to end attempt, whatever stage stopped it"""
 
     stage: str
     status: str

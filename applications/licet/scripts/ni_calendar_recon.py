@@ -1,4 +1,4 @@
-"""recon ni back-office admin menu for inspection/calendar admin pages"""
+"""recon ni back office admin menu for inspection/calendar admin pages"""
 from __future__ import annotations
 
 import asyncio

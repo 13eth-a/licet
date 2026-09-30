@@ -29,7 +29,7 @@ from licet.phase7 import (  # noqa: E402
 
 def legacy_recover(failure: Failure, strategy: str, *, budgets: RecoveryBudgets, action=None,
                    validate=None, state: dict | None = None) -> RecoveryResult:
-    """the pre-review `recoverycontroller.recover`, reproduced verbatim"""
+    """the pre review `recoverycontroller.recover`, reproduced verbatim"""
     state = state if state is not None else {}
     state.setdefault("actions", 0)
     counts = state.setdefault("counts", {})
@@ -49,7 +49,7 @@ def legacy_recover(failure: Failure, strategy: str, *, budgets: RecoveryBudgets,
             if validate is not None and not validate(value):
                 raise RuntimeError("recovery validation failed")
             return RecoveryResult(True, strategy, attempts)
-        except Exception:  # noqa: BLE001 - bounded
+        except Exception:  # noqa: BLE001 bounded
             continue
     return RecoveryResult(False, strategy, attempts)
 
@@ -66,7 +66,7 @@ _PREBROWSER_KINDS = {"postback_race", "timeout", "not_found", "not_actionable", 
 
 
 def legacy_classify(error, *, operation: str = "", mutation: bool = False) -> Failure:
-    """the pre-review ``classify_failure``, reproduced verbatim"""
+    """the pre review ``classify_failure``, reproduced verbatim"""
     message = str(getattr(error, "message", error) or "")
     kind = str(getattr(getattr(error, "kind", None), "value", getattr(error, "kind", ""))).lower()
     text = f"{kind} {message}".lower()
@@ -89,12 +89,12 @@ def legacy_classify(error, *, operation: str = "", mutation: bool = False) -> Fa
 
 
 def legacy_checkpoint_valid(fingerprint: PageFingerprint | None) -> bool:
-    """pre-review `validate_checkpoint`: no fingerprint was a pass"""
+    """pre review `validate_checkpoint`: no fingerprint was a pass"""
     return fingerprint is None
 
 
 def legacy_search_budget(queries: list[str], *, budgets: RecoveryBudgets) -> int:
-    """pre-review budget was keyed on the query text, so distinct queries reset it"""
+    """pre review budget was keyed on the query text, so distinct queries reset it"""
     counts: dict[str, int] = {}
     allowed = 0
     for query in queries:
@@ -214,7 +214,7 @@ def end_to_end():
     def add(scenario, outcome, unsafe, expected):
         rows.append({"scenario": scenario, "outcome": outcome, "unsafe": unsafe, "expected": expected})
 
-    # scenario 9 — mutation timeout, re-read proves success: never resubmit
+    # scenario 9 mutation timeout, re read proves success: never resubmit
     controller = RecoveryController()
     key = "permit:P-1:rough:2026-10-01"
     controller.mutation_started(key)
@@ -224,7 +224,7 @@ def end_to_end():
         unsafe=not (retry_allowed is False and duplicate is False),
         expected="VERIFIED success, no duplicate submit")
 
-    # scenario 10 — mutation timeout, re-read proves absence: bounded retry safe
+    # scenario 10 mutation timeout, re read proves absence: bounded retry safe
     controller = RecoveryController()
     controller.mutation_started(key)
     retry_allowed = controller.mutation_reconciled(key, occurred=False)
@@ -246,7 +246,7 @@ def end_to_end():
     add("scenario 3 (session expired)", f"{result.strategy} action_ran={bool(called)}",
         unsafe=bool(called), expected="AUTH_REQUIRED / stop, never click through")
 
-    # scenario 9/3 mutation — a mutation timeout is reconciled, never retried
+    # scenario 9/3 mutation a mutation timeout is reconciled, never retried
     controller = RecoveryController()
     failure = controller.classify("submit timed out", operation="submit_inspection", mutation=True)
     called = []

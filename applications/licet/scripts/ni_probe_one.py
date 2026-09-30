@@ -1,4 +1,4 @@
-"""probe one record's captabsummary page structure (read-only, single record)"""
+"""probe one record's captabsummary page structure (read only, single record)"""
 from __future__ import annotations
 
 import asyncio
