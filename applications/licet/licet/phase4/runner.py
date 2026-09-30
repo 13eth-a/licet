@@ -1,11 +1,4 @@
-"""Phase 4 runner: reasoning output -> policy -> executor -> verified result.
-
-This is the narrow, auditable seam between Phase 3's decision and the real
-portal: no planner loop, no invented workflows — one inspection action,
-policy-checked, executed through the Accela adapter, and verified by an
-independent state re-read (the executor owns that logic; this file only
-assembles the pieces and keeps the preview + audit trail available).
-"""
+"""phase 4 runner: reasoning output -> policy -> executor -> verified result"""
 from __future__ import annotations
 
 import datetime as _dt
@@ -23,7 +16,7 @@ from licet.safety.policy import ConfirmationRequest
 
 @dataclass(frozen=True)
 class ActionRequest:
-    """What the caller asked for, before normalization."""
+    """what the caller asked for, before normalization"""
 
     action_type: str
     permit_id: str
@@ -33,9 +26,7 @@ class ActionRequest:
     existing_inspection_id: str | None = None
     constraints: tuple[str, ...] = ()
     confirmed: bool = False
-    # The scoped, single-use approval for a consequential action. `confirmed`
-    # alone is not one: it names no permit, target or inspection, so the
-    # executor refuses to convert it into permission.
+    # the scoped, single-use approval for a consequential action
     approval: ConfirmationRequest | None = None
     required_inputs: dict[str, str] | None = None
     date_window_start: str | None = None
@@ -44,12 +35,12 @@ class ActionRequest:
     snapshot_id: str | None = None
     evidence_ids: tuple[str, ...] = ()
     requires_confirmation: bool = False
-    # Report (never select) portal dates outside the window when selection fails.
+    # report (never select) portal dates outside the window when selection fails
     allow_alternatives: bool = False
 
 
 def _dates(request: ActionRequest, reference: _dt.date | None) -> DateConstraints:
-    """Intersect explicit and interpreted constraints; never discard either."""
+    """intersect explicit and interpreted constraints; never discard either"""
     parsed = normalize_date_constraints(request.date_instruction, reference=reference)
     iso = lambda value: _dt.date.fromisoformat(value) if value else None
     starts = [d for d in (parsed.start, iso(request.date_window_start)) if d is not None]
@@ -66,11 +57,7 @@ def _dates(request: ActionRequest, reference: _dt.date | None) -> DateConstraint
 
 
 def preview(request: ActionRequest, reference: _dt.date | None = None) -> dict[str, Any]:
-    """The human-readable proposed action, with the date window made concrete.
-
-    Produced before any browser step; safe to show a user. Raises ValueError
-    on unparseable date language — the caller reports that instead of acting.
-    """
+    """the human-readable proposed action, with the date window made concrete"""
     constraints = _dates(request, reference)
     return {
         "proposed_action": request.action_type,
@@ -88,7 +75,7 @@ def preview(request: ActionRequest, reference: _dt.date | None = None) -> dict[s
 
 
 def action_from_selection(selection: ActionSelection, confirmed: bool = False) -> ActionRequest:
-    """A Phase 3 `ActionSelection` becomes a normalized request (no browser)."""
+    """a phase 3 `actionselection` becomes a normalized request (no browser)"""
     if selection.action is None:
         raise ValueError("Phase 3 reasoning did not select an action; nothing to preview")
     for name in ("record_key", "snapshot_id"):
@@ -109,9 +96,9 @@ def action_from_selection(selection: ActionSelection, confirmed: bool = False) -
         existing_inspection_id=selection.action.existing_inspection_id,
         constraints=tuple(selection.action.constraints or ()),
         confirmed=confirmed,
-        # The caller (a human at a CLI, naming this record and type) approves the
-        # selection in front of them; the approval is scoped to exactly that
-        # action, so it cannot travel to another record or inspection.
+        # the caller (a human at a cli, naming this record and type) approves the selection in front of
+        # them; the approval is scoped to exactly that action, so it cannot travel to another record or
+        # inspection
         approval=(ConfirmationRequest(
             action_type=selection.action.action_type,
             permit_id=selection.action.permit_id,
@@ -127,7 +114,7 @@ def action_from_selection(selection: ActionSelection, confirmed: bool = False) -
 
 
 class Phase4ActionRunner:
-    """Executes one inspection action end to end and reports honestly."""
+    """executes one inspection action end to end and reports honestly"""
 
     def __init__(
         self,
@@ -139,8 +126,6 @@ class Phase4ActionRunner:
     ) -> None:
         self.portal = portal
         self.executor = executor or InspectionActionExecutor(portal)
-        # Optional observation: counters always; the run log persists each
-        # mutation audit so the trail survives the process.
         self.metrics = metrics
         self.logger = logger
 
@@ -152,14 +137,14 @@ class Phase4ActionRunner:
         eligible_types: list[str] | tuple[str, ...] = (),
         available_dates: list[str] | tuple[str, ...] = (),
     ) -> InspectionActionResult:
-        """Preview -> policy -> execute. Never reports success unverified."""
+        """preview -> policy -> execute"""
         constraints = _dates(request, reference)
         action = InspectionAction(
             action_type=request.action_type,
             permit_id=request.permit_id,
             inspection_type=request.inspection_type,
             preferred_date=constraints.preferred.isoformat() if constraints.preferred else None,
-            # Exact requested dates must not fall back to a different day.
+            # exact requested dates must not fall back to a different day
             date_window_start=(constraints.preferred or constraints.start).isoformat() if (constraints.preferred or constraints.start) else None,
             date_window_end=(constraints.preferred or constraints.end).isoformat() if (constraints.preferred or constraints.end) else None,
             existing_inspection_id=request.existing_inspection_id,

@@ -1,4 +1,4 @@
-"""Planner recovery bridge. Only closed read capabilities may be retried."""
+"""planner recovery bridge"""
 from copy import deepcopy
 from dataclasses import replace
 from licet.phase5.state import Action, READS, Observation, established
@@ -39,7 +39,7 @@ async def recover_read(planner, run, action, observation):
         failure = Failure(route.failure_type, route.reason, action.value, recoverable=True)
     if not failure.recoverable or not (observation.retryable or route):
         return observation
-    # Discovery precedes a verified identity; its own result must establish it.
+    # discovery precedes a verified identity; its own result must establish it
     decision = decide_semantic_recovery(context_for(run, controller,
         identity_verified=run.world.permit_verified or action == Action.FIND_PERMIT,
         transient_read_failure=True))
@@ -53,8 +53,7 @@ async def recover_read(planner, run, action, observation):
     async def attempt():
         nonlocal candidate
         world = deepcopy(checkpoint)
-        # Route implementations must finish by re-reading through the ordinary
-        # capability. They cannot grant permission, submit or invent identity.
+        # route implementations must finish by re-reading through the ordinary capability
         counter = getattr(planner.capabilities, 'browser_action_count', lambda: 0)
         before_actions = counter()
         try:

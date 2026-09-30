@@ -1,17 +1,4 @@
-"""Verify the NI public-user account: log in via Solari, check session.
-
-Uses ACCELA_TEST_USERNAME/PASSWORD from .env (created 2026-09-19 via
-CommunityView/account/new). Read-only: login + navigation checks only, no
-scheduling/applying.
-
-Checks:
-  1. login-panel iframe (CommunityView/login-panel) accepts credentials
-  2. logged-in indicators appear (Sign Out / account name / My Records)
-  3. auth survives navigation (home → CapHome) — the pending checklist item
-  4. accela session cookies captured
-
-Run:  .venv/bin/python scripts/ni_login_verify.py
-"""
+"""verify the ni public-user account: log in via solari, check session"""
 from __future__ import annotations
 
 import asyncio
@@ -44,7 +31,7 @@ async def login_frame(page):
 
 
 async def logged_in_markers(page) -> list[str]:
-    """Scan all frames' text for logged-in indicators."""
+    """scan all frames' text for logged-in indicators"""
     markers = []
     for fr in page.frames:
         try:
@@ -72,7 +59,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # 1. login page
         await asyncio.wait_for(
             page.goto(f"{CITIZEN}/Login.aspx", timeout=45000,
                       wait_until="domcontentloaded"),
@@ -85,7 +71,6 @@ async def main() -> int:
             return 3
         out(f"login panel: {fr.url[:100]}")
 
-        # 2. fill credentials (recon: inputs have name= attrs, not ids)
         for sel, val in (("input[name='username']", USER),
                          ("input[name='password']", PWD),
                          ("input[type='password']", PWD)):
@@ -102,7 +87,6 @@ async def main() -> int:
             if "password" in sel:
                 break
 
-        # 3. submit — the panel has one button; try click then Enter fallback
         try:
             await fr.locator("button").first.click(timeout=6000)
             out("clicked login button")
@@ -124,7 +108,6 @@ async def main() -> int:
             out("FAIL: no logged-in markers — credentials may be wrong or verify pending")
             return 4
 
-        # 4. auth survives navigation → CapHome (the pending checklist item)
         await asyncio.wait_for(
             page.goto(f"{CITIZEN}/Cap/CapHome.aspx?TabName=Home&module=Building",
                       timeout=45000, wait_until="domcontentloaded"),

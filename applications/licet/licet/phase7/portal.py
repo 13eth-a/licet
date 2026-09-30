@@ -1,32 +1,4 @@
-"""Portal-aware recovery: what ACA just did, and what may be done about it.
-
-Phase 7 (portal integration). The recovery controller (`licet/phase7/recovery.py`)
-decides *whether* a failure may be recovered and bounds every attempt; this
-module is the Accela half of the decision. It is deliberately two things:
-
-1. **A classifier for the portal weirdness the checklist names** — unexplained
-   redirects, session expiry (redirect *or* modal), partial AJAX rendering,
-   stale result tables, unexpected modals, popups/new tabs, wizard position —
-   expressed as data over one observation, and
-2. **A settled page identity** for `RecoveryController.loop_observed`.
-
-The adversarial review Phase 7 handoff recorded the residual: *the loop key is only as
-stable as the page state the caller supplies; a render timestamp or spinner
-label makes every occurrence unique — the caller must pass the settled page
-identity, not a live render token.* The planner was passing
-`browser_state["active_section"] or browser_state["url"]`, but nothing ever
-wrote `active_section`, so every loop key collapsed to the raw URL — and the
-URL is exactly the signal ACA does not change (postback wizards share one URL
-across every step; section navigation never leaves `CapDetail.aspx`). Both
-ends of that are fixed here: `PageIdentity.from_observation` derives a
-*settled* identity (URL path + record identity + flow step + section, with
-in-flight markers excluded), the Phase 3 retrieval runner records it into
-`browser_state` after each settled read, and the planner consumes it.
-
-Nothing here launches a browser or holds credentials. Every function is pure
-over observation mappings, so all of it is testable offline against captured
-text and URLs.
-"""
+"""portal-aware recovery: what aca just did, and what may be done about it"""
 
 from __future__ import annotations
 
@@ -40,12 +12,7 @@ from licet.phase7.recovery import FailureType, RecoveryResult
 
 
 class PortalFinding(StrEnum):
-    """The weird states ACA produces, as the checklist's portal integration lane names them.
-
-    Values mirror `accela.detect_weirdness` output strings 1:1; the enum gives
-    the recovery layer a typed vocabulary while `accela.py` stays
-    dependency-free plain data.
-    """
+    """the weird states aca produces, as the checklist's portal integration lane names them"""
 
     SESSION_EXPIRED_MODAL = "session_expired_modal"
     SESSION_EXPIRED = "session_expired"
@@ -59,27 +26,23 @@ class PortalFinding(StrEnum):
     WRONG_PAGE = "wrong_page"
 
 
-# Findings that mean the observation itself is not evidence: a decision made
-# from it (a fact, a loop key, a "no inspections" claim) would be invented.
-# These are the checklist's portal loading weirdness — settled state only.
+# findings that mean the observation itself is not evidence: a decision made from it (a fact, a loop key,
+# a "no inspections" claim) would be invented
 UNSETTLED_FINDINGS = frozenset({
     PortalFinding.AJAX_SECTION_LOADING,
     PortalFinding.EMPTY_TABLE_PENDING_ROWS,
     PortalFinding.SESSION_EXPIRED_MODAL,
 })
 
-# Findings that end the run rather than invite any recovery attempt: a dead
-# session cannot be re-authenticated by clicking through, and a modal whose
-# acceptance mutates something belongs to policy, never to recovery.
+# findings that end the run rather than invite any recovery attempt: a dead session cannot be
+# re-authenticated by clicking through, and a modal whose acceptance mutates something belongs to policy,
+# never to recovery
 TERMINAL_FINDINGS = frozenset({
     PortalFinding.SESSION_EXPIRED,
     PortalFinding.SESSION_EXPIRED_MODAL,
     PortalFinding.CONSEQUENTIAL_MODAL,
 })
 
-# FailureType for each finding. Accela states are PORTAL by default, but a
-# finding that is really a navigation event (a redirect, a new tab) classifies
-# as NAVIGATION so the controller's browser-shaped budgets apply.
 _FINDING_FAILURE_TYPES: dict[PortalFinding, FailureType] = {
     PortalFinding.SESSION_EXPIRED_MODAL: FailureType.PORTAL,
     PortalFinding.SESSION_EXPIRED: FailureType.PORTAL,
@@ -96,15 +59,7 @@ _FINDING_FAILURE_TYPES: dict[PortalFinding, FailureType] = {
 
 @dataclass(frozen=True)
 class PageIdentity:
-    """The settled identity of one portal page, for loop keys and checkpoints.
-
-    Built from a `read_page` observation (or any mapping with the same keys).
-    Deliberately excludes everything that changes while a section is still
-    rendering — visible text, timestamps, spinner labels, "Loading..." — so the
-    same settled page produces the same identity every time (the adversarial review
-    handoff's caller contract), and two different pages never collapse into one
-    key just because ACA kept the URL constant (postback wizards).
-    """
+    """the settled identity of one portal page, for loop keys and checkpoints"""
 
     url_path: str | None = None
     record_number: str | None = None
@@ -119,10 +74,9 @@ class PageIdentity:
         flow = flow or {}
         record = observation.get("record_number") or observation.get("permit_id")
         if not record:
-            # The record identity that actually addresses the page is in the
-            # CapDetail URL's capID1/2/3 — stable across ACA's display-label
-            # reformatting, and present even when the header text failed to
-            # parse. A display label alone is not identity.
+            # the record identity that actually addresses the page is in the capdetail url's capid1/2/3 —
+            # stable across aca's display-label reformatting, and present even when the header text failed
+            # to parse
             ref = accela.parse_ref_from_url(url)
             record = "/".join(ref[key] for key in ("capID1", "capID2", "capID3")) if ref else None
         return cls(
@@ -134,7 +88,7 @@ class PageIdentity:
 
     @classmethod
     def from_fingerprint(cls, fingerprint: Any) -> "PageIdentity":
-        """Adapt a `recovery.PageFingerprint` (checkpoint reuse, trace joins)."""
+        """adapt a `recovery.pagefingerprint` (checkpoint reuse, trace joins)"""
         if fingerprint is None:
             return cls()
         return cls(
@@ -145,8 +99,7 @@ class PageIdentity:
         )
 
     def key(self) -> str:
-        """The loop-key component: stable for the same settled page, distinct
-        for any other page, and never containing live-render tokens."""
+        """the loop-key component: stable for the same settled page, distinct for any other page, and never containing live-render tokens"""
         parts = (self.url_path or "?", self.record_number or "-", self.flow or "-",
                  self.step or "-")
         return "|".join(parts)
@@ -158,7 +111,7 @@ class PageIdentity:
 
 @dataclass(frozen=True)
 class PortalState:
-    """One observation through the portal-weirdness lens."""
+    """one observation through the portal-weirdness lens"""
 
     findings: tuple[PortalFinding, ...]
     identity: PageIdentity
@@ -178,8 +131,7 @@ class PortalState:
         if any(grid.get("row_count") == 0 and not grid.get("declared_empty") for grid in observation.get("grids", ())):
             raw = (*raw, PortalFinding.EMPTY_TABLE_PENDING_ROWS.value)
         findings = tuple(dict.fromkeys(PortalFinding(value) for value in (*raw, *observation.get("findings", ())) if value in PortalFinding._value2member_map_))
-        # A wrong page is relational: only detectable against the record the
-        # run verified. Checked here so every caller reports the same thing.
+        # a wrong page is relational: only detectable against the record the run verified
         expected = observation.get("expected_record_number")
         if expected and url and "capdetail" in url.lower():
             identity = PageIdentity.from_observation(observation)
@@ -189,7 +141,7 @@ class PortalState:
 
     @property
     def unsettled(self) -> bool:
-        """True when the observation is mid-render: not evidence of anything."""
+        """true when the observation is mid-render: not evidence of anything"""
         return any(finding in UNSETTLED_FINDINGS for finding in self.findings)
 
     def as_dict(self) -> dict[str, Any]:
@@ -202,13 +154,7 @@ class PortalState:
 
 @dataclass(frozen=True)
 class RecoveryRoute:
-    """The portal half of one recovery decision.
-
-    `failure_type` feeds `classify_failure`-shaped handling; `terminal` means
-    the only safe route is stopping with the evidence; `strategy` names the
-    recovery shape when a bounded attempt is allowed. The controller still
-    enforces every budget — this only says what ACA's state permits at all.
-    """
+    """the portal half of one recovery decision"""
 
     finding: PortalFinding
     failure_type: FailureType
@@ -222,14 +168,7 @@ class RecoveryRoute:
 
 
 def route_recovery(state: PortalState) -> RecoveryRoute | None:
-    """The recovery route for the worst finding in one observation, or None.
-
-    Worst-first ordering: session death outranks everything (the checklist's
-    "don't repeatedly click through"), then consequential modals (policy
-    territory), then mid-render states (the observation is not evidence), then
-    the navigation-shaped findings. A clean, settled page returns None — no
-    finding, nothing to recover.
-    """
+    """the recovery route for the worst finding in one observation, or none"""
     priority = list(PortalFinding)
     for finding in sorted(state.findings, key=lambda f: (f not in TERMINAL_FINDINGS, priority.index(f))):
         if finding is PortalFinding.SESSION_EXPIRED_MODAL:
@@ -286,13 +225,7 @@ def route_recovery(state: PortalState) -> RecoveryRoute | None:
 
 
 def route_from_result(result: RecoveryResult) -> RecoveryRoute | None:
-    """Recover a route from a recorded recovery result (trace/audit use).
-
-    `RecoveryResult` carries only `strategy`/`error`; this maps a strategy name
-    back to its route so run reports can say *which portal finding* a recovery
-    answered. Unknown strategies (controller-internal ones like
-    RECONCILE_MUTATION_STATE) return None rather than a guess.
-    """
+    """recover a route from a recorded recovery result (trace/audit use)"""
     strategy_routes: dict[str, PortalFinding] = {
         "WAIT_FOR_SETTLE": PortalFinding.AJAX_SECTION_LOADING,
         "CLOSE_INFORMATIONAL_MODAL": PortalFinding.UNEXPECTED_MODAL,
@@ -312,23 +245,14 @@ def route_from_result(result: RecoveryResult) -> RecoveryRoute | None:
 
 def settled_browser_state(observation: Mapping[str, Any] | None,
                           *, expected_record_number: str | None = None) -> dict[str, Any]:
-    """The `browser_state` slice the planner should persist from one read.
-
-    Writes the *settled* page identity the loop key consumes: url path, record
-    identity, flow position, section step, plus the finding list so traces show
-    what the portal was doing. Deliberately excludes page text and anything
-    mid-render — a spinner label or an in-flight grid must never become the
-    state a loop key is built from (the adversarial review residual), and text churn must
-    never read as progress (`World.fingerprint` ignores this dict anyway).
-    """
+    """the `browser_state` slice the planner should persist from one read"""
     observation = dict(observation or {})
     if expected_record_number:
         observation["expected_record_number"] = expected_record_number
     state = PortalState.from_observation(observation)
     identity = state.identity
-    # The planner's loop key reads active_section first: the flow step is the
-    # finest position ACA exposes, and a step change is exactly what a URL-only
-    # key cannot see inside a postback wizard.
+    # the planner's loop key reads active_section first: the flow step is the finest position aca exposes,
+    # and a step change is exactly what a url-only key cannot see inside a postback wizard
     return {
         "url": observation.get("url"),
         "active_section": identity.step,
@@ -341,16 +265,7 @@ def settled_browser_state(observation: Mapping[str, Any] | None,
 
 
 def identity_from_world(world: Any) -> str:
-    """The settled page-state string for `loop_observed`, from a Phase 5 World.
-
-    Contract (adversarial review handoff): pass the settled page identity, never a live
-    render token. `browser_state` now carries the derived identity
-    (`settled_browser_state`), so the same settled page yields the same key
-    across replans, and a spinner label cannot defeat detection. The fallback
-    order is identity-bearing first: the recorded flow step, the capID record
-    identity, the URL *path* (query strings are noise for identity), then the
-    raw url for callers that recorded nothing better, then unknown.
-    """
+    """the settled page-state string for `loop_observed`, from a phase 5 world"""
     browser_state = getattr(world, "browser_state", None) or {}
     section = browser_state.get("active_section")
     if section:
@@ -366,8 +281,7 @@ def identity_from_world(world: Any) -> str:
 
 
 def audit_transient_identity_sources() -> tuple[dict[str, str], ...]:
-    """Which ACA states produce a transient `active_section`/URL (the audit
-    the adversarial review’s handoff asked for), each with the mitigation now in place."""
+    """which aca states produce a transient `active_section`/url (the audit the adversarial review’s handoff asked for), each with the mitigation now in place"""
     return (
         {
             "state": "AJAX sections still rendering (Inspections shows 'Loading...')",

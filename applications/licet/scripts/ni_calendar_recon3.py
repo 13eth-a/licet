@@ -1,8 +1,4 @@
-"""Recon round 3: reach the daily Inspections portlet via favorites bar.
-
-Read-only. Click a.favorite-text[aria-label=Inspections] (visible favorites
-bar), dump the portlet; also probe the spacev360 inspection space URL.
-"""
+"""recon round 3: reach the daily inspections portlet via favorites bar"""
 from __future__ import annotations
 
 import asyncio
@@ -67,7 +63,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(10000), 20)
         out("logged in")
 
-        # A) favorites-bar click
         try:
             await page.locator('a.favorite-text[aria-label="Inspections"]').first.click(
                 timeout=6000
@@ -78,7 +73,6 @@ async def main() -> int:
         except Exception as exc:
             out(f"A) favorites click failed: {exc!r}")
 
-        # B) direct space URL for inspections
         await asyncio.wait_for(
             page.goto(INSPEC_SPACE, timeout=45000, wait_until="domcontentloaded"), 55
         )

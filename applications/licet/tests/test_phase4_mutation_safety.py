@@ -1,10 +1,4 @@
-"""Phase 4 mutation-safety regressions (adversarial review portion).
-
-Each test pins one path that could mutate the wrong record, duplicate an
-action, violate a user constraint, or falsely report success — the four
-mutation outcomes Phase 4 targets at zero. They exercise the executor, the
-date selector, and the Accela adapter's second identity gate directly.
-"""
+"""phase 4 mutation-safety regressions (adversarial review portion)"""
 from datetime import date
 
 import pytest
@@ -30,9 +24,8 @@ RECORD_KEY = "NULLISLAND/Building/REC26/00000/000QD"
 
 
 class Portal:
-    """Minimal InspectionPortal whose first read is `before`, later reads `after`."""
+    """minimal inspectionportal whose first read is `before`, later reads `after`"""
 
-    # An identified sandbox, like the real adapter's session host.
     environment = Environment.SANDBOX
 
     def __init__(self, before, *, after=None, error=None):
@@ -69,13 +62,8 @@ def schedule(**overrides):
     return InspectionAction("schedule", "P-1", "Rough Electrical", **overrides)
 
 
-# --- duplicate submission -----------------------------------------------------
-
-
 @pytest.mark.parametrize("status", ["Requested", "Pending"])
 def test_schedule_is_blocked_when_a_request_is_already_in_flight(status):
-    # An accepted-but-unscheduled request already produces the desired outcome;
-    # submitting again would create a duplicate inspection.
     portal = Portal(snap(status=status))
     result = InspectionActionExecutor(portal).execute(
         schedule(), eligible_types=["Rough Electrical"], available_dates=["2026-09-24"]
@@ -85,17 +73,14 @@ def test_schedule_is_blocked_when_a_request_is_already_in_flight(status):
 
 
 def test_not_scheduled_is_requestable_and_is_not_a_duplicate():
-    # "Not scheduled" is a requestable state, not an outstanding request: the
-    # idempotency gate must not turn it into a permanent block.
+    # "not scheduled" is a requestable state, not an outstanding request: the idempotency gate must not
+    # turn it into a permanent block
     portal = Portal(snap(status="Not Scheduled"), after=snap(status="Scheduled", scheduled_date="2026-09-24"))
     result = InspectionActionExecutor(portal).execute(
         schedule(), eligible_types=["Rough Electrical"], available_dates=["2026-09-24"]
     )
     assert result.success and result.verified
     assert portal.submits == [("Rough Electrical", "2026-09-24")]
-
-
-# --- wrong-record mutation ----------------------------------------------------
 
 
 def test_action_bound_to_a_different_record_key_is_refused_before_submit():
@@ -119,12 +104,8 @@ def test_matching_record_key_proceeds_and_is_kept_in_the_audit():
 
 
 def test_portal_that_declines_to_assert_a_record_key_cannot_authorize():
-    # This used to be a documented residual: a portal returning no observed
-    # record key left only the displayed-permit check. Phase 6 closed it — an
-    # action that asserts a record key against an observation that does not
-    # assert one is unverified, so the mutation is refused instead of falling
-    # back to the displayed id. (The real Accela adapter always asserts the key;
-    # this contract now holds for every portal.)
+    # this used to be a documented residual: a portal returning no observed record key left only the
+    # displayed-permit check
     portal = Portal(snap(record_key=None), after=snap(status="Scheduled", scheduled_date="2026-09-24", record_key=None))
     result = InspectionActionExecutor(portal).execute(
         schedule(record_key=RECORD_KEY), eligible_types=["Rough Electrical"], available_dates=["2026-09-24"]
@@ -133,11 +114,8 @@ def test_portal_that_declines_to_assert_a_record_key_cannot_authorize():
     assert portal.submits == []
 
 
-# --- user date-constraint violation -------------------------------------------
-
-
 def test_unavailable_requested_weekday_is_not_silently_substituted():
-    # "Friday": another allowed day must never stand in for it.
+    # "friday": another allowed day must never stand in for it
     constraints = DateConstraints(preferred=date(2026, 9, 25), earliest=True)
     assert select_date(["2026-09-21", "2026-09-24"], constraints) is None
 
@@ -165,12 +143,9 @@ def test_no_availability_without_constraints_is_reported_as_no_dates():
     assert portal.submits == []
 
 
-# --- missing required input (fail closed) -------------------------------------
-
-
 def test_omitted_required_inputs_do_not_bypass_the_gate():
-    # The runner defaults required_inputs to None; that must mean "nothing
-    # supplied", not "the portal requires nothing".
+    # the runner defaults required_inputs to none; that must mean "nothing supplied", not "the portal
+    # requires nothing"
     portal = Portal(snap(required_fields=("phone",)))
     result = InspectionActionExecutor(portal).execute(
         schedule(), eligible_types=["Rough Electrical"], available_dates=["2026-09-24"]
@@ -190,12 +165,9 @@ def test_supplied_required_input_allows_the_action():
     assert result.success and result.verified
 
 
-# --- false success ------------------------------------------------------------
-
-
 def test_reschedule_to_the_current_date_is_not_reported_success():
-    # The state would be identical whether or not the reschedule ran, so
-    # "old date changed to new date" cannot be verified. Refuse, do not submit.
+    # the state would be identical whether or not the reschedule ran, so "old date changed to new date"
+    # cannot be verified
     portal = Portal(snap(status="Scheduled", scheduled_date="2026-09-24"))
     result = InspectionActionExecutor(portal).execute(
         InspectionAction("reschedule", "P-1", "Rough Electrical", existing_inspection_id="I-1"),
@@ -205,9 +177,6 @@ def test_reschedule_to_the_current_date_is_not_reported_success():
     assert result.error_code is ActionErrorCode.RESCHEDULE_FAILED
     assert not result.verified
     assert portal.submits == []
-
-
-# --- audit integrity ----------------------------------------------------------
 
 
 def test_uncertain_submission_records_exactly_one_audit():
@@ -228,9 +197,6 @@ def test_post_submit_mismatch_records_exactly_one_audit():
     assert result.verification_state is ActionVerificationState.STATE_MISMATCH
     assert len(executor.audits) == 1
     assert executor.audits[0].browser_steps == ("submit", "re-read inspection state")
-
-
-# --- adapter identity gate ----------------------------------------------------
 
 
 def test_adapter_snapshot_carries_the_stable_record_key():

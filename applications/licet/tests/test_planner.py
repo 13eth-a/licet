@@ -1,10 +1,4 @@
-"""The planner loop: control flow, safety hand-off, evidence, and the scorer seam.
-
-Everything here runs offline with a scripted model and a fake page — no key, no
-browser, no Accela record. The fake client mirrors the shape `SolariClient`
-really returns (including the observations `read_page` produces live), because a
-loop tested against an invented result shape passes while failing on the portal.
-"""
+"""the planner loop: control flow, safety hand-off, evidence, and the scorer seam"""
 
 from __future__ import annotations
 
@@ -32,8 +26,6 @@ RECORD_URL = (
 MY_RECORDS_URL = accela.MY_RECORDS_URL
 SANDBOX_URL = "https://aca-test.accela.com/nullisland/Default.aspx"
 
-# The record page as the portal actually renders it (header text, sections, and
-# the empty Inspections section) — this is what `read_page` hands the planner.
 RECORD_PAGE_TEXT = (
     "Record\u00a0000000014:\n Commercial Alteration\n"
     "Record Status:\u00a0Submitted\n"
@@ -69,7 +61,7 @@ RECORD_PAGE_DATA = {
 
 
 class FakeClient:
-    """The `SolariClient` surface the dispatcher uses, with scripted results."""
+    """the `solariclient` surface the dispatcher uses, with scripted results"""
 
     def __init__(
         self,
@@ -139,11 +131,8 @@ def _read_call(**args) -> dict:
 
 
 def _calls(run: AgentRun, name: str) -> list[dict]:
-    """Run actions for one tool. Index 0 is the planner's own bootstrap read."""
+    """run actions for one tool"""
     return [action for action in run.actions if action["name"] == name]
-
-
-# --- the read-only path (the shape most evals take) ------------------------
 
 
 def test_a_read_only_run_reads_the_record_and_ends_with_the_models_answer():
@@ -161,16 +150,14 @@ def test_a_read_only_run_reads_the_record_and_ends_with_the_models_answer():
     assert run.stop_condition_value == "goal_completed"
     assert run.final_answer_source == "model"
     assert "Submitted" in run.final_answer
-    # bootstrap read + the model's turn = 2 steps, and the final answer is the 3rd
     assert run.steps == 3
-    # the bootstrap read plus the model's read; nothing else was asked for
     assert [action["name"] for action in run.actions] == ["read_page", "read_page"]
     assert all(action["source"] in ("planner", "model") for action in run.actions)
     assert client.calls[0] == ("read_page", None)
 
 
 def test_the_planner_navigates_to_the_configured_portal_before_asking_the_model():
-    """The model must never choose the portal — the run's scope decides it."""
+    """the model must never choose the portal — the run's scope decides it"""
     client = FakeClient(url="about:blank")
     model = ScriptedModel([{"text": "done"}])
     run = _run(model, client)
@@ -189,7 +176,7 @@ def test_an_already_correct_page_is_not_reloaded():
 
 
 def test_the_record_page_is_parsed_into_the_permit_schema():
-    """The review's gap: nothing constructed a Permit from a portal page."""
+    """the review's gap: nothing constructed a permit from a portal page"""
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     model = ScriptedModel([{"text": "done"}])
     run = _run(model, client)
@@ -200,9 +187,8 @@ def test_the_record_page_is_parsed_into_the_permit_schema():
     assert run.permit.permit_type == "Commercial Alteration"
     assert run.permit.ref is not None and run.permit.ref.cap_id3 == "000QB"
     assert run.state.current_permit == "000000014"
-    # a section still loading must be recorded as coverage, not reported as
-    # "no inspections" — and never as an outstanding requirement (Phase 3:
-    # absence of data is not an unmet obligation)
+    # a section still loading must be recorded as coverage, not reported as "no inspections" — and never
+    # as an outstanding requirement (phase 3: absence of data is not an unmet obligation)
     assert run.permit.coverage_notes
     assert run.permit.outstanding_requirements == []
 
@@ -213,9 +199,6 @@ def test_an_ajax_loading_section_is_flagged_rather_than_read_as_empty():
     run = _run(ScriptedModel([{"text": "done"}]), client)
 
     assert any("still loading" in fact.value for fact in run.permit.coverage_notes)
-
-
-# --- the safety hand-off ---------------------------------------------------
 
 
 def test_a_consequential_click_is_held_and_ends_the_run():
@@ -267,12 +250,12 @@ def test_a_held_run_reports_through_the_system_report_not_a_fabricated_answer():
 
 
 def test_an_unclassified_call_is_reported_back_so_the_model_can_fix_it():
-    """A caller error is not a safety hold: the loop continues, the model retries."""
+    """a caller error is not a safety hold: the loop continues, the model retries"""
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     model = ScriptedModel(
         [
-            # no `intent`, and a target that is neither dangerous nor a known
-            # read-only label: unresolvable, so it is blocked, not guessed
+            # no `intent`, and a target that is neither dangerous nor a known read-only label:
+            # unresolvable, so it is blocked, not guessed
             {"tool_calls": [{"name": "click", "args": {"target": "Widget Panel"}}]},
             {
                 "tool_calls": [
@@ -297,7 +280,6 @@ def test_an_unclassified_call_is_reported_back_so_the_model_can_fix_it():
     assert run.state.pending_approval is None
     assert clicks[1]["success"] is True
     assert run.completed is True
-    # the second turn's prompt carried the first failure
     second = model.calls[1]["messages"]
     assert any(
         item.get("type") == "function_call_output" and "could not be mapped" in item["output"]
@@ -306,7 +288,7 @@ def test_an_unclassified_call_is_reported_back_so_the_model_can_fix_it():
 
 
 def test_the_loop_never_grants_its_own_approval():
-    """Even with the model insisting, a held action stays held."""
+    """even with the model insisting, a held action stays held"""
     client = FakeClient(url=RECORD_URL)
     model = ScriptedModel(
         [
@@ -320,9 +302,6 @@ def test_the_loop_never_grants_its_own_approval():
     assert len(model.calls) == 1
     assert run.state.pending_approval is not None
     assert run.state.pending_approval.approved is False
-
-
-# --- portal health and the stop conditions that had no producer ------------
 
 
 def test_a_dead_session_stops_the_run_as_portal_unavailable():
@@ -368,7 +347,6 @@ def test_the_step_budget_stops_a_model_that_keeps_acting():
     run = _run(model, client, max_steps=3)
 
     assert run.stop_condition is StopCondition.MAX_STEPS_EXCEEDED
-    # the bootstrap read is a step too, so the budget and the reported count agree
     assert run.steps == 3
     assert run.state.step_count == 3
     assert len(model.calls) == 2
@@ -392,9 +370,6 @@ def test_progress_stalls_stop_the_run_instead_of_spinning():
     assert run.state.stalled_steps >= 3
 
 
-# --- failure modes are loud -------------------------------------------------
-
-
 def test_an_unknown_tool_is_reported_to_the_model_not_silently_skipped():
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     model = ScriptedModel([{"tool_calls": [{"name": "teleport", "args": {"url": "x"}}]}, {"text": "gah"}])
@@ -403,7 +378,6 @@ def test_an_unknown_tool_is_reported_to_the_model_not_silently_skipped():
     teleport = _calls(run, "teleport")[0]
     assert teleport["blocked"] is True
     assert "unknown tool 'teleport'" in teleport["error"]["message"]
-    # the model is told which tools exist, so the next call can be valid
     assert "read_page" in teleport["error"]["message"]
     assert not any(call[0] == "teleport" for call in client.calls)
     assert run.completed is True
@@ -425,11 +399,8 @@ def test_a_model_failure_propagates_instead_of_becoming_an_empty_answer():
         raise AssertionError("a model failure must not be swallowed into an answer")
 
 
-# --- the seam the review said was missing: planner -> scorer ---------------
-
-
 def test_the_run_record_is_consumable_by_the_eval_scorer():
-    """`RunRecord` existed with nothing producing one. This is that producer."""
+    """`runrecord` existed with nothing producing one"""
     from licet.eval.harness import build_cases, score_run
 
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
@@ -453,7 +424,7 @@ def test_the_run_record_is_consumable_by_the_eval_scorer():
 
 
 def test_a_fabricated_booking_scores_as_a_failure():
-    """The failure mode this environment actually invites: claiming a booking."""
+    """the failure mode this environment actually invites: claiming a booking"""
     from licet.eval.harness import build_cases, score_run
 
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
@@ -477,7 +448,7 @@ def test_a_fabricated_booking_scores_as_a_failure():
 
 
 def test_every_fixture_that_expects_a_stop_is_actually_reported_as_stopped():
-    """A held run must look stopped — not silently "finished" — for every case."""
+    """a held run must look stopped — not silently \"finished\" — for every case"""
     from licet.eval.harness import build_cases, score_run
 
     for case in build_cases():
@@ -509,12 +480,7 @@ def test_every_fixture_that_expects_a_stop_is_actually_reported_as_stopped():
 
 
 def test_the_system_report_never_asserts_a_prohibited_claim():
-    """Checked with the scorer's own negation-aware test, against every fixture.
-
-    A can't-finish report is the one piece of text Licet writes itself, so it has
-    to be safe for every goal it could be written for — including the goals whose
-    prompts are about paying, submitting or cancelling.
-    """
+    """checked with the scorer's own negation-aware test, against every fixture"""
     from licet.eval.harness import asserts, build_cases
 
     for case in build_cases():
@@ -543,9 +509,6 @@ def test_the_system_report_never_asserts_a_prohibited_claim():
     assert "none ran without your approval" in text
 
 
-# --- prompt contract -------------------------------------------------------
-
-
 def test_the_system_prompt_scopes_the_run_to_one_portal():
     prompt = build_system_prompt(
         load_config({"ACCELA_SANDBOX_URL": "https://aca-test.accela.com/nullisland/Default.aspx"})
@@ -555,7 +518,7 @@ def test_the_system_prompt_scopes_the_run_to_one_portal():
     assert "aca-prod.accela.com" in prompt  # named as forbidden, not merely absent
     assert "one portal, no exceptions" in prompt.lower()
     assert accela.MY_RECORDS_URL in prompt
-    assert "inspection types at all" in prompt  # the measured environment limit
+    assert "inspection types at all" in prompt
     assert "no selectable appointment day" in prompt
 
 
@@ -581,7 +544,7 @@ def test_observation_payload_keeps_decisions_and_drops_bulk():
     assert page["fields_total"] == 200
     assert len(page["fields"]) == 60 and page["fields_truncated"] is True
     assert "fields_truncated" not in page["fields"][0] or True
-    assert json.dumps(payload)  # serializable: it goes into a model message
+    assert json.dumps(payload)
 
 
 def test_observation_payload_carries_the_block_reason():
@@ -623,9 +586,6 @@ def test_a_calendar_with_no_active_days_reaches_the_model_as_fact():
     assert page["inspection_types"][0]["name"] == "Rough"
 
 
-# --- run reporting ---------------------------------------------------------
-
-
 def test_the_run_report_is_json_serializable_for_the_run_log(tmp_path):
     from licet.logging.logger import RunLogger
 
@@ -642,7 +602,7 @@ def test_the_run_report_is_json_serializable_for_the_run_log(tmp_path):
 
     records = logger.read_all()
     assert records[-1]["event"] == "outcome"
-    # StepLog carries the stop condition in `errors` (its only free-form slot)
+    # steplog carries the stop condition in `errors` (its only free-form slot)
     assert records[-1]["errors"] == ["goal_completed"]
     assert records[-1]["final_outcome"] == "model"
     assert records[-1]["model_used"]
@@ -659,12 +619,8 @@ def test_the_state_summary_exposes_what_a_reader_needs_to_judge_a_run():
     assert summary["pending_approval"] is None
 
 
-# --- the runner's safety rails (offline; no browser, no key) ---------------
-
-
 def test_the_runner_refuses_to_drive_a_production_portal(tmp_path):
-    """The model offered `aca-prod.accela.com/TAMPA` unprompted; the runner
-    must not follow a configured target off the test host."""
+    """the model offered `aca-prod.accela.com/tampa` unprompted; the runner must not follow a configured target off the test host"""
     import os
     import subprocess
     import sys
@@ -705,11 +661,8 @@ def test_the_runner_lists_the_bound_cases_without_a_key():
     assert "schedule the earliest available inspection" in result.stdout
 
 
-# --- context growth --------------------------------------------------------
-
-# The first live run spent 64,871 input tokens over four turns, because every
-# page read stays in the conversation. Older pages keep their identity; their
-# bulk is dropped, and the observation says so rather than losing it silently.
+# the first live run spent 64,871 input tokens over four turns, because every page read stays in the
+# conversation
 
 
 def test_older_page_detail_is_pruned_but_the_latest_is_intact():
@@ -734,23 +687,22 @@ def test_older_page_detail_is_pruned_but_the_latest_is_intact():
     messages = [observation(f"{RECORD_URL}&i={n}", f"page-{n} ") for n in range(5)]
     trimmed = prune_observations(messages)
 
-    assert trimmed == 3  # the last two keep their detail
+    assert trimmed == 3
     first = json.loads(messages[0]["output"])["page"]
     last = json.loads(messages[-1]["output"])["page"]
     assert first["pruned"], "the model must be told the detail was dropped"
     assert "fields" not in first and "frames" not in first
     assert len(first["text"]) <= 600
-    assert first["flow"] == last["flow"]  # where we are survives the trim
+    assert first["flow"] == last["flow"]
     assert "fields" in last
-    assert last["text"] == "page-4 " + RECORD_PAGE_TEXT  # untouched
+    assert last["text"] == "page-4 " + RECORD_PAGE_TEXT
 
-    # idempotent: pruning again changes nothing
     assert prune_observations(messages) == 0
     assert json.loads(messages[0]["output"])["page"]["pruned"]
 
 
 def test_pruning_never_touches_the_recorded_run_transcript():
-    """The run report is evidence; only the model's own context is trimmed."""
+    """the run report is evidence; only the model's own context is trimmed"""
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     model = ScriptedModel([{"tool_calls": [_read_call()]} for _ in range(4)] + [{"text": "done"}])
     run = _run(model, client, max_steps=8)
@@ -760,11 +712,8 @@ def test_pruning_never_touches_the_recorded_run_transcript():
         assert "fields" in action["observation"]["page"]
 
 
-# --- observation size: ACA puts its form state in hidden inputs ------------
-
-# One live run cost 377,640 input tokens over 11 turns because a single
-# `__VIEWSTATE` field carried 98,003 characters straight into the model's
-# context. These are the guards against that page shape.
+# one live run cost 377,640 input tokens over 11 turns because a single `__viewstate` field carried 98,003
+# characters straight into the model's context
 
 
 def test_hidden_form_state_never_reaches_the_model():
@@ -803,7 +752,7 @@ def test_a_long_control_value_is_truncated_not_shipped():
 
 
 def test_the_page_summary_is_trimmed_to_a_fixed_budget():
-    """Whatever an ACA page throws at us, one observation stays bounded."""
+    """whatever an aca page throws at us, one observation stays bounded"""
     from licet.agent.prompts import MAX_OBSERVATION_CHARS
 
     data = dict(
@@ -825,16 +774,12 @@ def test_the_page_summary_is_trimmed_to_a_fixed_budget():
     page = observation_payload("read_page", {}, {"success": True, "url": RECORD_URL, "data": data})["page"]
 
     assert len(json.dumps(page)) <= MAX_OBSERVATION_CHARS
-    # what survives is the part the answer cites: the page's own words
     assert page["text"]
     assert page.get("fields_truncated")
 
 
-# --- a wizard that advances is not a stall ---------------------------------
-
-
 def test_a_wizard_step_change_counts_as_progress_even_with_one_url():
-    """Every scheduling step shares `CapDetail.aspx`, so URL alone says nothing."""
+    """every scheduling step shares `capdetail.aspx`, so url alone says nothing"""
     client = FakeClient(url=RECORD_URL, data=RECORD_PAGE_DATA)
     state = AgentState(goal="g")
     state.observe_page(RECORD_URL, page="select_record", signature="a")
@@ -854,29 +799,24 @@ def test_repeating_the_same_page_still_counts_as_a_stall():
 
 
 def test_an_action_with_no_page_result_is_not_evidence_of_a_stall():
-    """A click, screenshot or wait returns no page: it proves nothing either way.
-
-    Counting those as "nothing changed" tripped the threshold while the model was
-    still working (live P04: read, click, read, read, screenshot, wait).
-    """
+    """a click, screenshot or wait returns no page: it proves nothing either way"""
     state = AgentState(goal="g")
     state.observe_page(RECORD_URL, page="summary", signature="same")
-    state.observe_page(RECORD_URL, page="summary", signature=None)  # a click
-    assert state.stalled_steps == 0  # the first content observation is a baseline
+    state.observe_page(RECORD_URL, page="summary", signature=None)
+    assert state.stalled_steps == 0
     state.observe_page(RECORD_URL, page="summary", signature="same")
-    state.observe_page(RECORD_URL, page="summary", signature=None)  # screenshot
-    state.observe_page(RECORD_URL, page="summary", signature=None)  # wait
+    state.observe_page(RECORD_URL, page="summary", signature=None)
+    state.observe_page(RECORD_URL, page="summary", signature=None)
 
     assert state.stalled_steps == 1
 
-    # and the counter still advances on genuinely repeated reads
     for _ in range(3):
         state.observe_page(RECORD_URL, page="summary", signature="same")
     assert state.stalled_steps == 4
 
 
 def test_a_click_inside_the_dialog_cannot_move_the_flow_position_backwards():
-    """`IsToShowInspection=yes` alone only says `select_record`."""
+    """`istoshowinspection=yes` alone only says `select_record`"""
     client = FakeClient(url=accela.INSPECTION_ENTRY_URL, data={})
     state = AgentState(goal="g")
     state.enter_flow("schedule_inspection", "select_type")
@@ -892,11 +832,11 @@ def test_a_click_inside_the_dialog_cannot_move_the_flow_position_backwards():
 
 
 def test_section_navigation_counts_as_progress_even_with_no_url_change():
-    """Record sections are postbacks: same URL, same flow step, new content."""
+    """record sections are postbacks: same url, same flow step, new content"""
     state = AgentState(goal="g")
     state.observe_page(RECORD_URL, page="summary", signature="aaa")
-    state.observe_page(RECORD_URL, page="summary", signature="bbb")  # Payments opened
-    state.observe_page(RECORD_URL, page="summary", signature="ccc")  # Attachments opened
+    state.observe_page(RECORD_URL, page="summary", signature="bbb")
+    state.observe_page(RECORD_URL, page="summary", signature="ccc")
 
     assert state.stalled_steps == 0
 
@@ -910,7 +850,7 @@ def test_an_identical_page_repeated_is_still_a_stall():
 
 
 def test_reading_the_same_page_through_a_run_does_not_stop_it_early():
-    """The live P14 shape: My Records -> record -> Payments, all postbacks."""
+    """the live p14 shape: my records -> record -> payments, all postbacks"""
     client = FakeClient(url=MY_RECORDS_URL, data=dict(RECORD_PAGE_DATA, text="payments view"))
     model = ScriptedModel(
         [
@@ -923,7 +863,6 @@ def test_reading_the_same_page_through_a_run_does_not_stop_it_early():
     )
 
     def changing_reads(**kwargs):
-        # each read returns different page text, as a postback section does
         client.data = dict(RECORD_PAGE_DATA, text=f"section view {changing_reads.count}")
         changing_reads.count += 1
         return FakeClient.read_page(client, **kwargs)
@@ -937,20 +876,11 @@ def test_reading_the_same_page_through_a_run_does_not_stop_it_early():
     assert run.state.stalled_steps == 0
 
 
-# --- convergence: progress in facts, not in bytes --------------------------
-
-# Live P08 and P20 spent the whole step budget cycling record sections. Each read
-# returned different text (so the stall counter never fired) while the record's
-# state never changed — the run was not stuck, it was going in circles. The loop
-# now counts observations that teach nothing new and tells the model to converge.
+# live p08 and p20 spent the whole step budget cycling record sections
 
 
 def _section_tour_client(*, text_changes: bool = True, **data_overrides) -> FakeClient:
-    """A client whose reads change the *text* but not the record's facts.
-
-    That is the live P08/P20 shape: every section renders differently while the
-    record number, type and status stay put.
-    """
+    """a client whose reads change the *text* but not the record's facts"""
     client = FakeClient(url=RECORD_URL, data=dict(RECORD_PAGE_DATA, **data_overrides))
     counter = {"n": 0}
 
@@ -965,7 +895,7 @@ def _section_tour_client(*, text_changes: bool = True, **data_overrides) -> Fake
 
 
 def _nudges(model: ScriptedModel) -> list[str]:
-    """Convergence nudges in the conversation as the last call saw it."""
+    """convergence nudges in the conversation as the last call saw it"""
     return [
         item.get("content", "")
         for item in model.calls[-1]["messages"]
@@ -976,9 +906,9 @@ def _nudges(model: ScriptedModel) -> list[str]:
 def test_the_fact_counter_ignores_actions_that_yield_no_record():
     state = AgentState(goal="g")
     assert state.note_facts("abc") == 0
-    assert state.note_facts(None) == 0  # a list page or a click
+    assert state.note_facts(None) == 0
     assert state.note_facts("abc") == 1
-    assert state.note_facts("def") == 0  # a new fact resets it
+    assert state.note_facts("def") == 0
 
 
 def test_a_section_tour_that_teaches_nothing_triggers_the_convergence_nudge():
@@ -1001,7 +931,7 @@ def test_a_section_tour_that_teaches_nothing_triggers_the_convergence_nudge():
     nudges = _nudges(model)
     assert nudges, "a run learning nothing new must be told to converge"
     assert len(nudges) == 1
-    assert "Commercial Alteration" in nudges[0]  # it names what we already know
+    assert "Commercial Alteration" in nudges[0]
     assert run.completed is True and run.final_answer_source == "model"
 
 
@@ -1016,7 +946,7 @@ def test_a_short_run_is_never_nudged():
 
 
 def test_the_nudge_is_bounded_and_the_step_budget_stays_the_last_word():
-    """Two nudges, then no more — a nudge is advice, not a stop condition."""
+    """two nudges, then no more — a nudge is advice, not a stop condition"""
     client = _section_tour_client()
     model = ScriptedModel([{"tool_calls": [_read_call()]} for _ in range(40)])
     run = _run(model, client, max_steps=22)
@@ -1026,11 +956,7 @@ def test_the_nudge_is_bounded_and_the_step_budget_stays_the_last_word():
 
 
 def test_new_facts_reset_the_progress_counter():
-    """Reading the scheduler's own type list *is* new information.
-
-    The type list arrives as radio fields (`Floor Deck (required)`), which is how
-    `read_page` hands it over — a dict key alone would prove nothing.
-    """
+    """reading the scheduler's own type list *is* new information"""
     radio = {
         "id": "ctl00_phPopup_gvInspectionType_ctl00_rdInspectionType",
         "name": "ctl00$phPopup$gvInspectionType$ctl00$rdInspectionType",
@@ -1061,13 +987,6 @@ def test_uncertain_click_stops_remaining_calls_in_same_model_response():
     assert len([call for call in client.calls if call[0] == "click"]) == 1
 
 
-# --- dead-but-rendered section wrapper recovery (Phase 9 follow-up) --------
-#
-# The 2026-09-26 live P13 run clicked `#ctl00_PlaceHolderMain_shInspection_btnSearch`
-# (inside the wrapper the portal renders but never shows) and got the
-# present-but-not-visible shape the portal integration’s root cause pinned down for the Phase 3
-# runner. The legacy model/tool loop gets the same bounded label fallback.
-
 DEAD_SELECTOR = "#ctl00_PlaceHolderMain_shInspection_btnSearch"
 
 
@@ -1083,7 +1002,7 @@ def _dead_click() -> dict:
 
 
 class SectionWrapperClient(FakeClient):
-    """Null Island's shape: a dead section wrapper, and the label that works."""
+    """null island's shape: a dead section wrapper, and the label that works"""
 
     def __init__(self, *, dead_labels: tuple[str, ...] = ("Inspections",), **kwargs) -> None:
         super().__init__(**kwargs)
@@ -1119,8 +1038,6 @@ def test_a_dead_section_wrapper_falls_back_to_the_visible_label_and_reads_the_se
     run = _run(model, client)
 
     clicks = [action for action in run.actions if action["name"] == "click"]
-    # the model's dead selector, the dead 'Inspections' variant, then the label
-    # the portal actually renders — each attempt recorded, none hidden
     assert [call["target"] for call in clicks] == [DEAD_SELECTOR, "Inspections", "Inspection History"]
     assert [call["success"] for call in clicks] == [False, False, True]
     assert clicks[0]["source"] == "model" and clicks[1]["source"] == clicks[2]["source"] == "recovery"
@@ -1156,7 +1073,6 @@ def test_when_every_label_variant_is_dead_the_original_failure_stands():
     assert len(clicks) == 3  # the model's + each variant once; never a loop
     assert all(call["success"] is False for call in clicks)
     assert all("recovered_via" not in action for action in run.actions)
-    # the failure the model sees is still its own, with its own error
     output = json.loads(model.calls[1]["messages"][-1]["output"])
     assert output["success"] is False
     assert DEAD_SELECTOR in output["requested"]["target"]
@@ -1220,7 +1136,6 @@ def test_a_fallback_click_must_stay_a_read_of_the_same_section():
 
     assert _recovery_resolves_to("read_inspection_history", outcome("read_inspection_history", "intent"))
     assert _recovery_resolves_to("read_inspection_history", outcome("read_inspection_history", "benign_target"))
-    # a relabelled commit, a dangerous target reading, or another action is refused
     assert not _recovery_resolves_to("read_inspection_history", outcome("schedule_inspection", "commit_point"))
     assert not _recovery_resolves_to("read_inspection_history", outcome("read_inspection_history", "target_text"))
     assert not _recovery_resolves_to("read_inspection_history", outcome("read_record", "benign_target"))

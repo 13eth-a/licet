@@ -1,1 +1,1 @@
-"""Package init for licet.browser."""
+"""package init for licet.browser"""

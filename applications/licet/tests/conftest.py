@@ -1,19 +1,4 @@
-"""Shared fixtures for Phase 2 lookup tests.
-
-The lookup test files previously each re-implemented the same fake client,
-canned page payloads, and row builders. This module is the single source for
-those, so new lookup tests (and the runner's gap coverage) stay small and
-consistent.
-
-Contracts preserved from the existing tests:
-
-- ``read_page`` carries the URL inside ``data`` as well as on the result,
-  because the dispatcher's position sync reads ``data["url"]``.
-- The fake client records calls as ``(name, dict)`` tuples, so assertions like
-  ``("click", {"target": "text=Search"}) in client.calls`` keep passing.
-- Field inventories are lists of plain dicts (the shape ``read_page`` really
-  serialises), not ``FieldInfo`` objects.
-"""
+"""shared fixtures for phase 2 lookup tests"""
 
 from __future__ import annotations
 
@@ -36,9 +21,7 @@ DETAIL_URL = (
     "&capID1=REC26&capID2=00000&capID3=00014&agencyCode=NULLISLAND&IsToShowInspection="
 )
 
-# Cached link targets used by the existing tests' click assertions. Row hrefs are
-# site-absolute (/NULLISLAND/...) per the live UI map — prefixing the agency
-# path yields /nullisland/NULLISLAND/... and "The file does not exist".
+# cached link targets used by the existing tests' click assertions
 _DETAIL_LINK_PREFIX = f"{accela.SITE_ROOT}/NULLISLAND/Cap/CapDetail.aspx"
 
 
@@ -50,8 +33,7 @@ def row(
     applicant: str = "Eval User",
     parcel: str | None = None,
 ) -> str:
-    """One result-grid row, including the empty Project Name cell the parser must
-    preserve (the My Records empty-Project-Name trap)."""
+    """one result-grid row, including the empty project name cell the parser must preserve (the my records empty-project-name trap)"""
     parcel_cell = f"<td>{parcel}</td>" if parcel else "<td></td>"
     cap_id = number.lstrip("0").zfill(5) if number.isdigit() else number
     return (
@@ -76,23 +58,15 @@ def results_page(
     total: int = 0,
     last: int = 0,
 ) -> str:
-    """A complete result grid, with the footer metadata the pagination scan reads."""
+    """a complete result grid, with the footer metadata the pagination scan reads"""
     n = len(rows) or 1
     return ROW_HTML.format(rows="".join(rows)) + (
         footer.format(n=n, total=total or n, last=last or n) if footer else ""
     )
 
 
-# --- the fake client ---------------------------------------------------------
-
-
 class FakeClient:
-    """Scripted ``SolariClient`` stand-in: queued read_page payloads, recorded calls.
-
-    ``read_page`` payloads are plain dicts — the shape the real client puts in
-    ``data`` — so a test can drop in a field inventory, a body text, a URL, a
-    flow position, or any combination without building a richer object.
-    """
+    """scripted ``solariclient`` stand-in: queued read_page payloads, recorded calls"""
 
     def __init__(self, reads: list[dict[str, Any]], *, html: str = "") -> None:
         self.reads = list(reads)
@@ -126,7 +100,6 @@ class FakeClient:
     async def screenshot(self, path: str | None = None) -> ToolResult:
         return _ok(path=None)
 
-    # helpers for tests -----------------------------------------------------------
 
     def next_read(self, payload: dict[str, Any]) -> None:
         self.reads.append(payload)
@@ -139,14 +112,10 @@ def types_ns(**attrs: Any) -> Any:
 
 
 def _ok(**data: Any) -> ToolResult:
-    """Real client contract: ``read_page`` carries the URL on the result AND
-    inside ``data``; the dispatcher's position sync reads it from ``data``."""
+    """real client contract: ``read_page`` carries the url on the result and inside ``data``; the dispatcher's position sync reads it from ``data``"""
     url = data.get("url", SEARCH_URL)
     data.setdefault("url", url)
     return ToolResult(ok=True, url=url, data=data, error=None)
-
-
-# --- canned payloads ---------------------------------------------------------
 
 
 def search_form(
@@ -157,24 +126,7 @@ def search_form(
     include_date: bool = True,
     text: str = "",
 ) -> dict[str, Any]:
-    """One ``read_page`` payload for a search-form page.
-
-    Parameters
-    ----------
-    fields:
-        The form controls the form currently renders. When ``options`` is given,
-        the search-mode dropdown is prepended so the runner can resolve the
-        mode label from the agency's wording.
-    options:
-        Dropdown option labels for ``ddlSearchType``, e.g.
-        ``["Permit Number", "Search by Address", "Search by Parcel"]``.
-    include_date:
-        ACA always renders the pre-filled date range on the search form, which is
-        exactly what the widened zero-result retry types into. Default True.
-    text:
-        Visible page text. Empty by default; set it to e.g. ``"No records found."``
-        when the form rendered but the search returned nothing.
-    """
+    """one ``read_page`` payload for a search-form page"""
     fields = list(fields or [])
     if options is not None:
         fields = [
@@ -199,10 +151,7 @@ def search_results(
     total: int = 0,
     last: int = 0,
 ) -> dict[str, Any]:
-    """One ``read_page`` payload for a rendered result grid.
-
-    When ``text`` is given it is used as the body verbatim; otherwise the rows are
-    rendered through ``results_page``."""
+    """one ``read_page`` payload for a rendered result grid"""
     body = text if text is not None else results_page(*rows, footer=footer, total=total, last=last)
     return {
         "url": url,
@@ -220,7 +169,7 @@ def detail_page(
     url: str | None = None,
     address: str | None = None,
 ) -> dict[str, Any]:
-    """One ``read_page`` payload for a record detail page."""
+    """one ``read_page`` payload for a record detail page"""
     cap_id = number.lstrip("0").zfill(5) if number.isdigit() else number
     url = url or DETAIL_URL.replace("capID3=00014", f"capID3={cap_id}")
     return {
@@ -236,12 +185,8 @@ def detail_page(
     }
 
 
-# --- field helpers ------------------------------------------------------------
-
-
 def gs_field(suffix: str, label: str = "") -> dict[str, Any]:
-    """One general-search-form text control, in the shape ``parse_fields`` would
-    produce for a ``ctl00_PlaceHolderMain_generalSearchForm_*`` id."""
+    """one general-search-form text control, in the shape ``parse_fields`` would produce for a ``ctl00_placeholdermain_generalsearchform_*`` id"""
     return {
         "id": f"ctl00_PlaceHolderMain_generalSearchForm_{suffix}",
         "kind": "text",
@@ -250,8 +195,7 @@ def gs_field(suffix: str, label: str = "") -> dict[str, Any]:
 
 
 def apo_fields() -> list[dict[str, Any]]:
-    """The address-mode controls NI actually renders after the mode postback
-    (live-verified: the ``txtAPO_Search_by_Address_*`` family)."""
+    """the address-mode controls ni actually renders after the mode postback (live-verified: the ``txtapo_search_by_address_*`` family)"""
     return [
         gs_field("txtAPO_Search_by_Address_StreetNumber_ChildControl0"),
         gs_field("txtAPO_Search_by_Address_StreetName"),
@@ -259,7 +203,7 @@ def apo_fields() -> list[dict[str, Any]]:
 
 
 def mode_dropdown(options: list[str]) -> list[dict[str, Any]]:
-    """Search-mode dropdown rendered as a field the inventory can carry."""
+    """search-mode dropdown rendered as a field the inventory can carry"""
     return [
         {
             "id": f"ctl00_PlaceHolderMain_{accela.SEARCH_MODE_DROPDOWN}",
@@ -270,21 +214,12 @@ def mode_dropdown(options: list[str]) -> list[dict[str, Any]]:
 
 
 def field_for(suffix: str, label: str = "") -> dict[str, Any]:
-    """A general-search-form text control by its id suffix — the shape the
-    runner's ``_bind_fields`` and the live ``resolve_search_field`` both target."""
+    """a general-search-form text control by its id suffix — the shape the runner's ``_bind_fields`` and the live ``resolve_search_field`` both target"""
     return gs_field(suffix, label=label)
 
 
-# --- runner helper ------------------------------------------------------------
-
-
 def runner_for(client: FakeClient, **kwargs: Any) -> LookupRunner:
-    """A ``LookupRunner`` wired to the fake client through the dispatcher.
-
-    ``html_source`` is bound to the client's current ``html``, so pagination
-    tests that mutate ``client.html`` after a Next click still feed the right
-    DOM to ``parse_search_results``.
-    """
+    """a ``lookuprunner`` wired to the fake client through the dispatcher"""
     return LookupRunner(
         ToolDispatcher(client),  # type: ignore[arg-type]
         html_source=lambda: client.html,
@@ -300,7 +235,7 @@ def run(
     runner_kwargs: dict[str, Any] | None = None,
     state_kwargs: dict[str, Any] | None = None,
 ) -> tuple[LookupRunner, Any, AgentState]:
-    """Drive one lookup end to end and return ``(runner, result, state)``."""
+    """drive one lookup end to end and return ``(runner, result, state)``"""
     state = AgentState(goal=goal or "test goal", **(state_kwargs or {}))
     runner = runner_for(client, **(runner_kwargs or {}))
     result = asyncio.run(runner.run(goal or "test goal", request, state))

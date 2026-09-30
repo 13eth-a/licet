@@ -1,4 +1,4 @@
-"""Prevent demo presentation from claiming more than the execution evidence."""
+"""prevent demo presentation from claiming more than the execution evidence"""
 from types import SimpleNamespace
 
 import pytest

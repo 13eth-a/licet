@@ -1,4 +1,4 @@
-"""Noisy Phase 2–7 integration: real runtime and policy, fake external I/O."""
+"""noisy phase 2–7 integration: real runtime and policy, fake external i/o"""
 import asyncio
 from copy import deepcopy
 from dataclasses import replace
@@ -17,16 +17,10 @@ from licet.phase7.recovery import RecoveryController, RecoveryBudgets
 KEY = 'NULLISLAND/Building/REC26/00000/00014'
 CASES = ('read_timeout', 'home', 'loading', 'modal', 'wrong_page', 'tab',
          'session', 'outage', 'lost_submit', 'unknown_submit', 'wrong_record', 'preflight_timeout',
-         # R1: the stale-but-plausible read this portal actually produces.
+         # r1: the stale-but-plausible read this portal actually produces
          'pending_rows')
 
-# What each injection actually exercises. The Phase 8 Accela realism review (R3)
-# found two under-anchored rows: `modal` injects the *finding* with no dialog
-# wording at all, so the benchmark grades the router and never `detect_modal`
-# detection, and `tab`'s markers are partly other-agency observed and sit on no
-# benchmarked Null Island flow. Recording the scope here keeps the limitation
-# visible instead of implying full coverage; a completeness test keeps it from
-# going stale as cases are added.
+# what each injection actually exercises
 CASE_SCOPE = {
     'read_timeout': 'full: transport timeout, then recovery',
     'home': 'full: dead-session deep-link redirect',
@@ -93,11 +87,7 @@ async def noisy_run(case, seed=0, journal=None, validate_outcome=True):
                     world.record_key = 'FOREIGN'
                     return Observation(world)
                 if case == 'pending_rows':
-                    # R1: the observation the portal really produces mid-load. The
-                    # findings are *derived* through the production helper from the
-                    # text and grid the read carried, not declared by the fixture,
-                    # so this grades detection and routing together rather than
-                    # the router alone (which is R3's `modal` limitation).
+                    # r1: the observation the portal really produces mid-load
                     world.browser_state = settled_browser_state({
                         'url': detail['url'],
                         'text': 'Inspections\nYou have not added any inspections.\nLoading...',
@@ -127,9 +117,8 @@ async def noisy_run(case, seed=0, journal=None, validate_outcome=True):
         if case in {'lost_submit','unknown_submit'}:
             assert len(portal.submits) == 1
         if case == 'pending_rows':
-            # The stale-empty grid is never taken as a fact: the run re-settled
-            # and scheduled the real inspection rather than concluding that the
-            # record has no inspections to schedule.
+            # the stale-empty grid is never taken as a fact: the run re-settled and scheduled the real
+            # inspection rather than concluding that the record has no inspections to schedule
             assert result.world.verified_inspection is not None
             assert result.world.verified_inspection.record_key == KEY
     return {'case':case, 'seed':seed, 'status':result.status.value, 'reason':result.reason,
@@ -145,16 +134,7 @@ def test_noisy_real_runtime(case, seed):
 
 
 def test_pending_rows_grid_is_not_evidence_and_recovery_re_settles():
-    """R1: a mid-load read is not evidence, whatever it appears to say.
-
-    ACA renders the Inspections section over AJAX, so a read that lands while
-    the grid is in flight returns the *declared-empty* wording ("You have not
-    added any inspections.") beside a table with no rows yet. An agent that
-    takes that at face value states as fact that the record has no inspections —
-    the most expensive false conclusion available on this portal. The tell is
-    the state itself, and the contract is that it re-settles instead of being
-    read as a fact.
-    """
+    """r1: a mid-load read is not evidence, whatever it appears to say"""
     observation = {
         'url': 'https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building',
         'text': 'Inspections\nYou have not added any inspections.\nLoading...',
@@ -165,8 +145,8 @@ def test_pending_rows_grid_is_not_evidence_and_recovery_re_settles():
     assert 'empty_table_pending_rows' in {finding.value for finding in state.findings}
     route = route_recovery(state)
     assert route is not None and not route.terminal
-    # Non-terminal and re-settling: the only route for an observation that is
-    # not yet evidence, as opposed to a stop or an invented reading of it.
+    # non-terminal and re-settling: the only route for an observation that is not yet evidence, as opposed
+    # to a stop or an invented reading of it
     assert route.finding.value == 'empty_table_pending_rows'
     assert route.strategy == 'WAIT_FOR_SETTLE'
     assert 're-settle' in route.reason

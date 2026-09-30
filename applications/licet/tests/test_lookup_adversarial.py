@@ -1,14 +1,4 @@
-"""Adversarial record-matching, confidence, and fallback tests for Phase 2.
-
-Division of responsibility: this file owns the *selection* logic — ranking,
-confidence thresholds, the ambiguity/too-many distinction, parsing of messy
-language, and the bounded fallback ladder. `tests/test_lookup.py` covers the
-happy-path primitives and `tests/test_lookup_runner.py` the browser bridge.
-
-The governing rule is the Phase 2 exit metric: **wrong-record rate must be 0**.
-Every test that could otherwise select a plausible-but-unproven record asserts
-that the lookup refuses instead.
-"""
+"""adversarial record-matching, confidence, and fallback tests for phase 2"""
 
 from __future__ import annotations
 
@@ -30,10 +20,6 @@ from licet.lookup import (
     resolve_lookup,
 )
 
-# ---------------------------------------------------------------------------
-# Messy / adversarial natural language
-# ---------------------------------------------------------------------------
-
 
 def test_building_record_with_directional_is_parsed():
     request = parse_lookup_request("building record at 1200 e main")
@@ -50,7 +36,6 @@ def test_commercial_alteration_shorthand_is_parsed():
 
 
 def test_parcel_phrase_extracts_only_the_parcel_token():
-    # A greedy pattern used to swallow the rest of the sentence.
     request = parse_lookup_request("the permit tied to parcel 42-18-33 and address 123 Main")
     assert request.parcel_number == "421833"
     assert choose_search_strategy(request).value == "parcel_number"
@@ -80,17 +65,6 @@ def test_partial_street_is_supported():
     assert choose_search_strategy(request).value == "partial_address"
 
 
-# ---------------------------------------------------------------------------
-# Trailing commentary and sentence punctuation
-#
-# The Phase 8 `prompts` suite (PROMPT-DISCOVERY-002-P029, -004-P032 and
-# -005-P036) found three ways a real question leaked non-street text into the
-# parsed address: a terminal "?", an em-dash clause and a parenthetical.
-# Commentary describes the result set, never the street, and a polluted street
-# name is what turns an ambiguous lookup into a spurious NOT_FOUND.
-# ---------------------------------------------------------------------------
-
-
 def test_terminal_question_mark_does_not_enter_the_street_field():
     request = parse_lookup_request("Which permit is at 123 Main Street?")
     assert request.street_number == "123"
@@ -111,17 +85,11 @@ def test_ambiguity_commentary_does_not_enter_the_street_field(text):
 
 
 def test_record_type_qualifier_survives_a_question_wording():
-    # The type qualifier is what separates two records at the same address, so
-    # losing it in the "Which <type> is at ..." wording creates a false
-    # ambiguity (PROMPT-DISCOVERY-004-P032).
+    # the type qualifier is what separates two records at the same address, so losing it in the "which
+    # <type> is at ..." wording creates a false ambiguity (prompt-discovery-004-p032)
     request = parse_lookup_request("Which Commercial Alteration is at 123 Main Street?")
     assert request.street_name == "main st"
     assert request.permit_type == "Commercial Alteration"
-
-
-# ---------------------------------------------------------------------------
-# Exact record number (5)
-# ---------------------------------------------------------------------------
 
 
 def test_exact_record_number_is_found_with_high_band():
@@ -157,8 +125,6 @@ def test_record_search_with_one_exact_among_noise_picks_the_exact_one():
 
 
 def test_record_search_that_only_returns_near_misses_is_ambiguous():
-    # Portal prefix search can return "BLD-10" for a query "BLD-01". Selecting
-    # the first row here would be exactly the wrong-record failure.
     result = resolve_lookup(
         PermitLookupRequest(record_number="BLD-01"),
         [SearchResult(record_number="BLD-10")],
@@ -178,11 +144,6 @@ def test_duplicate_record_number_with_different_types_is_ambiguous():
         ],
     )
     assert result.status is LookupStatus.AMBIGUOUS
-
-
-# ---------------------------------------------------------------------------
-# Exact address (5)
-# ---------------------------------------------------------------------------
 
 
 def test_exact_address_alone_is_found_and_medium_band():
@@ -225,8 +186,8 @@ def test_numeric_ordinal_streets_are_equivalent():
 
 
 def test_apartment_constraint_requires_unit_evidence():
-    # "Apt 4" must not be typed into the street-name field; a well-formed query
-    # with a unit still has to find the base address record.
+    # "apt 4" must not be typed into the street-name field; a well-formed query with a unit still has to
+    # find the base address record
     request = parse_lookup_request("Find the permit at 123 Main Street Apt 4")
     assert request.street_name == "main st"
     result = resolve_lookup(request, [SearchResult(record_number="BLD-1", address="123 Main St")])
@@ -246,16 +207,11 @@ def test_a_street_containing_a_unit_word_is_not_emptied():
 
 
 def test_street_name_does_not_match_as_a_substring_of_another_street():
-    # "main st" is a substring of "domain st"; whole-token matching must reject it.
+    # "main st" is a substring of "domain st"; whole-token matching must reject it
     request = PermitLookupRequest(street_name="main st")
     result = resolve_lookup(request, [SearchResult(record_number="BLD-1", address="999 Domain Street")])
     assert result.status is LookupStatus.AMBIGUOUS
     assert result.selected is None
-
-
-# ---------------------------------------------------------------------------
-# Parcel (3)
-# ---------------------------------------------------------------------------
 
 
 def test_exact_parcel_is_found_with_high_band():
@@ -280,13 +236,8 @@ def test_parcel_search_returning_a_different_parcel_does_not_select():
     assert result.selected is None
 
 
-# ---------------------------------------------------------------------------
-# Ambiguity (3)
-# ---------------------------------------------------------------------------
-
-
 def test_three_records_at_one_address_are_ambiguous_without_context():
-    """The Phase 2 flagship ambiguity case: never open the first of three."""
+    """the phase 2 flagship ambiguity case: never open the first of three"""
     request = PermitLookupRequest(street_number="123", street_name="main st")
     result = resolve_lookup(
         request,
@@ -331,11 +282,6 @@ def test_two_exact_ties_are_ambiguous():
     assert result.selected is None
 
 
-# ---------------------------------------------------------------------------
-# No results + too many results (2)
-# ---------------------------------------------------------------------------
-
-
 def test_empty_results_are_not_found():
     result = resolve_lookup(PermitLookupRequest(record_number="BLD-9999"), [])
     assert result.status is LookupStatus.NOT_FOUND
@@ -353,11 +299,6 @@ def test_too_many_indistinguishable_candidates_report_too_many_results():
     assert not result.results_complete
     assert result.error_code is LookupErrorCode.TOO_MANY_RESULTS
     assert result.selected is None
-
-
-# ---------------------------------------------------------------------------
-# Dedup, confidence band, fallback ladder, determinism
-# ---------------------------------------------------------------------------
 
 
 def test_pagination_duplicate_rows_do_not_manufacture_ambiguity():
@@ -417,11 +358,6 @@ def test_zip_only_corroborates_and_never_matches_as_a_substring():
     assert "ZIP" not in without_zip.match_reasons
 
 
-# ---------------------------------------------------------------------------
-# Retrieval metrics — wrong-record rate is the one that must stay 0
-# ---------------------------------------------------------------------------
-
-
 def test_retrieval_metrics_expose_the_phase_two_kpis():
     metrics = LookupMetrics(
         attempts=10,
@@ -459,11 +395,6 @@ def test_lookup_metrics_as_dict_is_json_serializable():
 
     payload = LookupMetrics(attempts=2, successful=1, exact_matches=1).as_dict()
     assert json.loads(json.dumps(payload))["wrong_record_rate"] == 0.0
-
-
-# ---------------------------------------------------------------------------
-# Applicant disambiguation
-# ---------------------------------------------------------------------------
 
 
 def test_unique_applicant_match_resolves_at_medium_band():
@@ -525,8 +456,8 @@ def test_no_applicant_match_does_not_select_a_nonmatching_record():
 
 
 def test_applicant_with_an_address_uses_the_normal_ranking_path():
-    # With an address key present, applicant is corroboration, not the special
-    # unique-match rule: two same-address rows are separated by the applicant.
+    # with an address key present, applicant is corroboration, not the special unique-match rule: two
+    # same-address rows are separated by the applicant
     request = PermitLookupRequest(
         street_number="123", street_name="main st", applicant_name="Jane Doe"
     )

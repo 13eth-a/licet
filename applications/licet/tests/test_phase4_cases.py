@@ -1,14 +1,4 @@
-"""Phase 4 checklist cases, executed as data (the test portion).
-
-The 25 cases in ``licet/eval/phase4_fixtures.build_cases()`` are the Phase 4
-checklist split verbatim (10 scheduling, 5 rescheduling, 5 cancellation, 5
-failure/safety/idempotency). One parametrised test runs all of them through the
-real executor, and the per-case assertions cover the result *and* the negative
-evidence that matters most: a refused action must never have reached the portal.
-
-The remaining tests cover the advisory-alternatives utility and its opt-in
-result field.
-"""
+"""phase 4 checklist cases, executed as data (the test portion)"""
 from __future__ import annotations
 
 from datetime import date
@@ -40,7 +30,7 @@ def test_checklist_case(case):
         assert result.error_code is None
     assert result.verification_state.value == case.expect_verification
     assert result.verified is (case.expect_verification == "VERIFIED_SUCCESS")
-    # The mutation count is the safety assertion: refusals must not submit.
+    # the mutation count is the safety assertion: refusals must not submit
     assert len(portal.submits) == case.expect_submits
     if case.expect_portal_type:
         assert portal.submits[0][0] == case.expect_portal_type
@@ -51,8 +41,8 @@ def test_checklist_case(case):
 
 
 def test_refused_cases_never_touched_the_portal_at_all():
-    # Policy/eligibility refusals must not even read the record; everything else
-    # that refuses must at least not submit. C04 is the policy-only case.
+    # policy/eligibility refusals must not even read the record; everything else that refuses must at
+    # least not submit
     refused = [case for case in CASES if case.expect_submits == 0]
     assert {case.case_id for case in refused} >= {"S09", "C04", "F01", "F04", "F05"}
     for case in refused:
@@ -63,13 +53,10 @@ def test_refused_cases_never_touched_the_portal_at_all():
     assert s09.reads == [] and c04.reads == []
 
 
-# --- advisory alternatives (checklist: "return closest alternatives if allowed")
-
-
 def test_alternatives_are_the_nearest_dates_outside_the_window():
     constraints = DateConstraints(start=date(2026, 9, 21), end=date(2026, 9, 27), earliest=True)
-    # 09-24 is inside the window (selectable, never an "alternative"); the rest
-    # are ordered by days outside the window: 09-20 (1), 09-30 (3), 10-04 (7).
+    # 09-24 is inside the window (selectable, never an "alternative"); the rest are ordered by days
+    # outside the window: 09-20 (1), 09-30 (3), 10-04 (7)
     assert closest_alternatives(
         ["2026-09-20", "2026-09-30", "2026-09-24", "2026-10-04"], constraints, limit=3
     ) == ["2026-09-20", "2026-09-30", "2026-10-04"]
@@ -106,7 +93,7 @@ def test_executor_reports_alternatives_only_when_allowed():
     )
     assert allowed.error_code.value == "DATE_CONSTRAINT_UNSATISFIED"
     assert allowed.alternatives == ("2026-09-25", "2026-09-24")
-    # Advisory only: the reported dates are still never submitted.
+    # advisory only: the reported dates are still never submitted
     assert portal_again.submits == []
 
 
@@ -124,9 +111,6 @@ def test_runner_and_preview_surface_the_alternatives_flag():
     assert result.alternatives == ("2026-09-25", "2026-09-24")
     assert result.as_dict()["alternatives"] == ["2026-09-25", "2026-09-24"]
     assert portal.submits == []
-
-
-# --- selection stays strict while alternatives are reported ------------------
 
 
 def test_selection_still_refuses_out_of_window_dates():

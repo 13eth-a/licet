@@ -1,25 +1,4 @@
-"""Drive one back-office task to acceptance (WARNING: --apply writes).
-
-This is the write half of the Phase 4 unblock. `--inspect` is read-only and
-prints the task form's own options so the write can be reviewed first; `--apply`
-then sets the disposition + status date and presses the task's `Submit`.
-
-Controls (from the captured task HTML, 2026-09-22):
-    value(taskItem*disposition)          Status            <select> (required)
-    date(taskItem*statusDate)            Status Date       <input>  (required)
-    value(department)                    Department        <select> (required)
-    value(actionUser*userID)             Staff             <select> (required)
-    value(taskItem*dispositionComment)   Note              <textarea>
-    Submit                               posts the task with button name 'Submit'
-
-Nothing outside those controls is touched; assignments, time entries and other
-task buttons are ignored.
-
-Run:
-    .venv/bin/python scripts/ni_backoffice_accept.py --record BLD26-00469 --inspect
-    .venv/bin/python scripts/ni_backoffice_accept.py --record BLD26-00469 \
-        --apply --disposition "Accepted - Plan Review Not Req"
-"""
+"""drive one back-office task to acceptance (warning: --apply writes)"""
 from __future__ import annotations
 
 import argparse
@@ -57,7 +36,7 @@ async def find_first_visible(scope, selectors: list[str]):
 
 
 async def dom_click(page, text: str) -> bool:
-    """Click the innermost navigation element containing `text` (never a button)."""
+    """click the innermost navigation element containing `text` (never a button)"""
     script = """(needle) => {
         const all = [...document.querySelectorAll('*')].filter(e => {
             const tag = (e.tagName || '').toUpperCase();
@@ -85,11 +64,7 @@ async def dom_click(page, text: str) -> bool:
 
 
 async def click_task_row(page, record: str) -> str | None:
-    """From the dashboard task queue, click the task *title* link in `record`'s row.
-
-    Clicking the record-id anchor navigates to the record; the task title anchor is
-    what opens the task detail form.
-    """
+    """from the dashboard task queue, click the task *title* link in `record`'s row"""
     script = """(id) => {
         const rows = [...document.querySelectorAll('tr,li,div,td')].filter(r =>
             ((r.innerText || '').includes(id)) && r.querySelector('a'));
@@ -119,7 +94,7 @@ async def click_task_row(page, record: str) -> str | None:
 
 
 async def click_task_link(page) -> str | None:
-    """Inside the record's Workflow Tasks portlet, click the active task link."""
+    """inside the record's workflow tasks portlet, click the active task link"""
     script = """() => {
         const wanted = /application|acceptance|submittal|issue|review|inspection/i;
         const anchors = [...document.querySelectorAll('a')].filter(a => {
@@ -145,7 +120,7 @@ async def click_task_link(page) -> str | None:
 
 
 async def form_frame(page):
-    """The frame holding the task form."""
+    """the frame holding the task form"""
     for scope in (page, *page.frames):
         try:
             found = await scope.evaluate(
@@ -204,7 +179,7 @@ async def set_field(scope, name: str, value: str) -> str | None:
 
 
 async def submit_controls(page, *, exclude=None) -> list[tuple[int, str, str]]:
-    """Every submit-like control visible across the page, with its frame index."""
+    """every submit-like control visible across the page, with its frame index"""
     script = """() => {
         const els = [...document.querySelectorAll('a,input,button')];
         return els.filter(e => {
@@ -231,12 +206,7 @@ async def submit_controls(page, *, exclude=None) -> list[tuple[int, str, str]]:
 
 
 async def press_submit(page, frame_index: int | None) -> str | None:
-    """Click the task's Submit control. Searches every frame, form frame first.
-
-    The workflow task menu renders SUBMIT as a bare element (not an anchor), so the
-    fallback walks every node whose text is exactly 'SUBMIT' and clicks it (or its
-    nearest anchor ancestor).
-    """
+    """click the task's submit control"""
     script = """() => {
         const label = el => el.tagName + '|' + (el.innerText || el.value || '').trim().slice(0, 24);
         const els = [...document.querySelectorAll('a,input,button')];
@@ -376,7 +346,7 @@ async def main() -> int:
         out(f"  -> {await set_field(scope, STATUS_DATE_INPUT, status_date)}")
         if args.note:
             out(f"setting note -> {await set_field(scope, NOTE_TEXTAREA, args.note)}")
-        # Department/Staff: leave prefilled values; only fill if empty.
+        # department/staff: leave prefilled values; only fill if empty
         if before.get("department_value") in (None, ""):
             out("department was empty: selecting the first non-placeholder option")
             await scope.evaluate(

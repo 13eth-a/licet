@@ -1,21 +1,5 @@
 #!/usr/bin/env python
-"""Phase 3 adversarial replay (adversarial review).
-
-Runs the golden set and its counterexample cases (``A01``-``A11``) against the
-current tree and prints the contract metrics. ``--baseline DIR`` additionally
-loads ``rules.py``/``extract.py``/``render.py`` from a copy of an earlier tree and
-reports which counterexamples that version fails, so the cases are demonstrably
-counterexamples rather than restatements of the current code. The "before"
-column in ``docs/phase3/adversarial_review.md`` was measured live against the
-pre-fix working tree (the Phase 3 runtime is not yet committed, so no revision
-contains it).
-
-    python scripts/phase3_adversarial_replay.py
-    python scripts/phase3_adversarial_replay.py --baseline /path/to/prefix/licet/phase3
-    python scripts/phase3_adversarial_replay.py --json docs/phase3/adversarial_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file.
-"""
+"""phase 3 adversarial replay (adversarial review)"""
 from __future__ import annotations
 
 import argparse
@@ -32,8 +16,6 @@ from licet.eval import phase3 as phase3_eval  # noqa: E402
 from licet.eval import phase3_fixtures  # noqa: E402
 from licet.phase3 import reasoning  # noqa: E402
 
-# Counterexample cases added by the adversarial review, and the finding each one
-# locks down (docs/phase3/adversarial_review.md).
 COUNTEREXAMPLES: dict[str, str] = {
     "A01": "negated payment wording became a confirmed gate",
     "A02": "gate stage assumed to be issuance",
@@ -52,14 +34,13 @@ COUNTEREXAMPLES: dict[str, str] = {
 def _load_module(directory: Path, name: str) -> types.ModuleType:
     module = types.ModuleType(f"baseline_{name}")
     source = (directory / f"{name}.py").read_text(encoding="utf-8")
-    # dataclasses with postponed annotations need the module resolvable by name
     sys.modules[module.__name__] = module
     exec(compile(source, f"baseline/{name}.py", "exec"), module.__dict__)
     return module
 
 
 def _install_baseline(directory: Path) -> None:
-    """Swap a pre-fix tree's modules in for a comparison run."""
+    """swap a pre-fix tree's modules in for a comparison run"""
     rules = _load_module(directory, "rules")
     extract = _load_module(directory, "extract")
     render = _load_module(directory, "render")

@@ -1,4 +1,4 @@
-"""Phase 4: safe inspection actions with independent state verification."""
+"""phase 4: safe inspection actions with independent state verification"""
 
 from licet.phase4.actions import (
     ActionErrorCode,

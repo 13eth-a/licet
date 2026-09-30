@@ -1,19 +1,9 @@
-"""Content identities for a benchmark even when its git checkout is dirty.
-
-A commit hash only identifies the code that ran if the tree was clean, and this
-repository's phase work is uncommitted (audit A9). The digest below is computed
-from the *bytes on disk*, so it identifies the measured source snapshot whether
-or not the tree is dirty, and a dirty-tree report is replayable.
-"""
+"""content identities for a benchmark even when its git checkout is dirty"""
 import hashlib
 import json
 from pathlib import Path
 from datetime import datetime, timezone
 
-# Files whose bytes can change a measured result: the production and benchmark
-# packages (JSON catalogues and markdown contracts included) plus the
-# dependency/tool pins — the same sources under different packages is a
-# different measurement.
 SOURCE_DIRECTORIES = ("licet", "licetbench")
 SOURCE_SUFFIXES = {".py", ".json", ".md"}
 SOURCE_FILES = ("pyproject.toml", "requirements-release.txt")

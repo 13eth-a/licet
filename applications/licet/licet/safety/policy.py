@@ -1,9 +1,4 @@
-"""Phase 6 deterministic safety boundary.
-
-Models may propose actions, but this module is deliberately not model-driven:
-unknown actions, unknown environments, stale approvals, wrong records, and
-unverified mutation retries are denied here before a browser call is possible.
-"""
+"""phase 6 deterministic safety boundary"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -44,8 +39,7 @@ class MutationState(StrEnum):
     UNKNOWN_RESULT = "UNKNOWN_RESULT"
 
 
-# Closed semantic vocabulary. Aliases are accepted only at the boundary and
-# normalize to one canonical action; arbitrary planner verbs never do.
+# closed semantic vocabulary
 _ACTION_ALIASES = {
     "SEARCH_PERMIT": "FIND_PERMIT", "SEARCH_RECORD": "FIND_PERMIT",
     "OPEN_RECORD": "READ_PERMIT_STATE", "READ_STATUS": "READ_PERMIT_STATE",
@@ -57,11 +51,8 @@ _ACTION_ALIASES = {
     "CANCEL": "CANCEL_INSPECTION", "PAY": "PAY_FEE", "PAYMENT": "PAY_FEE",
     "SUBMIT": "SUBMIT_APPLICATION", "UPLOAD": "UPLOAD_DOCUMENT",
     "EDIT": "EDIT_APPLICANT",
-    # The browser dispatcher's vocabulary (`licet/safety/risk_levels.py`) is the
-    # other half of the same action space, and a semantic action may arrive from
-    # either layer. Mapping the dispatcher's names onto the canonical ones means a
-    # payment named at the primitive layer is classified as a payment here too,
-    # rather than falling through to "unclassified, therefore prohibited".
+    # the browser dispatcher's vocabulary (`licet/safety/risk_levels.py`) is the other half of the same
+    # action space, and a semantic action may arrive from either layer
     "SUBMIT_PAYMENT": "PAY_FEE", "ENTER_PAYMENT_DETAILS": "PAY_FEE",
     "ACCEPT_LEGAL_ATTESTATION": "LEGAL_ATTESTATION", "SIGN_DOCUMENT": "LEGAL_ATTESTATION",
 }
@@ -74,9 +65,7 @@ ACTION_RISKS: dict[str, ActionRisk] = {
     "READ_DOCUMENTS": ActionRisk.READ_ONLY,
     "READ_HISTORY": ActionRisk.READ_ONLY,
     "CHECK_AVAILABILITY": ActionRisk.READ_ONLY,
-    # The planner's own read/planning verbs. Classifying them keeps the vocabulary
-    # closed against the component that actually emits it: an action the planner
-    # can name must get a deterministic decision rather than `UNKNOWN_ACTION_RISK`.
+    # the planner's own read/planning verbs
     "READ_CONDITIONS": ActionRisk.READ_ONLY,
     "DETERMINE_BLOCKERS": ActionRisk.READ_ONLY,
     "DETERMINE_NEXT_INSPECTION": ActionRisk.READ_ONLY,
@@ -98,10 +87,8 @@ ACTION_RISKS: dict[str, ActionRisk] = {
     "BYPASS_AUTHENTICATION": ActionRisk.PROHIBITED,
     "OVERRIDE_AUTHORIZATION": ActionRisk.PROHIBITED,
     "MUTATE_LIVE_RECORD": ActionRisk.PROHIBITED,
-    # Dispatcher-side verbs whose canonical equivalent is above, plus the
-    # navigation/session/UI verbs the dispatcher can emit. Listed so that both
-    # layers give the same answer for the same action name; the parity test in
-    # tests/test_phase6_adversarial.py fails if they drift apart.
+    # dispatcher-side verbs whose canonical equivalent is above, plus the navigation/session/ui verbs the
+    # dispatcher can emit
     "NAVIGATE": ActionRisk.READ_ONLY,
     "LOGIN": ActionRisk.READ_ONLY,
     "LOGOUT": ActionRisk.READ_ONLY,
@@ -117,29 +104,19 @@ ACTION_RISKS: dict[str, ActionRisk] = {
     "CREATE_COLLECTION": ActionRisk.READ_ONLY,
     "COPY_RECORD": ActionRisk.READ_ONLY,
     "REPORT_EXPORT": ActionRisk.READ_ONLY,
-    # The dispatcher's catalogue names these as known actions (and the guard
-    # therefore reaches them), but they are not portal operations Licet is being
-    # built to perform. The Phase 6 vocabulary rule wants one closed space with
-    # one explicit decision per action, not a policy layer that inherits its
-    # answer from the guard's CONFIRMATION_REQUIRED fallback. These three are
-    # therefore given an explicit PROHIBITED fixture decision rather than being
-    # left as "unlisted, therefore fall back". That keeps the parity invariant
-    # readable as a design choice and keeps the vocabulary closed.
+    # the dispatcher's catalogue names these as known actions (and the guard therefore reaches them), but
+    # they are not portal operations licet is being built to perform
     "REGISTER_ACCOUNT": ActionRisk.PROHIBITED,
     "DELETE_RECORD": ActionRisk.PROHIBITED,
     "WITHDRAW_APPLICATION": ActionRisk.PROHIBITED,
 }
 
-# Mutations that act on one already-existing appointment. Without that
-# appointment's id the action cannot be bound to the row a human approved: the
-# confirmation's scope, the identity check and the post-action verification all
-# key on it, so an id-less proposal would be resolved against whichever row the
-# portal happens to render. Such a proposal is refused, not guessed at.
+# mutations that act on one already-existing appointment
 _TARGETED_MUTATIONS = frozenset({"CANCEL_INSPECTION", "RESCHEDULE_INSPECTION"})
 
 _MUTATIONS = frozenset(name for name, risk in ACTION_RISKS.items() if risk > ActionRisk.READ_ONLY)
-# The last six are policy-level prohibited intents, not executable mutations,
-# but keeping them in the vocabulary lets the engine produce an explicit deny.
+# the last six are policy-level prohibited intents, not executable mutations, but keeping them in the
+# vocabulary lets the engine produce an explicit deny
 _EXECUTABLE_MUTATIONS = frozenset({
     "SCHEDULE_INSPECTION", "RESCHEDULE_INSPECTION", "CANCEL_INSPECTION",
     "PAY_FEE", "SUBMIT_APPLICATION", "SUBMIT_CORRECTIONS", "UPLOAD_DOCUMENT",
@@ -201,7 +178,7 @@ class ProposedAction:
 
 @dataclass(frozen=True)
 class UserConstraints:
-    """Immutable run-wide permissions. Planner output cannot replace this object."""
+    """immutable run-wide permissions"""
 
     read_only: bool = False
     allow_scheduling: bool = True
@@ -216,27 +193,17 @@ class UserConstraints:
     source_text: str = ""
 
     def __post_init__(self) -> None:
-        # Permission objects are intentionally immutable and normalize booleans.
         for name in ("read_only", "allow_scheduling", "allow_rescheduling", "allow_cancellation",
                      "allow_payments", "allow_submissions", "allow_uploads",
                      "allow_applicant_edits", "allow_renewals", "no_existing_inspection_changes"):
             object.__setattr__(self, name, bool(getattr(self, name)))
 
-    # Capabilities the constraint vocabulary can deny. `allow_<capability>` is
-    # False exactly when the instruction forbids it.
     CAPABILITIES = ("scheduling", "rescheduling", "cancellation", "payments",
                     "submissions", "uploads", "applicant_edits", "renewals")
 
     @classmethod
     def from_text(cls, text: str | None) -> "UserConstraints":
-        """Parse an instruction into permissions, conservatively.
-
-        Prohibitions are collected first and then no affirmative phrase may
-        re-grant them: "do everything possible, but don't submit anything" must
-        not permit submissions just because the broad phrase came first, and
-        clause order must not decide permission. Broad language only fills in
-        what the instruction did not forbid.
-        """
+        """parse an instruction into permissions, conservatively"""
         raw = (text or "").strip()
         low = raw.casefold().replace("’", "'")
         denied: set[str] = set()
@@ -297,13 +264,7 @@ class UserConstraints:
         return self.contradiction(action) is None
 
 
-# Contradiction detection. The Phase 6 checklist requires that an instruction
-# which both *requests* and *forbids* the same operation resolve to
-# `CONSTRAINT_CONFLICT`, never to an arbitrary interpretation — e.g. "Schedule
-# the inspection, but don't make any changes." This is deterministic and reads
-# the same permission object the run will enforce: take the positive clause
-# (everything before the first restriction word), then ask whether the text's
-# own prohibitions forbid an operation that clause requested.
+# contradiction detection
 CONSTRAINT_CONFLICT = "CONSTRAINT_CONFLICT"
 
 _RESTRICTION_BOUNDARY = re.compile(r"\b(?:without|but|do not|don't|never|except|unless)\b", re.I)
@@ -319,14 +280,7 @@ _REQUESTED_OPERATIONS: tuple[tuple[str, str], ...] = (
 
 
 def detect_constraint_conflict(text: str | None) -> str | None:
-    """Return `CONSTRAINT_CONFLICT` when an instruction requests what it forbids.
-
-    "Schedule the inspection, but don't make any changes." is the canonical
-    case: the positive clause asks to schedule and the restriction forbids every
-    change, so there is no single reading to act on. A prohibition that is not
-    contradicted by a request ("Read only") is a constraint, not a conflict, and
-    returns ``None``.
-    """
+    """return `constraint_conflict` when an instruction requests what it forbids"""
     raw = (text or "").strip()
     if not raw:
         return None
@@ -346,12 +300,6 @@ class ConfirmationRequest:
     consequence: str
     amount: float | None = None
     inspection_id: str | None = None
-    # Every field the operation actually names is bound, so an approval cannot be
-    # re-pointed at another record or another date window between the approval and
-    # the execution. (The *observed* existing date of a reschedule/cancel cannot
-    # be bound here: at approval time the run has not read the appointment yet,
-    # and the executor compares it against the same read it authorizes from. That
-    # residual is named in docs/phase6/adversarial_review.md.)
     record_key: str | None = None
     date_window_start: str | None = None
     date_window_end: str | None = None
@@ -370,12 +318,7 @@ class ConfirmationRequest:
         return datetime.now(timezone.utc) >= self.expires_at  # type: ignore[operator]
 
     def matches(self, action: ProposedAction) -> bool:
-        """Whether this approval authorizes *exactly* this action.
-
-        Nullable fields are compared, not treated as wildcards: an approval issued
-        without an inspection id or an amount must not silently authorize an
-        action that names one.
-        """
+        """whether this approval authorizes *exactly* this action"""
         return (
             not self.used and not self.expired
             and self.action_type == normalize_action(action.action_type)
@@ -403,28 +346,13 @@ class IdentityCheck:
 
 
 def same_inspection_type(requested: str, observed: str) -> bool:
-    """Whether two spellings name the same inspection type.
-
-    One definition, shared with the planner's own target gate: punctuation, case
-    and word order vary between Accela agencies ("Rough Electrical" is
-    "Electrical - Rough" on some), but a substring is not a match. Reusing
-    `licet.phase4.matching` here keeps the identity gate from contradicting the
-    eligibility gate that already accepted the same pair.
-    """
+    """whether two spellings name the same inspection type"""
     from licet.phase4.matching import match_inspection_type
     return match_inspection_type(requested, [observed]) is not None
 
 
 def verify_identity(action: ProposedAction, observed: RecordIdentity | Mapping[str, Any] | None) -> IdentityCheck:
-    """Bind an action to the record/inspection an independent read observed.
-
-    Every field the action *asserts* must be present in the observation and
-    agree with it. An observation that is silent about a target the action names
-    is unverified, not a pass: a portal read that lost the inspection type or
-    date must never authorize a mutation of whatever row is on screen. (`permit_id`
-    and `record_key` already failed closed this way; the inspection fields were
-    the gap.)
-    """
+    """bind an action to the record/inspection an independent read observed"""
     if observed is None:
         return IdentityCheck(False, "RECORD_IDENTITY_UNVERIFIED")
     if isinstance(observed, Mapping):
@@ -497,7 +425,7 @@ class MutationDecision:
 
 
 class MutationLedger:
-    """Run-local idempotency ledger. UNKNOWN_RESULT is never replayable."""
+    """run-local idempotency ledger"""
 
     def __init__(self, max_mutations: int = 2) -> None:
         if max_mutations < 1:
@@ -508,9 +436,8 @@ class MutationLedger:
 
     @property
     def attempted_count(self) -> int:
-        # A reservation consumes a run mutation slot even if validation later
-        # fails; otherwise callers could reserve unlimited distinct mutations
-        # without respecting MAX_MUTATIONS_PER_RUN.
+        # a reservation consumes a run mutation slot even if validation later fails; otherwise callers
+        # could reserve unlimited distinct mutations without respecting max_mutations_per_run
         return len(self.records)
 
     def begin(self, action: ProposedAction, *, before_state: Any = None) -> MutationDecision:
@@ -525,9 +452,9 @@ class MutationLedger:
             if record.state is MutationState.VERIFIED_FAILURE:
                 return MutationDecision(False, existing_id, "MUTATION_ALREADY_FAILED", record.state)
         if existing_id:
-            # A reservation is a reservation even before submission: a second
-            # begin() of the same operation must not mint a second mutation id
-            # (or displace the first) just because nothing was submitted yet.
+            # a reservation is a reservation even before submission: a second begin() of the same
+            # operation must not mint a second mutation id (or displace the first) just because nothing
+            # was submitted yet
             return MutationDecision(False, existing_id, "MUTATION_ALREADY_RESERVED",
                                     self.records[existing_id].state)
         if self.attempted_count >= self.max_mutations:
@@ -540,7 +467,6 @@ class MutationLedger:
         self.by_fingerprint[fingerprint] = mutation_id
         return MutationDecision(True, mutation_id, "mutation slot reserved", MutationState.NOT_STARTED)
 
-    # Explicit aliases make the lifecycle readable at call sites and in tests.
     reserve = begin
 
     def mark_submitted(self, mutation_id: str) -> None:
@@ -619,11 +545,7 @@ class SafetyAuditLog:
 
 def safety_panel(decision: PolicyDecision, action: ProposedAction, *,
                  environment: Environment, permit_id: str | None = None) -> str:
-    """The one-screen debug/demo view of a single policy decision.
-
-    Shows the caller and the human the same five facts the audit records, in the
-    order they are decided, so a run can be explained without reading the log.
-    """
+    """the one-screen debug/demo view of a single policy decision"""
     return "\n".join((
         f"Environment: {Environment(environment).value}",
         f"Permit: {permit_id or action.permit_id or '-'}",
@@ -635,7 +557,7 @@ def safety_panel(decision: PolicyDecision, action: ProposedAction, *,
 
 
 def environment_from_url(url: str | None, *, sandbox_hosts: Iterable[str] = ("aca-test.accela.com",)) -> Environment:
-    """Classify only known hosts; portal data never participates in detection."""
+    """classify only known hosts; portal data never participates in detection"""
     if not url:
         return Environment.UNKNOWN
     host = (urlparse(url).hostname or "").casefold().rstrip(".")
@@ -662,7 +584,7 @@ def detect_environment(source: Any, *, sandbox_hosts: Iterable[str] = ("aca-test
 
 
 class PolicyEngine:
-    """Central deterministic Planner -> Policy -> Executor decision point."""
+    """central deterministic planner -> policy -> executor decision point"""
 
     def __init__(self, *, environment: Environment = Environment.UNKNOWN,
                  constraints: UserConstraints | None = None,
@@ -675,15 +597,11 @@ class PolicyEngine:
         self.constraints = constraints or UserConstraints()
         self.ledger = ledger or MutationLedger()
         self.audit_log = audit_log or SafetyAuditLog()
-        # Optional Phase 6 outcome tracker (`licet.safety.metrics.SafetyMetrics`).
-        # Typed loosely to avoid a policy<->metrics import cycle; the only contract
-        # is a `record_decision(decision)` method.
+        # optional phase 6 outcome tracker (`licet.safety.metrics.safetymetrics`)
         self.metrics = metrics
         self.run_id, self.user_goal, self._now = run_id, user_goal, now or (lambda: datetime.now(timezone.utc))
         self._current_pre_action_state: Any = None
-        # Issued-and-spent approvals, by id. The object's own `used` flag is
-        # mutable state a caller can copy; the engine's record of what it has
-        # already authorized is not.
+        # issued-and-spent approvals, by id
         self._consumed_confirmations: set[str] = set()
 
     def decide(self, action: ProposedAction | str, *, permit_id: str | None = None,
@@ -711,8 +629,8 @@ class PolicyEngine:
             return self._decision(action, False, False, risk, "TARGET_INSPECTION_UNIDENTIFIED",
                                   "TARGET_INSPECTION_UNIDENTIFIED")
         if action.mutates_state:
-            # Action completeness, not identity: a proposal that needs a phone
-            # number is refused here whether or not the record was re-verified.
+            # action completeness, not identity: a proposal that needs a phone number is refused here
+            # whether or not the record was re-verified
             missing = [field for field in action.required_inputs if not (required_inputs or {}).get(field)]
             if missing:
                 return self._decision(action, False, False, risk, "MISSING_REQUIRED_INPUT: " + ", ".join(missing), "MISSING_REQUIRED_INPUT")
@@ -732,10 +650,7 @@ class PolicyEngine:
                     date_window_start=action.date_window_start, date_window_end=action.date_window_end,
                 )
                 return self._decision(action, False, True, risk, "CONFIRMATION_REQUIRED", "MISSING_CONFIRMATION", request)
-            # Approval is consumed at the policy boundary, not by the model or
-            # browser adapter. Consuming it in the registry as well as on the
-            # object means a copied or deserialized approval cannot authorize a
-            # second execution of the same operation.
+            # approval is consumed at the policy boundary, not by the model or browser adapter
             confirmation.consume(action)
             self._consumed_confirmations.add(confirmation.confirmation_id)
         return self._decision(action, True, False, risk, "policy allows action", None)
@@ -763,7 +678,7 @@ class PolicyEngine:
     def record_execution(self, action: ProposedAction, *, mutation_id: str | None,
                          execution_result: Any = None, post_action_state: Any = None,
                          reason: str = "") -> None:
-        """Append the execution/verification half of a mutation audit."""
+        """append the execution/verification half of a mutation audit"""
         self.audit_log.record(SafetyAuditEvent(
             self.run_id, self.environment, self.user_goal, self.constraints,
             action.permit_id, action.action_type, action.risk, "EXECUTION",

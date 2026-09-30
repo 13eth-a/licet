@@ -1,9 +1,4 @@
-"""Extraction: the page text we captured becomes a `Permit`, with no invention.
-
-Text below is the shape the live Null Island detail page rendered (2026-09-20),
-including the non-BLD26 record number, the `01/31/2026` expiration that belongs
-to a Submitted record, and the scheduling wizard's own type list.
-"""
+"""extraction: the page text we captured becomes a `permit`, with no invention"""
 
 from __future__ import annotations
 
@@ -62,7 +57,7 @@ def _page(**overrides):
 def test_permit_from_page_reads_the_header_and_identity():
     permit = permit_from_page(_page())
 
-    assert permit.permit_id == "000000014"  # not a BLD26- id: per-type format
+    assert permit.permit_id == "000000014"  # not a bld26- id: per-type format
     assert permit.permit_type == "Commercial Alteration"
     assert permit.status == "Submitted"
     assert permit.status_normalized is PermitStatus.SUBMITTED
@@ -84,7 +79,6 @@ def test_permit_from_page_records_sections_and_the_empty_inspection_history():
         "Schedule or Request an Inspection",
     ]
     assert permit.inspections == []
-    # Phase 3: absence is coverage, not an outstanding requirement (P1 #5).
     assert any(
         "no inspection history" in fact.value for fact in permit.coverage_notes
     )
@@ -92,7 +86,7 @@ def test_permit_from_page_records_sections_and_the_empty_inspection_history():
 
 
 def test_a_still_loading_section_is_not_reported_as_no_inspections():
-    """Live hazard: the Inspections section loads over AJAX and says 'none' first."""
+    """live hazard: the inspections section loads over ajax and says 'none' first"""
     permit = permit_from_page(_page(loading=["loading..."]))
 
     assert not any(
@@ -106,10 +100,10 @@ def test_a_still_loading_section_is_not_reported_as_no_inspections():
 def test_permit_from_page_keeps_the_portal_status_text_and_parses_the_date():
     permit = permit_from_page(_page())
 
-    assert permit.status == "Submitted"  # raw, for citing
+    assert permit.status == "Submitted"
     assert permit.expiration_date == dt.date(2026, 1, 31)
-    # expiration on a Submitted record is agency config — the schema keeps both
-    # the raw status and the date so "is it expired?" cannot be silently wrong
+    # expiration on a submitted record is agency config — the schema keeps both the raw status and the
+    # date so "is it expired?" cannot be silently wrong
     assert permit.issued_date is None
 
 
@@ -128,8 +122,8 @@ def test_wizard_types_and_no_availability_become_next_action():
     apply_next_action(permit)
 
     assert permit.schedulable_inspection_types == ["Brycer Inspection History", "Set Backs"]
-    # Only the portal's own `(required)` marker is requirement evidence; the
-    # offered catalog never becomes missing work (architecture review review P1 #1).
+    # only the portal's own `(required)` marker is requirement evidence; the offered catalog never becomes
+    # missing work (architecture review review p1 #1)
     assert permit.required_inspection_types == ["Brycer Inspection History"]
     assert permit.missing_inspections() == ["Brycer Inspection History"]
     assert permit.next_action is not None
@@ -138,7 +132,6 @@ def test_wizard_types_and_no_availability_become_next_action():
         "no bookable appointment dates" in fact.value
         for fact in permit.coverage_notes
     )
-    # calendar claims are scoped to the months actually observed (P1 #5)
     assert any(
         "2 observed month(s)" in fact.value
         for fact in permit.coverage_notes

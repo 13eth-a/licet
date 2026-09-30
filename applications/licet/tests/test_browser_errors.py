@@ -2,7 +2,6 @@ import pytest
 
 from licet.browser.errors import BrowserError, classify_error, tool_error
 
-# Messages copied from the live runs / captured HTML (docs/phase0_review.md §2).
 LIVE_MESSAGES = [
     ("element was detached from the DOM, retrying", BrowserError.POSTBACK_RACE),
     ("Timeout 30000ms exceeded waiting for locator('#btnSearch')", BrowserError.TIMEOUT),
@@ -27,16 +26,13 @@ def test_unknown_message_stays_unknown():
 
 
 def test_retry_classification_drives_recovery():
-    # transient: worth another attempt
     assert tool_error("element was detached from the DOM, retrying").retryable
     assert tool_error("Timeout 30000ms exceeded").retryable
-    # retrying a rate limit makes it worse
     rate_limited = tool_error("Error 1015 you are being rate limited")
     assert rate_limited.needs_cooldown and not rate_limited.retryable
     # auth failures need re-login, not a retry
     auth = tool_error("Please login to continue")
     assert auth.needs_reauth and not auth.retryable
-    # a genuinely missing control is terminal
     assert not tool_error("no element matches '#nope'").retryable
 
 

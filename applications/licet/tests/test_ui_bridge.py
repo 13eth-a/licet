@@ -1,4 +1,4 @@
-"""The UI cannot bypass the local run boundary or expose files without pairing."""
+"""the ui cannot bypass the local run boundary or expose files without pairing"""
 import json
 from io import BytesIO
 from types import SimpleNamespace

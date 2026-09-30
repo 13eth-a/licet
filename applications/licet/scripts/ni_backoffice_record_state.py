@@ -1,11 +1,4 @@
-"""Read-only: dump one back-office record's header status + workflow tasks + inspections.
-
-Used to *independently verify* that a back-office write (e.g. task acceptance)
-actually changed the record, rather than trusting the postback.
-
-Run:
-    .venv/bin/python scripts/ni_backoffice_record_state.py --record BLD26-00469
-"""
+"""read-only: dump one back-office record's header status + workflow tasks + inspections"""
 from __future__ import annotations
 
 import argparse

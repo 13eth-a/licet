@@ -1,4 +1,4 @@
-"""Record one real UI-triggered, plan-only Accela run. No account secrets in media."""
+"""record one real ui-triggered, plan-only accela run"""
 import asyncio
 import json
 import os
@@ -32,7 +32,7 @@ async def main():
                 'origin': ORIGIN,
             })
         except Exception:
-            pass  # Older Chrome may not implement the permission.
+            pass  # older chrome may not implement the permission
         print('Opening live UI.', flush=True)
         await asyncio.wait_for(page.goto(ORIGIN + '/#connect=' + token, wait_until='domcontentloaded'), 60)
         await asyncio.sleep(8)

@@ -1,17 +1,4 @@
-"""Read-only: does the back office expose an *issue* action for our records?
-
-The one action that would make a record bookable is issuing it (ACA only lets
-citizens book inspections on issued permits). This probe answers, without
-writing anything:
-
-- does one of our Submitted records have a workflow/issue action available?
-- what status does the back office show for it?
-
-It logs in, navigates to the Record space, clicks the record by text in any
-frame, and dumps text + HTML. Nothing is created, edited, or issued.
-
-Run:  .venv/bin/python scripts/ni_backoffice_issue_recon.py [--record BLD26-00469]
-"""
+"""read-only: does the back office expose an *issue* action for our records?"""
 from __future__ import annotations
 
 import argparse
@@ -127,12 +114,12 @@ async def main() -> int:
         out("logged in")
         await dump(page, stamp, "dashboard")
 
-        # Open the Record space (read-only navigation).
+        # open the record space (read-only navigation)
         clicked = await click_in_any_frame(page, ["a:has-text('Record')"], text="Record")
         out(f"Record nav clicked: {clicked}")
         await page.wait_for_timeout(8000)
 
-        # Load more of the record grid if the record is not on the first page.
+        # load more of the record grid if the record is not on the first page
         for _ in range(4):
             if await click_in_any_frame(page, [], text=args.record):
                 break

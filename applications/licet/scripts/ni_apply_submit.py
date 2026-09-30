@@ -1,16 +1,4 @@
-"""Submit a real application for Building/Sign/Temporary/NA on the NI portal.
-
-Adaptive wizard walker:
-  disclaimer agree → CapType (Sign - Temporary) → CapEdit (required:
-  Street No / Street Name / Zip) → contact/attachment pages → CapConfirm
-  (agree + submit) → capture the issued record ID (altID).
-
-Runtime required-field discovery: ACA renders a validation panel whose
-skipTo('ctlId') links enumerate missing fields; we read them if a Continue
-click doesn't advance the page.
-
-Run:  .venv/bin/python scripts/ni_apply_submit.py
-"""
+"""submit a real application for building/sign/temporary/na on the ni portal"""
 from __future__ import annotations
 
 import asyncio
@@ -54,16 +42,9 @@ def out(m: str) -> None:
     print(m, flush=True)
 
 
-# The apply flow's disclaimer is a legal attestation. Licet never accepts it:
-# if that box gets ticked, the click is the operator's, in the browser.
-#
-# See ni_apply_batch.py: the run does not wait on a human for it. NI ticks its
-# own box and advances on its own, so this is a short settle window for the
-# portal, not a request for anyone to act.
+# the apply flow's disclaimer is a legal attestation
 DISCLAIMER_SETTLE_SECONDS = 30.0
 
-# See ni_apply_batch.py: NI pre-ticks its own agree box, so there is no
-# attestation act for the operator to perform out of it.
 DISCLAIMER_ALLOW_PORTAL_DEFAULT = True
 
 
@@ -144,11 +125,7 @@ async def find_button(page, sels: tuple[str, ...]):
 
 
 async def missing_required(page) -> list[str]:
-    """Extract control ids from ACA validation-panel skipTo links.
-
-    DOM serialization HTML-encodes quotes inside onclick attrs, so
-    unescape before matching.
-    """
+    """extract control ids from aca validation-panel skipto links"""
     import html as _h
     found: list[str] = []
     for f in list(page.frames):
@@ -178,8 +155,6 @@ async def fill_control(page, cid: str, value: str) -> bool:
             else:
                 cls = (await el.get_attribute("class")) or ""
                 if "masked" in cls:
-                    # MaskedEdit fields ignore programmatic fill; they need
-                    # real keystrokes to populate the mask buffer.
                     await el.click(timeout=5000)
                     await el.press("Control+A")
                     await el.press("Delete")
@@ -188,7 +163,6 @@ async def fill_control(page, cid: str, value: str) -> bool:
                     await el.fill(value)
                 val = await el.input_value()
                 if not val.strip():
-                    # last-ditch: focus + retype
                     await el.focus(timeout=5000)
                     await page.keyboard.type(value, delay=70)
                     val = await el.input_value()
@@ -201,10 +175,8 @@ async def fill_control(page, cid: str, value: str) -> bool:
 CONTACT_HEURISTICS = (
     ("firstname", "Eval"), ("lastname", "User"),
     ("fname", "Eval"), ("lname", "User"),
-    # NOTE: deliberately no phone entry — ACA's phone mask rejects typed
-    # digits ("Invalid") and phones are optional (validempty=true).
     ("email", USER),
-    ("organization", "Licet Eval Testing LLC"),  # 'Name of Business' (required)
+    ("organization", "Licet Eval Testing LLC"),
     ("business", "Licet Eval Testing LLC"),
     ("address1", "77 Licet Eval Way"), ("addressline1", "77 Licet Eval Way"),
     ("city", "Null Island"), ("zip", "00001"),
@@ -212,10 +184,7 @@ CONTACT_HEURISTICS = (
 
 
 async def handle_contact_page(page, stamp: str) -> bool:
-    """On the Contact Information page, add the required Applicant contact.
-
-    Returns True if we clicked Add New and (best-effort) saved a contact.
-    """
+    """on the contact information page, add the required applicant contact"""
     btn_frame = None
     for f in list(page.frames):
         loc = f.locator("[id$='Applicant_269Edit_btnAddNew']")
@@ -224,7 +193,6 @@ async def handle_contact_page(page, stamp: str) -> bool:
             break
     if btn_frame is None:
         return False
-    # if an applicant row already exists (added on a previous run), skip
     try:
         txt = await asyncio.wait_for(btn_frame.locator("body").inner_text(), 8)
         if re.search(r"User,\s*Eval|Eval\s+User", txt):
@@ -239,7 +207,6 @@ async def handle_contact_page(page, stamp: str) -> bool:
     await asyncio.wait_for(page.wait_for_timeout(3000), 10)
     await dump_page(page, stamp, "contact_dialog")
 
-    # fill visible inputs inside whichever frame now holds a contact form
     filled = 0
     for f in list(page.frames):
         try:
@@ -264,7 +231,6 @@ async def handle_contact_page(page, stamp: str) -> bool:
                     except Exception:
                         pass
                     break
-    # selects in the dialog (e.g. required contact Type): pick first non-empty
     for f in list(page.frames):
         if "ContactAddNew" not in f.url:
             continue
@@ -273,7 +239,6 @@ async def handle_contact_page(page, stamp: str) -> bool:
                 try:
                     if await el.input_value():
                         continue
-                    # prefer the semantic choice for contact Type
                     picked = False
                     for want in ("Applicant",):
                         opt = el.locator(
@@ -299,9 +264,8 @@ async def handle_contact_page(page, stamp: str) -> bool:
             continue
     out(f"contact dialog: filled {filled} fields")
 
-    # save the contact — the dialog iframe (ContactAddNew.aspx) has its own
-    # Save/Continue button (ctl00_phPopup_btnSave). Clicking the parent's
-    # btnSave here would trigger "save & resume later" instead.
+    # save the contact — the dialog iframe (contactaddnew.aspx) has its own save/continue button
+    # (ctl00_phpopup_btnsave)
     saved = False
     for f in list(page.frames):
         if "ContactAddNew" not in f.url:
@@ -316,7 +280,6 @@ async def handle_contact_page(page, stamp: str) -> bool:
         out("WARN: dialog save button not found")
         await dump_page(page, stamp, "contact_no_save_btn")
         return False
-    # wait for the dialog overlay to close
     closed = False
     for _ in range(12):
         await asyncio.wait_for(page.wait_for_timeout(900), 5)
@@ -341,8 +304,6 @@ async def main() -> int:
     if not USER or not PWD:
         out("credentials missing")
         return 2
-    # A headed local browser: the operator has to be able to reach the
-    # disclaimer checkbox themselves.
     browser, close_browser = await open_apply_browser(headless=False, warn=out)
     stamp = stamp_now()
     try:
@@ -351,7 +312,6 @@ async def main() -> int:
             else "  could not raise the browser window (continuing)")
         await login(page)
 
-        # disclaimer
         await asyncio.wait_for(
             page.goto(f"{CITIZEN}/Cap/CapApplyDisclaimer.aspx"
                       "?module=Building&TabName=Building&FilterName=PMT_GENERAL",
@@ -379,7 +339,6 @@ async def main() -> int:
             url = page.url
             out(f"step {step}: {url[:110]}")
 
-            # ACA renders an empty shell mid-redirect; wait for real content
             body = await body_text(page)
             for _ in range(10):
                 if len(body.strip()) > 300:
@@ -396,7 +355,6 @@ async def main() -> int:
                 break
 
             if url == prev_url and step > 1:
-                # page didn't advance — validation likely tripped
                 missing = await missing_required(page)
                 out(f"no advance; validation targets: {missing}")
                 filled_any = False
@@ -413,14 +371,12 @@ async def main() -> int:
                     out("cannot auto-fill missing fields — stopping")
                     break
 
-            # pick the wizard's continue button
             btn_frame, btn_sel = await find_button(page, (
                 "#ctl00_PlaceHolderMain_actionBarBottom_btnContinue",
                 "a#ctl00_PlaceHolderMain_btnNextStep",
                 "input[value='Continue']", "a:has-text('Continue')",
                 "button:has-text('Continue')", "a[title*='Continue']",
             ))
-            # CapEdit contact page: add the required Applicant contact
             body_low = body.lower()
             if "CapEdit" in url and "contact information" in body_low:
                 try:
@@ -428,13 +384,12 @@ async def main() -> int:
                 except Exception as exc:
                     out(f"contact handler failed: {exc!r}")
 
-            # CapEdit page: pre-fill the known required fields before Continue
+            # capedit page: pre-fill the known required fields before continue
             if "CapEdit" in url:
                 for cid, val in TEST_DATA.items():
                     if await fill_control(page, cid, val):
                         out(f"filled {cid.rsplit('_', 1)[-1]}={val!r}")
 
-            # CapType page: select the type first (radio value is the cap type)
             if "CapType" in url:
                 for f in list(page.frames):
                     loc = f.locator(
@@ -446,14 +401,13 @@ async def main() -> int:
                         await radio.check(timeout=6000)
                     except Exception:
                         await radio.click(timeout=6000)
-                    # NOTE: do not call SelectNode() manually — check() already
-                    # fires the onclick handler, and a second invocation can
-                    # toggle ACA's internal selection state off.
+                    # note: do not call selectnode() manually — check() already fires the onclick handler,
+                    # and a second invocation can toggle aca's internal selection state off
                     checked = await radio.is_checked()
                     out(f"radio 'Sign - Temporary' checked={checked}")
                     await asyncio.wait_for(page.wait_for_timeout(2000), 8)
                     break
-            # CapConfirm page: check agree box before submit
+            # capconfirm page: check agree box before submit
             if "CapConfirm" in url or "agree" in body.lower():
                 for f in list(page.frames):
                     try:

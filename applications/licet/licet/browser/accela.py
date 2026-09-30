@@ -1,15 +1,4 @@
-"""Null Island ACA knowledge as data — the reconciliation artefact.
-
-Phase 0 review §5: `scripts/` (the only code that has ever touched the real
-portal) imported `licet/` zero times, so the package encoded pre-recon guesses
-while the proven behaviour lived in 25 ad-hoc scripts. Everything verified
-below was lifted out of those scripts and the live findings in
-`docs/accela_ui_map.md`, so the runtime and the guard share one source of
-truth instead of each re-deriving it.
-
-Nothing here launches a browser; it is pure data plus parsing helpers, which
-makes it testable offline against captured HTML.
-"""
+"""null island aca knowledge as data — the reconciliation artefact"""
 
 from __future__ import annotations
 
@@ -19,12 +8,9 @@ from dataclasses import dataclass, field
 from typing import Iterable
 from urllib.parse import parse_qsl
 
-# --- environment (verified live 2026-09-19/20) ------------------------------
 
 AGENCY_CODE = "NULLISLAND"
-# NOTE: the site root and the agency path are different prefixes. Row hrefs are
-# site-absolute (/NULLISLAND/...); prefixing the agency path yields
-# /nullisland/NULLISLAND/... -> "The file does not exist".
+# note: the site root and the agency path are different prefixes
 SITE_ROOT = "https://aca-test.accela.com"
 PORTAL_ROOT = f"{SITE_ROOT}/nullisland"
 DEFAULT_MODULE = "Building"
@@ -41,22 +27,15 @@ INSPECTION_ENTRY_URL = (
 
 
 def search_url(module: str = DEFAULT_MODULE) -> str:
-    """The record-search page. Results render as a postback of this same URL."""
+    """the record-search page"""
     return f"{PORTAL_ROOT}/Cap/CapHome.aspx?TabName=Home&module={module}"
 
 
-# --- record search forms (verified live 2026-09-18/20) ----------------------
-
-# Selecting a search mode is an auto-postback that swaps the whole form: on NI
-# choosing "Search by Address" makes `txtGSStreetName` AND even
-# `txtGSPermitNumber` vanish. Never cache field ids across a mode switch —
-# resolve fields from a fresh field inventory every time.
+# selecting a search mode is an auto-postback that swaps the whole form: on ni choosing "search by
+# address" makes `txtgsstreetname` and even `txtgspermitnumber` vanish
 SEARCH_MODE_DROPDOWN = "ctl00_PlaceHolderMain_ddlSearchType"
 SEARCH_BUTTON_TEXT = "Search"
 
-# Address mode on NI uses the APO control family (live-verified: Omaha and NI
-# both drop txtGSStreetName when Search by Address is selected). Other agencies
-# keep the GS family, so every field is matched by id suffix across both.
 SEARCH_FIELD_SUFFIXES: dict[str, tuple[str, ...]] = {
     "record_number": ("txtGSPermitNumber",),
     "street_number": (
@@ -73,8 +52,6 @@ SEARCH_FIELD_SUFFIXES: dict[str, tuple[str, ...]] = {
     "applicant_name": ("txtGSBusiName", "txtGSLastName"),
 }
 
-# Search-mode dropdown labels, matched case-insensitively as substrings (the
-# exact wording is agency-configured). First match wins in tuple order.
 SEARCH_MODE_LABELS: dict[str, tuple[str, ...]] = {
     "record_number": ("permit number", "record number"),
     "address": ("address",),
@@ -84,8 +61,7 @@ SEARCH_MODE_LABELS: dict[str, tuple[str, ...]] = {
 
 
 def search_mode_option(labels: Iterable[str], method: str) -> str | None:
-    """The dropdown label to select for a lookup method, or None when the
-    agency exposes no such mode (the caller must fall back, not guess)."""
+    """the dropdown label to select for a lookup method, or none when the agency exposes no such mode (the caller must fall back, not guess)"""
     matchers = SEARCH_MODE_LABELS.get(method, ())
     for label in labels:
         lowered = (label or "").strip().lower()
@@ -95,12 +71,7 @@ def search_mode_option(labels: Iterable[str], method: str) -> str | None:
 
 
 def resolve_search_field(fields: Iterable[object], kind: str) -> str | None:
-    """The id of the search-form control for `kind`, from a *fresh* inventory.
-
-    `fields` is the read_page field list (dicts or FieldInfo). Returns None when
-    the control is absent — after a mode switch that is the expected shape of
-    the page, not an error.
-    """
+    """the id of the search-form control for `kind`, from a *fresh* inventory"""
     suffixes = SEARCH_FIELD_SUFFIXES.get(kind, ())
     for field in fields:
         control_id = str(field.get("id") or "") if isinstance(field, dict) else str(getattr(field, "id", "") or "")
@@ -112,14 +83,13 @@ def resolve_search_field(fields: Iterable[object], kind: str) -> str | None:
     return None
 
 
-# An "address" search can return zero rows purely because the agency
-# pre-fills a narrow date window (NI: 09/18/2024→09/18/2026) that hides older
-# sandbox data. Widening the start date is a standard retry, not a hack.
+# an "address" search can return zero rows purely because the agency pre-fills a narrow date window (ni:
+# 09/18/2024→09/18/2026) that hides older sandbox data
 SEARCH_DATE_START_SUFFIX = "txtGSStartDate"
 SEARCH_DATE_START_WIDENED = "01/01/1990"
 
-# True zero results vs a page that never rendered results: ACA words the first
-# explicitly, the second means the search never executed or the grid failed.
+# true zero results vs a page that never rendered results: aca words the first explicitly, the second
+# means the search never executed or the grid failed
 ZERO_RESULT_MARKERS: tuple[str, ...] = (
     "no records found",
     "no matching records",
@@ -129,8 +99,8 @@ ZERO_RESULT_MARKERS: tuple[str, ...] = (
 )
 RESULTS_TABLE_HEADER_MARKER = "record number"
 RECORD_DETAIL_URL_MARKER = "capdetail.aspx"
-# Pagination is postback-based: "Next" fires __doPostBack and the URL does not
-# change, so "more pages" is read from the grid footer text.
+# pagination is postback-based: "next" fires __dopostback and the url does not change, so "more pages" is
+# read from the grid footer text
 PAGINATION_NEXT_TEXT = "Next"
 
 
@@ -143,48 +113,37 @@ def has_results_table(html: str) -> bool:
     return RESULTS_TABLE_HEADER_MARKER in (html or "").lower()
 
 
-# The CivicId SSO credential form renders inside this iframe; it has
-# input[name='username'] / input[name='password'] and no ids.
 LOGIN_FRAME_MARKER = "login-panel"
 
-# --- the behaviours that actually make ACA clicks work ----------------------
 
-# `#divGlobalLoadingMask` is a Silverlight-era overlay iframe that stays in the
-# DOM "hidden" yet intercepts pointer events after every postback. Injecting
-# this after each settle is what turns a timing-out click into a working one.
+# `#divgloballoadingmask` is a silverlight-era overlay iframe that stays in the dom "hidden" yet
+# intercepts pointer events after every postback
 MASK_SELECTOR = "#divGlobalLoadingMask"
 MASK_NEUTRALIZER_JS = (
     "() => { const el = document.querySelector('#divGlobalLoadingMask');"
     " if (el) el.style.setProperty('display', 'none', 'important'); }"
 )
 
-# `#btnSearch` keeps a `ButtonDisabled` class no matter what; force-clicking it
-# is what fires the search, so button styling is advisory only.
+# `#btnsearch` keeps a `buttondisabled` class no matter what; force-clicking it is what fires the search,
+# so button styling is advisory only
 FORCE_CLICK_FALLBACK = True
 
-# MaskedEdit inputs (`class="... maskedfields ..."`, e.g. Zip `#####`, dates
-# `MM/DD/YYYY`) ignore fill(); they only accept real keystrokes.
+# maskededit inputs (`class="... maskedfields ..."`, e.g
 MASKED_CLASS_MARKER = "masked"
 
-# Every ACA popup (contact, licensed professional, education, parcel list)
-# renders its controls under this id prefix in its own iframe overlay, and
-# saves via ctl00_phPopup_btnSave / ctl00_phPopup_btnSaveAndClose. The
-# parent's btnSave is "save and resume later" — a trap.
 POPUP_ID_PREFIX = "ctl00_phPopup_"
 
-# The validation panel enumerates missing controls; unescape before matching
-# because DOM serialization HTML-encodes the quotes inside onclick attributes.
+# the validation panel enumerates missing controls; unescape before matching because dom serialization
+# html-encodes the quotes inside onclick attributes
 VALIDATION_TARGET_RE = re.compile(r"skipTo\(\s*['\"]([^'\"]+)", re.I)
 # targets whose id contains this are the error *labels*, not the controls
 VALIDATION_LABEL_MARKER = "v_a_l_i_d"
 
-# Sections that load over AJAX after the page `load` event (observed on the
-# record detail's Inspections section, 2026-09-20). Catching this state matters:
-# a mid-load read says "You have not added any inspections", which a planner
-# would happily report as fact.
+# sections that load over ajax after the page `load` event (observed on the record detail's inspections
+# section, 2026-09-20)
 LOADING_MARKERS: tuple[str, ...] = ("loading...", "loading…", "please wait")
 
-# Message text that arrives as a JS notice dialog, not a redirect.
+# message text that arrives as a js notice dialog, not a redirect
 NOTICE_PATTERNS: tuple[str, ...] = (
     "please login to continue",
     "you must be logged in",
@@ -192,25 +151,18 @@ NOTICE_PATTERNS: tuple[str, ...] = (
     "session timeout",
 )
 
-# Where a successful CivicId login lands, and how to tell it landed. The SSO
-# postback can leave the URL on Login.aspx while the redirect is still in
-# flight, so a URL-only check reported a *successful* login as failed on the very
-# first live planner run (2026-09-20) — the kind of false alarm that makes a
-# whole eval suite run anonymously while looking fine. Hence both signals:
-# the URL, then a marker only a signed-in page renders (never "my records",
-# which the public header can show).
+# where a successful civicid login lands, and how to tell it landed
 LOGGED_IN_URL_MARKERS: tuple[str, ...] = ("dashboard.aspx", "myrecordscap.aspx", "caphome.aspx")
 LOGGED_IN_TEXT_MARKERS: tuple[str, ...] = ("sign out", "sign-out", "log out", "logoff")
 
 
 def login_succeeded(url: str, text: str = "") -> bool:
-    """Whether the page is past the login form."""
+    """whether the page is past the login form"""
     lowered = (url or "").lower()
     if any(marker in lowered for marker in LOGGED_IN_URL_MARKERS):
         return True
     if "login" in lowered and "login-panel" not in lowered:
-        # still the login page proper: do not trust body text that may be part of
-        # the public site chrome
+        # still the login page proper: do not trust body text that may be part of the public site chrome
         body = (text or "").lower()
         return any(marker in body for marker in LOGGED_IN_TEXT_MARKERS)
     body = (text or "").lower()
@@ -218,12 +170,7 @@ def login_succeeded(url: str, text: str = "") -> bool:
 
 @dataclass(frozen=True)
 class FlowPosition:
-    """Where in a multi-step flow we are.
-
-    ACA postback wizards barely change the URL, so position must be tracked
-    explicitly; the `stepNumber` / `pageNumber` query params are the only
-    reliable signal, and they are agency/cap-type configured.
-    """
+    """where in a multi-step flow we are"""
 
     flow: str
     step: str
@@ -232,12 +179,7 @@ class FlowPosition:
 
 @dataclass(frozen=True)
 class Flow:
-    """A multi-step flow and the step that commits it.
-
-    `commit_action` is what the safety guard sees instead of a generic
-    `click`: on NI the review step issues the record immediately (no payment
-    gate, no agree checkbox), so it *is* an application submission.
-    """
+    """a multi-step flow and the step that commits it"""
 
     name: str
     steps: tuple[str, ...]
@@ -252,10 +194,7 @@ APPLY_FLOW = Flow(
     commit_action="submit_application",
 )
 
-# Verified live to the calendar (2026-09-20). CapDetail's URL does not change
-# across the wizard's steps, so each step is identified by what the popup says,
-# not by the URL — see `schedule_step`. Without that, `flow_step` would sit at
-# "select_record" forever and the commit-point rule could never fire.
+# verified live to the calendar (2026-09-20)
 SCHEDULE_FLOW = Flow(
     name="schedule_inspection",
     steps=("select_record", "select_type", "select_date", "select_time", "confirm"),
@@ -263,8 +202,6 @@ SCHEDULE_FLOW = Flow(
     commit_action="schedule_inspection",
 )
 
-# Ordered: the first marker found in the visible text wins. All verified on the
-# record detail's scheduling dialog.
 SCHEDULE_STEP_MARKERS: tuple[tuple[str, str], ...] = (
     ("available inspection types", "select_type"),
     ("select an appointment date and time range", "select_date"),
@@ -276,19 +213,11 @@ SCHEDULE_STEP_MARKERS: tuple[tuple[str, str], ...] = (
 
 FLOWS: dict[str, Flow] = {flow.name: flow for flow in (APPLY_FLOW, SCHEDULE_FLOW)}
 
-# CapEdit `stepNumber` -> wizard step. Verified against the Sign - Temporary
-# and Right of Way applications; other cap types add their own AppSpec sections
-# but keep this page sequence.
 _APPLY_STEP_BY_STEP_NUMBER = {1: "form", 2: "contact", 3: "detail"}
 
 
 def schedule_step(text: str) -> str | None:
-    """Which step of the scheduling wizard the popup is showing.
-
-    The wizard's own wording is the only signal: `CapDetail.aspx` is the URL for
-    every step, so a URL-only position would keep reporting `select_record` and
-    the guard's commit-point rule would never see `confirm`.
-    """
+    """which step of the scheduling wizard the popup is showing"""
     haystack = (text or "").lower()
     for marker, step in SCHEDULE_STEP_MARKERS:
         if marker in haystack:
@@ -297,10 +226,7 @@ def schedule_step(text: str) -> str | None:
 
 
 def locate(url: str, text: str = "") -> FlowPosition | None:
-    """Best-effort flow position from a URL, refined by the visible text.
-
-    `text` is optional so URL-only callers (and the guard) keep working.
-    """
+    """best-effort flow position from a url, refined by the visible text"""
     if not url:
         return None
     path = url.split("?")[0].lower()
@@ -341,7 +267,7 @@ def detail_url(
     module: str = DEFAULT_MODULE,
     agency_code: str = AGENCY_CODE,
 ) -> str:
-    """Record detail deep link (the read path verified for all 8 owned records)."""
+    """record detail deep link (the read path verified for all 8 owned records)"""
     return (
         f"{SITE_ROOT}/{agency_code}/Cap/CapDetail.aspx"
         f"?Module={module}&TabName={module}"
@@ -351,11 +277,7 @@ def detail_url(
 
 
 def inspection_detail_url(ref: dict[str, str]) -> str:
-    """Verified record's read-only inspection view, observed in P13's live trace.
-
-    This changes the displayed panel only; it does not open or submit a booking.
-    Build from a verified record reference, never an arbitrary portal-supplied URL.
-    """
+    """verified record's read-only inspection view, observed in p13's live trace"""
     return detail_url(
         ref["capID1"], ref["capID2"], ref["capID3"],
         module=ref.get("module", DEFAULT_MODULE),
@@ -363,16 +285,13 @@ def inspection_detail_url(ref: dict[str, str]) -> str:
     ) + "yes"
 
 
-# --- HTML parsing helpers (regex, as the scripts proved necessary) ----------
-
-
 @dataclass(frozen=True)
 class FieldInfo:
-    """A control on the page, enough for the planner to act on it."""
+    """a control on the page, enough for the planner to act on it"""
 
     id: str
     name: str
-    kind: str  # text | select | checkbox | radio | textarea | other
+    kind: str
     label: str = ""
     required: bool = False
     masked: bool = False
@@ -396,7 +315,7 @@ class FieldInfo:
 
 @dataclass(frozen=True)
 class ValidationError:
-    """One entry from ACA's validation panel: which control, and why."""
+    """one entry from aca's validation panel: which control, and why"""
 
     control_id: str
     message: str
@@ -425,9 +344,7 @@ class FrameInfo:
         }
 
 
-# ACA markup is not consistent about attribute quoting; both forms occur in
-# popup and validation fragments. Keep this parser deliberately small, but do
-# not silently lose all fields when a response uses single quotes.
+# aca markup is not consistent about attribute quoting; both forms occur in popup and validation fragments
 _ATTR_RE = re.compile(r"([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(['\"])(.*?)\2", re.S)
 _TAG_RE = re.compile(r"<(input|select|textarea)\b([^>]*)>", re.I)
 _SELECT_RE = re.compile(r"<select\b([^>]*)>(.*?)</select>", re.I | re.S)
@@ -454,11 +371,7 @@ def _is_required(attrs: dict[str, str]) -> bool:
 
 
 def parse_fields(html: str) -> list[FieldInfo]:
-    """Every labelled control, keyed the way ACA actually renders it.
-
-    `fieldname` / `aria-label` / the `<label for=...>` text are the stable
-    handles; the `ctl00_...` ids are ~60 chars and agency-config driven.
-    """
+    """every labelled control, keyed the way aca actually renders it"""
     html = _html.unescape(html or "")
     labels: dict[str, str] = {}
     for attrs_raw, body in _LABEL_RE.findall(html):
@@ -483,7 +396,7 @@ def parse_fields(html: str) -> list[FieldInfo]:
                     required=_is_required(attrs),
                     value=_select_value(html, control_id),
                     options=_select_options(html, control_id),
-                    postback=True,  # ACA dropdowns auto-postback
+                    postback=True,
                 )
             )
             continue
@@ -509,23 +422,19 @@ def parse_fields(html: str) -> list[FieldInfo]:
     return fields
 
 
-# --- the scheduling wizard's inspection types (verified live 2026-09-20) ---
-
-# Types render as radios inside this ACA dialog grid. The declared total comes
-# from the section heading, not from the rows: the grid paginates at 10 rows
-# (`< Prev 1 2 Next >`), so a page-1 read shows 10 of Commercial Alteration's 18.
+# types render as radios inside this aca dialog grid
 INSPECTION_TYPE_ID_MARKER = "gvInspectionType"
 INSPECTION_TYPE_COUNT_RE = re.compile(
     r"Available Inspection Types\s*\(\s*(?P<count>\d+)\s*\)", re.I
 )
-# `(required)` / `(optional)` is inside the label text and is the only signal
-# for whether ACA will let the rest be skipped.
+# `(required)` / `(optional)` is inside the label text and is the only signal for whether aca will let the
+# rest be skipped
 _TYPE_MARKER_RE = re.compile(r"\(\s*(?P<marker>optional|required)\s*\)\s*$", re.I)
 
 
 @dataclass(frozen=True)
 class InspectionTypeOption:
-    """One selectable inspection type from the scheduling wizard."""
+    """one selectable inspection type from the scheduling wizard"""
 
     name: str
     required: bool
@@ -542,20 +451,14 @@ class InspectionTypeOption:
 
 
 def _field_get(field: object, key: str) -> str:
-    """Read a key off a `FieldInfo` or the dict `read_page` serialises it to."""
+    """read a key off a `fieldinfo` or the dict `read_page` serialises it to"""
     if isinstance(field, dict):
         return str(field.get(key) or "")
     return str(getattr(field, key, "") or "")
 
 
 def parse_inspection_types(fields: list[object]) -> list[InspectionTypeOption]:
-    """The wizard's selectable inspection types.
-
-    Names come from the radio's label (`floor deck (required)`, `set backs
-    (optional)`), and the grid's own id marker is preferred. If ACA ever renders
-    the grid elsewhere, fall back to any radio whose label carries the
-    `(required)`/`(optional)` marker so this degrades to the same answer.
-    """
+    """the wizard's selectable inspection types"""
     radios = [f for f in fields if _field_get(f, "kind") == "radio"]
     marked = [
         f
@@ -582,23 +485,17 @@ def parse_inspection_types(fields: list[object]) -> list[InspectionTypeOption]:
 
 
 def inspection_type_total(text: str) -> int | None:
-    """Declared total from `Available Inspection Types (18)` — spans all pages."""
+    """declared total from `available inspection types (18)` — spans all pages"""
     match = INSPECTION_TYPE_COUNT_RE.search(text or "")
     return int(match.group("count")) if match else None
 
 
-# --- the scheduling calendar (verified live 2026-09-20) ---------------------
-
-# Days are `<td class="CalendarDayInactive ACA_LinkButton" title="Cannot
-# schedule inspection on this date">1</td>` — cells, not anchors, so resolving a
-# date by link text is impossible. Active days drop the Inactive class.
+# days are `<td class="calendardayinactive aca_linkbutton" title="cannot schedule inspection on this
+# date">1</td>` — cells, not anchors, so resolving a date by link text is impossible
 CALENDAR_CONTAINER_ID = "_calendar_calendar"
 CALENDAR_DAY_CLASS_MARKER = "calendarday"
 CALENDAR_INACTIVE_CLASS = "calendardayinactive"
 CALENDAR_INACTIVE_TITLE = "cannot schedule inspection on this date"
-# Popup Continue is rendered disabled until a date *and* time are chosen, with
-# the real postback stashed in `href_disabled` — a force-click would fire a
-# postback the portal has explicitly disabled.
 POPUP_CONTINUE_ID = "ctl00_phPopup_lnkContinue"
 _SELECTABLE_TIMES_ID = "lblavaliabletimes"
 
@@ -615,7 +512,7 @@ _ID_SPAN_RE = re.compile(
 
 @dataclass(frozen=True)
 class CalendarMonth:
-    """One month of the appointment calendar."""
+    """one month of the appointment calendar"""
 
     month: str
     active_days: tuple[int, ...]
@@ -635,13 +532,7 @@ class CalendarMonth:
 
 
 def parse_calendar(html: str) -> list[CalendarMonth]:
-    """The appointment calendar, month by month.
-
-    `any_available` is the honest answer to "can this be scheduled?": on a
-    sandbox where every cell is `CalendarDayInactive`, no date can be chosen at
-    all, so the flagship "book the earliest slot" goal is unachievable there and
-    the agent must say so rather than hunt the calendar forever.
-    """
+    """the appointment calendar, month by month"""
     html = _html.unescape(html or "")
     months: list[CalendarMonth] = []
     for attrs_raw, body in _CALENDAR_TABLE_RE.findall(html):
@@ -671,60 +562,41 @@ def parse_calendar(html: str) -> list[CalendarMonth]:
 
 
 def selectable_times_text(html: str) -> str:
-    """Text of `lblAvaliableTimes` (ACA's spelling) — empty until a day is picked."""
+    """text of `lblavaliabletimes` (aca's spelling) — empty until a day is picked"""
     match = _ID_SPAN_RE.search(_html.unescape(html or ""))
     return _text(match.group(1)) if match else ""
 
 
 def popup_continue_disabled(html: str) -> bool:
-    """Whether the wizard's popup Continue is the disabled variant."""
+    """whether the wizard's popup continue is the disabled variant"""
     match = re.search(
         rf'<a\b[^>]*id="{re.escape(POPUP_CONTINUE_ID)}"([^>]*)>', _html.unescape(html or ""), re.I
     )
     if not match:
         return False
     attrs = match.group(1)
-    # A standalone `disabled` attribute, not the `href_disabled` fallback or the
-    # cosmetic `ButtonDisabled` class (both contain "disabled" as a substring,
-    # and matching either would read a disabled button as enabled).
+    # a standalone `disabled` attribute, not the `href_disabled` fallback or the cosmetic `buttondisabled`
+    # class (both contain "disabled" as a substring, and matching either would read a disabled button as
+    # enabled)
     has_disabled_attr = bool(re.search(r"\bdisabled\s*=", attrs, re.I))
     return has_disabled_attr and "href_disabled" in attrs.lower()
 
 
-# --- scheduling wizard: section links, confirmation, calendar dates --------
-
-# The record-detail link(s) that open the scheduling wizard. Null Island
-# rendered the short label (2026-09-20 captures); the long one is ACA's
-# standard wording. Matched case-insensitively; first hit wins.
 SCHEDULE_LINK_LABELS: tuple[str, ...] = (
     "Schedule or Request an Inspection",
     "Schedule an Inspection",
 )
-# Null Island renders the schedule opener as a clickable <div onclick=...>,
-# with the label in a nested <span>; it is not an anchor despite its link-like
-# presentation. Resolve the actual JavaScript-backed control by stable id.
+# null island renders the schedule opener as a clickable <div onclick=...>, with the label in a nested
+# <span>; it is not an anchor despite its link-like presentation
 SCHEDULE_LINK_CONTROL_ID = "lnkInspectionSchedule"
-# NOTE the opener lives inside the record-tabs menu, which ACA renders as a
-# *collapsed dropdown* (`a[data-control="tab-inspections"]` sits in a
-# `nav-bar > selected > dropdown-menu > li` chain and measures 0x0). On the
-# plain detail URL the opener is therefore present in the DOM but laid out at
-# 0x0, and a click is refused as `not_actionable` — the wizard never opens and
-# the failure only surfaces later as a missing declared type count. Measured
-# live 2026-09-30. Land on the record's inspection view first (`detail_url(...)
-# + "yes"`, i.e. ACA's own `IsToShowInspection=yes` flag, as
-# `inspection_detail_url` builds) — that renders the panel, after which the
-# opener is genuinely clickable and the dialog opens with e.g.
-# "Available Inspection Types (13)".
+# note the opener lives inside the record-tabs menu, which aca renders as a *collapsed dropdown*
+# (`a[data-control="tab-inspections"]` sits in a `nav-bar > selected > dropdown-menu > li` chain and
+# measures 0x0)
 
-# The popup's month tables share this id fragment (verified capture
-# 2026-09-20): ctl00_phPopup_calendar_calendar1/2/3. Selectors anchor on the
-# fragment so a control-id prefix change does not break the day click.
+# the popup's month tables share this id fragment (verified capture 2026-09-20):
+# ctl00_phpopup_calendar_calendar1/2/3
 CALENDAR_TABLE_ID_MARKER = "calendar_calendar"
 
-# The month tables carry NO caption on Null Island (verified: the capture has
-# no <caption> and no month name anywhere in the popup) — the three rendered
-# tables are the reference month and the two following it. When an agency
-# *does* render a caption ("September 2026"), it wins over the assumption.
 _CAPTION_MONTH_RE = re.compile(r"\b([A-Za-z]+)\s+(\d{4})\b")
 _MONTH_NAMES: dict[str, int] = {}
 for _i, _name in enumerate(
@@ -738,21 +610,13 @@ for _i, _name in enumerate(
 
 
 def parse_confirmation_number(text: str) -> str | None:
-    """The portal's confirmation/ref number off a success page, or None.
-
-    ACA words these pages per-agency; the phrase family covers the standard
-    renderings (Confirmation Number: X / Confirmation #X / Reference No. X).
-    None means no number was printed: the caller must rely on the state
-    re-read for verification, never on the absence of the word "success".
-    """
+    """the portal's confirmation/ref number off a success page, or none"""
     match = re.search(
         r"\b(?:confirmation|reference)(?:\s+(?:number|no\.?|ref\.?))?\s*[:#]?\s*"
         r"([A-Za-z0-9][A-Za-z0-9-]{2,})",
         text or "",
         re.I,
     )
-    # Exclude the phrase itself being matched as the value (e.g. a heading
-    # "Confirmation Number" followed by nothing) — require a digit somewhere.
     value = match.group(1) if match else None
     if value and not any(ch.isdigit() for ch in value):
         return None
@@ -762,15 +626,7 @@ def parse_confirmation_number(text: str) -> str | None:
 def resolve_calendar_months(
     months: Iterable[object], *, reference: "object"
 ) -> list[tuple[int, int, tuple[int, ...]]]:
-    """(year, month, active_days) per rendered month table, in render order.
-
-    `months` is the `calendar` list `read_page` assembles (dicts with
-    `month`/`active_days`, or CalendarMonth objects). A table whose caption
-    names a month uses it; a caption-less table is the implied strip: the
-    reference month plus each following one (the only rendering observed live).
-    A caption that names no known month yields `(0, 0, ...)` — its days are
-    unusable because their dates would be invented.
-    """
+    """(year, month, active_days) per rendered month table, in render order"""
     import datetime as _dt
 
     resolved: list[tuple[int, int, tuple[int, ...]]] = []
@@ -780,8 +636,8 @@ def resolve_calendar_months(
         active = tuple(getattr(entry, "active_days", ()) or (entry.get("active_days") if isinstance(entry, dict) else ()) or ())
         match = _CAPTION_MONTH_RE.search(caption) if caption else None
         if caption and not match:
-            # A caption exists but names no parseable month: its days cannot be
-            # dated, so they are unusable rather than assumed onto the strip.
+            # a caption exists but names no parseable month: its days cannot be dated, so they are
+            # unusable rather than assumed onto the strip
             resolved.append((0, 0, active))
             continue
         if match:
@@ -791,7 +647,6 @@ def resolve_calendar_months(
                 continue
             resolved.append((0, 0, active))
             continue
-        # Implied strip: reference month + implied_index, rolling the year.
         total = reference.month - 1 + implied_index
         year = reference.year + total // 12
         month = total % 12 + 1
@@ -801,14 +656,7 @@ def resolve_calendar_months(
 
 
 def active_calendar_day_selector(table_index: int, day: int) -> str:
-    """Selector for one *active* day cell inside the wizard popup's month table.
-
-    `table_index` is 0-based render order (the implied month strip). Inactive
-    days are `<td class="CalendarDayInactive ACA_LinkButton" ...>` — cells, not
-    anchors — so the class filter is what makes an active day addressable, and
-    the trailing `text=` engine binds the day number without substring-matching
-    other cells. Live-verified markup: logs/ni_backoffice/schedule/*_calendar_f10.html.
-    """
+    """selector for one *active* day cell inside the wizard popup's month table"""
     return (
         f'table[id*="{CALENDAR_TABLE_ID_MARKER}{table_index + 1}"] '
         f'td[class*="{CALENDAR_DAY_CLASS_MARKER}"]:'
@@ -816,31 +664,15 @@ def active_calendar_day_selector(table_index: int, day: int) -> str:
     )
 
 
-# --- Phase 6 mutation boundaries: what actually mutates on this portal ------
-
-# The citizen portal's complete mutation surface, as far as it is mapped. This
-# is the portal-side half of the Phase 6 boundary map: the policy layer says
-# WHETHER an action may run, this says WHAT on the page would run it, so the
-# dispatcher's resolution (and the audit of unmapped flows) rests on observed
-# controls rather than on label guesses. Each entry's provenance is stated; a
-# control observed only on other agencies is marked so, never asserted for NI.
-#
-# `commit` = the click that submits the operation. `mutates` = True only when
-# the portal's own handler performs a record-state change; wizard steps that
-# merely advance the dialog (select type/date/time, Continue before the confirm
-# step) are navigation and are classified READ-ONLY, which is what makes
-# driving the wizard to a gate lawful without a confirmation.
+# the citizen portal's complete mutation surface, as far as it is mapped
 MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
-    # -- scheduling (mapped live to the calendar, 2026-09-20) -----------------
     {
         "flow": "schedule_inspection", "step": "confirm",
         "control": POPUP_CONTINUE_ID, "label": "Continue",
         "action": "schedule_inspection", "risk": "reversible",
         "mutates": True, "commit": True,
-        # Live-captured: the popup's Continue is disabled (postback parked in
-        # href_disabled) until a date AND time are chosen, so a stray click on
-        # an uncompleted wizard cannot commit. SolariClient refuses the
-        # disabled variant outright (see click()).
+        # live-captured: the popup's continue is disabled (postback parked in href_disabled) until a date
+        # and time are chosen, so a stray click on an uncompleted wizard cannot commit
         "evidence": "live capture 2026-09-20; disabled until date+time chosen",
     },
     {
@@ -857,10 +689,8 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "mutates": False, "commit": False,
         "evidence": "live capture 2026-09-20; clicking a day only fills lblAvaliableTimes",
     },
-    # -- cancellation (UNMAPPED: no owned record ever held a scheduled
-    #    inspection, so the per-row controls never rendered on this sandbox).
-    #    Fail-closed is the contract (see the adapter's _UNMAPPED_REASONS); the
-    #    guard holds a resolved cancel_inspection before the browser either way.
+    # -- cancellation (unmapped: no owned record ever held a scheduled inspection, so the per-row controls
+    # never rendered on this sandbox)
     {
         "flow": "cancel_inspection", "step": "confirm",
         "control": None, "label": "Cancel (inspection row)",
@@ -868,12 +698,8 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "mutates": True, "commit": True,
         "evidence": "UNMAPPED on NI: per-row control shape never rendered/captured",
     },
-    # -- payments (UNMAPPED on NI: the apply flow's review step carries no
-    #    payment gate, and no owned record has been driven to the Payments
-    #    section's controls. The record detail DOES render a "Payments" section
-    #    link — that link is a READ (benign target in the dispatcher); whatever
-    #    controls live inside the section are not classified, so the guard's
-    #    answer for them is "unclassified, therefore blocked".)
+    # -- payments (unmapped on ni: the apply flow's review step carries no payment gate, and no owned
+    # record has been driven to the payments section's controls
     {
         "flow": "payments", "step": "pay",
         "control": None, "label": "Make a Payment / Pay Now (phrase-matched)",
@@ -882,20 +708,15 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "evidence": "UNMAPPED on NI; dispatcher catches these labels by phrase, "
                     "not by a mapped control id",
     },
-    # -- legal attestation (mapped: the APPLY flow's disclaimer step. Its agree
-    #    checkbox + btnNextStep is the only attestation control observed on NI;
-    #    the guard classifies accept_legal_attestation as PROHIBITED — no
-    #    approval path — and the apply wizard's review Continue is separately
-    #    resolved as submit_application via the flow's commit point.)
+    # -- legal attestation (mapped: the apply flow's disclaimer step
     {
         "flow": "apply_application", "step": "disclaimer",
         "control": "apply disclaimer agree checkbox", "label": "I agree",
         "action": "accept_legal_attestation", "risk": "prohibited",
         "mutates": True, "commit": True,
         "evidence": "live apply flow 2026-09-19 (ni_apply_submit.py); PROHIBITED tier",
-        # The supported path is a human handoff, not an approval: the run stops
-        # here and the operator ticks the box themselves
-        # (licet/safety/attestation_handoff.py).
+        # the supported path is a human handoff, not an approval: the run stops here and the operator
+        # ticks the box themselves (licet/safety/attestation_handoff.py)
         "handoff": "licet/safety/attestation_handoff.py:accept_disclaimer_with_human",
     },
     {
@@ -903,12 +724,8 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
         "control": "CapConfirm continue", "label": "Continue",
         "action": "submit_application", "risk": "consequential",
         "mutates": True, "commit": True,
-        # Verified live: this one Continue issues the record — no payment gate,
-        # no agree checkbox on NI. That is why it is the flow's commit step.
         "evidence": "live apply flow 2026-09-19; commit point of APPLY_FLOW",
     },
-    # -- document upload (UNMAPPED: Attachments section renders; no upload
-    #    control has been captured on an owned record.)
     {
         "flow": "attachments", "step": "upload",
         "control": None, "label": "Upload Document (phrase-matched)",
@@ -920,44 +737,18 @@ MUTATION_BOUNDARIES: tuple[dict[str, object], ...] = (
 
 
 def mutation_boundaries() -> tuple[dict[str, object], ...]:
-    """The mutation boundary map, for the audit doc and the safety panel.
-
-    Read-only data; callers must treat absent controls as unmapped (fail-closed
-    at the guard) rather than as permission to improvise a flow.
-    """
+    """the mutation boundary map, for the audit doc and the safety panel"""
     return MUTATION_BOUNDARIES
 
 
-# --- appointment identity from the record's inspection rows -----------------
-
-# The citizen detail page renders each existing inspection row with its own
-# per-row controls (`Edit`/`Cancel` style action links), which ACA addresses by
-# the appointment's own id inside the postback target. Those per-row controls
-# are the only appointment identity the citizen portal exposes: the row text
-# itself is `Type | Status | Date` with no id column. Parsing them is what lets
-# a cancel/reschedule proposal name the appointment it acts on
-# (TARGET_INSPECTION_UNIDENTIFIED exists precisely because nothing else does).
-# Verified shape: phase3 fixtures (record_detail_fees.html, ni_schedule_probe
-# captures). Both idioms ACA uses for per-row action links are handled:
-#   1. `javascript:__doPostBack('ctlNN$lnkCancel','')`  (WebForms postback)
-#   2. `<a href="..." id="ctl00_..._lnkCancel" ...>`     (server-side anchor)
-# The postback target carries the row's grid identity: extract the trailing
-# sequence so a grid re-render that renumbers ctlNN does not silently rebind a
-# stored approval. (The id string itself, not the number, is what snapshots
-# carry; the suffix is for the audit's stable-label comparison.)
+# the citizen detail page renders each existing inspection row with its own per-row controls
+# (`edit`/`cancel` style action links), which aca addresses by the appointment's own id inside the
+# postback target
 _ROW_POSTBACK_KEY_RE = re.compile(r"__doPostBack\(['\"]([^'\"]+)", re.I)
 
 
 def parse_inspection_row_controls(html: str) -> list[dict[str, str]]:
-    """Per-appointment action controls observed in the inspections section HTML.
-
-    Returns one entry per row-level control: {"control_id", "verb", "key"},
-    where verb is cancel/reschedule/edit and key is the postback target or the
-    control id fragment that distinguishes this row's control from every other
-    row's. Read-only parsing; the caller (the phase4 adapter) binds a row's id
-    to its Type|Status|Date line by document order — one control per row, in
-    the order the portal rendered them.
-    """
+    """per-appointment action controls observed in the inspections section html"""
     html = _html.unescape(html or "")
     controls: list[dict[str, str]] = []
     for match in re.finditer(
@@ -967,10 +758,6 @@ def parse_inspection_row_controls(html: str) -> list[dict[str, str]]:
         control_id = attrs.get("id", "")
         href = attrs.get("href", "")
         body = _text(match.group("body"))
-        # Which mutation the control would perform: the id suffix is ACA's own
-        # naming (lnkCancel / lnkReschedule / lnkEdit); the label text is the
-        # fallback, matched whole-word so a read-only link like "Cancellation
-        # Policy" is not misread as a cancel control.
         verb = None
         for marker, name in (
             ("cancel", "cancel"), ("reschedule", "reschedule"),
@@ -989,28 +776,19 @@ def parse_inspection_row_controls(html: str) -> list[dict[str, str]]:
     return controls
 
 
-# --- record detail: reading the page into facts (verified 2026-09-20) -------
-
-# The header reads `Record<nbsp>BLD26-00472:<space>\n Right of Way Use Permit
-# \nRecord Status:<nbsp>Submitted`. Note the altID format is per record type
-# (Commercial Alteration renders `000000014`), so nothing may assume BLD26-.
 RECORD_HEADER_RE = re.compile(
     r"Record\s*(?P<id>\S+?):\s*\n?\s*(?P<type>[^\n]+)\n\s*Record Status:\s*(?P<status>[^\n]+)",
     re.I,
 )
 RECORD_EXPIRATION_RE = re.compile(r"Expiration Date:\s*(?P<value>[^\n]+)", re.I)
-# Sections render as links on the detail page; only Record Info/Payments/
-# Attachments were click-through-verified (all three open from the summary).
-# "Attachments" is listed here because it renders, not because it is reachable
-# only one way — the earlier "dead link" reading was our own resolver's bug.
 RECORD_SECTIONS: tuple[str, ...] = (
     "Record Info",
     "Payments",
-    "Fees",  # some ACA configurations render Fees separately from Payments
+    "Fees",
     "Attachments",
     "Inspections",
     "Schedule or Request an Inspection",
-    "Schedule an Inspection",  # Null Island's shorter live label
+    "Schedule an Inspection",
 )
 NO_INSPECTIONS_MARKERS: tuple[str, ...] = (
     "you have not added any inspections",
@@ -1020,7 +798,7 @@ NO_INSPECTIONS_MARKERS: tuple[str, ...] = (
 
 
 def parse_record_header(text: str) -> dict[str, str]:
-    """Display id, record type and raw status off a record detail page."""
+    """display id, record type and raw status off a record detail page"""
     match = RECORD_HEADER_RE.search(text or "")
     if not match:
         return {}
@@ -1036,11 +814,7 @@ def parse_record_header(text: str) -> dict[str, str]:
 
 
 def parse_ref_from_url(url: str) -> dict[str, str]:
-    """capID1/2/3 + module + agencyCode out of a CapDetail URL.
-
-    This is the identity that actually addresses a record; the displayed record
-    number is only what the agency chose to print.
-    """
+    """capid1/2/3 + module + agencycode out of a capdetail url"""
     query = (url or "").split("?", 1)[-1]
     raw_params = dict(parse_qsl(query, keep_blank_values=True))
     params = {key.lower(): _html.unescape(value) for key, value in raw_params.items()}
@@ -1059,28 +833,19 @@ def parse_ref_from_url(url: str) -> dict[str, str]:
 
 
 def parse_sections(text: str) -> list[str]:
-    """Which record sections this page renders."""
+    """which record sections this page renders"""
     lowered = (text or "").lower()
     return [name for name in RECORD_SECTIONS if name.lower() in lowered]
 
 
 def declares_no_inspections(text: str) -> bool:
-    """True when the page says there is no inspection history.
-
-    Distinguish this from a half-rendered AJAX section: `detect_loading` says
-    whether the section is still coming, and a reader must apply both or it will
-    report "no inspections" about a section that simply had not loaded.
-    """
+    """true when the page says there is no inspection history"""
     lowered = (text or "").lower()
     return any(marker in lowered for marker in NO_INSPECTIONS_MARKERS)
 
 
 def _select_block(html: str, control_id: str) -> str:
-    """The <select> body whose opening tag carries control_id.
-
-    Do not search for the literal ``id=\"...\"``: ACA fragments returned by
-    different controls legitimately switch between single and double quotes.
-    """
+    """the <select> body whose opening tag carries control_id"""
     for attrs_raw, body in _SELECT_RE.findall(html):
         if control_id and _attrs(attrs_raw).get("id") == control_id:
             return body
@@ -1106,11 +871,7 @@ def _select_value(html: str, control_id: str) -> str:
 
 
 def parse_validation_errors(html: str) -> list[ValidationError]:
-    """ACA's validation panel as (control_id, message) pairs.
-
-    These are how we learn what a Continue click was missing — the scripts
-    relied on them for every required-field discovery.
-    """
+    """aca's validation panel as (control_id, message) pairs"""
     html = _html.unescape(html or "")
     errors: list[ValidationError] = []
     seen: set[str] = set()
@@ -1125,7 +886,7 @@ def parse_validation_errors(html: str) -> list[ValidationError]:
 
 
 def validation_targets(html: str) -> list[str]:
-    """Control ids the validation panel points at, labels filtered out."""
+    """control ids the validation panel points at, labels filtered out"""
     found: list[str] = []
     for target in VALIDATION_TARGET_RE.findall(_html.unescape(html or "")):
         target = _html.unescape(target)
@@ -1135,13 +896,13 @@ def validation_targets(html: str) -> list[str]:
 
 
 def detect_notices(text: str) -> list[str]:
-    """JS notice dialogs that never show up as navigation events."""
+    """js notice dialogs that never show up as navigation events"""
     lowered = (text or "").lower()
     return [pattern for pattern in NOTICE_PATTERNS if pattern in lowered]
 
 
 def detect_loading(text: str) -> list[str]:
-    """Loading markers still present, i.e. a section is only half-rendered."""
+    """loading markers still present, i.e. a section is only half-rendered"""
     lowered = (text or "").lower()
     return [marker for marker in LOADING_MARKERS if marker in lowered]
 
@@ -1151,23 +912,14 @@ def is_loading(text: str) -> bool:
 
 
 def has_postback_history(html: str) -> bool:
-    """True when back-navigation would resubmit a WebForms postback."""
+    """true when back-navigation would resubmit a webforms postback"""
     marker = (html or "").lower()
     return "__viewstate" in marker or "__dopostback" in marker
 
 
-# --- Phase 7 portal weirdness: the states recovery must recognise -----------
+# portal integration, phase 7
 
-# portal integration, Phase 7. The recovery controller (licet/phase7/recovery.py)
-# decides *whether* a failure may be recovered; this vocabulary says *what ACA
-# actually did*. Plain data + one classifier, same charter as the rest of this
-# module: testable offline against captured text/URLs, no browser required.
-
-# An AJAX grid that has rendered its chrome but not its rows. Distinct from a
-# declared-empty section: these wordings mean "the request is still in flight
-# or returned nothing yet", so a reader must re-settle instead of recording a
-# fact. (Search-grid zero-results stays ZERO_RESULT_MARKERS above; these are
-# the in-page grid idioms, including the DataTables default ACA ships.)
+# an ajax grid that has rendered its chrome but not its rows
 EMPTY_TABLE_MARKERS: tuple[str, ...] = (
     "no data available in table",
     "no records to display",
@@ -1176,21 +928,17 @@ EMPTY_TABLE_MARKERS: tuple[str, ...] = (
     "0 of 0",
 )
 
-# ACA renders unexpected dialogs as Bootstrap-style modals. A modal the plan
-# did not open is either informational (safe to close) or consequential (a
-# confirmation that mutates something — never dismissed; routed to policy).
+# aca renders unexpected dialogs as bootstrap-style modals
 MODAL_TEXT_MARKERS: tuple[str, ...] = (
     "dialog", "modal", "please confirm", "are you sure", "warning",
 )
-# Modal wordings that carry a real consequence if accepted. Anything else that
-# merely *looks* like a modal is treated as informational, and even these are
-# only ever routed, never clicked, by the recovery layer.
+# modal wordings that carry a real consequence if accepted
 CONSEQUENTIAL_MODAL_MARKERS: tuple[str, ...] = (
     "are you sure", "confirm cancel", "confirm cancellation", "cannot be undone",
     "do you want to delete", "agree to the", "i accept",
 )
-# Session expiry sometimes renders as a modal over the current page instead of
-# a redirect (observed wording on ACA deployments; NI usually redirects).
+# session expiry sometimes renders as a modal over the current page instead of a redirect (observed
+# wording on aca deployments; ni usually redirects)
 SESSION_MODAL_MARKERS: tuple[str, ...] = (
     "your session is about to expire",
     "session about to expire",
@@ -1198,37 +946,23 @@ SESSION_MODAL_MARKERS: tuple[str, ...] = (
     "session has expired",
 )
 
-# The ACA landing page a session bounce or a dead deep link drops the agent
-# on. "Unexpectedly on home" is only reportable when the record context is
-# gone (no CapDetail in the URL) — CapHome.aspx *is* the search page, not home.
 PORTAL_HOME_URL_MARKERS: tuple[str, ...] = (
     "default.aspx", "dashboard.aspx", "/home.aspx",
 )
 
-# Targets ACA opens in a new tab/window. Phrase-level and partly other-agency
-# observed (provenance stated per the mutation-boundary convention): NI renders
-# printable views, attachments and help on the citizen portal.
 NEW_TAB_URL_MARKERS: tuple[str, ...] = (
     "printable", "printview", "help.aspx", "downloadattachment", "attachment",
 )
 
 
 def detect_empty_table(text: str) -> list[str]:
-    """In-flight or empty grid wordings still visible in the page text."""
+    """in-flight or empty grid wordings still visible in the page text"""
     lowered = (text or "").lower()
     return [marker for marker in EMPTY_TABLE_MARKERS if marker in lowered]
 
 
 def detect_modal(text: str) -> dict[str, object] | None:
-    """An unexpected dialog in the text, classified informational/consequential.
-
-    Returns {"kind": "informational"|"consequential", "marker": ...} or None.
-    Textual detection is conservative: ACA modals render standard dialog chrome
-    and stock wordings. Session-expiry wordings are excluded — they have their
-    own, stronger finding (`detect_session_modal`) and must not double-report
-    as a generic consequential modal. When in doubt the caller must treat a
-    modal as consequential (route to policy) rather than dismiss it.
-    """
+    """an unexpected dialog in the text, classified informational/consequential"""
     lowered = (text or "").lower()
     if any(marker in lowered for marker in SESSION_MODAL_MARKERS):
         return None
@@ -1241,13 +975,13 @@ def detect_modal(text: str) -> dict[str, object] | None:
 
 
 def detect_session_modal(text: str) -> str | None:
-    """A session-expiry *modal* (no redirect) — session handling without navigation."""
+    """a session-expiry *modal* (no redirect) — session handling without navigation"""
     lowered = (text or "").lower()
     return next((m for m in SESSION_MODAL_MARKERS if m in lowered), None)
 
 
 def is_portal_home(url: str) -> bool:
-    """Whether the URL is the ACA landing page (record context absent)."""
+    """whether the url is the aca landing page (record context absent)"""
     lowered = (url or "").lower()
     if not lowered:
         return False
@@ -1257,7 +991,7 @@ def is_portal_home(url: str) -> bool:
 
 
 def looks_like_new_tab(url: str) -> bool:
-    """Whether the URL looks like a target ACA opened in its own tab/window."""
+    """whether the url looks like a target aca opened in its own tab/window"""
     lowered = (url or "").lower()
     return any(marker in lowered for marker in NEW_TAB_URL_MARKERS)
 
@@ -1270,13 +1004,7 @@ def detect_weirdness(
     loading: Iterable[str] | None = None,
     notices: Iterable[str] | None = None,
 ) -> tuple[str, ...]:
-    """The portal-weirdness findings for one observation, in stable order.
-
-    Values are the Phase 7 portal finding vocabulary (mirrored 1:1 by
-    ``licet.phase7.portal.PortalFinding``; the enum lives there, this module
-    stays dependency-free). Detection order is fixed so reports are comparable
-    across runs.
-    """
+    """the portal-weirdness findings for one observation, in stable order"""
     findings: list[str] = []
     session_modal = detect_session_modal(text)
     if session_modal:

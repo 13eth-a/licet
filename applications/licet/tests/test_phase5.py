@@ -1,4 +1,4 @@
-"""Deterministic planner scenarios: capability observations, never LLM success."""
+"""deterministic planner scenarios: capability observations, never llm success"""
 import asyncio
 from copy import deepcopy
 from dataclasses import FrozenInstanceError, replace
@@ -409,12 +409,6 @@ def test_preflight_cannot_mutate_using_stale_reasoning():
     assert mutation_denial(Run(goal(), world), Action.SCHEDULE_INSPECTION)
 
 
-# --- goal-language cases found by the Phase 8 `prompts` suite ---------------
-# PROMPT-003 and PROMPT-006 were measured production parsing failures (see
-# docs/phase8/final_review.md). The goldens were left alone and the parser was
-# fixed instead, so each fix is pinned here rather than only in the benchmark.
-
-
 def test_book_is_an_authorized_scheduling_request():
     g = parse_goal("Book Rough Electrical inspection for permit P-1.")
     assert g.operation == "schedule"
@@ -425,8 +419,8 @@ def test_book_is_an_authorized_scheduling_request():
 
 
 def test_book_does_not_outrank_an_explicit_no_changes_restriction():
-    # "Book" is an authorized scheduling verb, so the restriction has to win
-    # explicitly: the run may report state, but it must not schedule.
+    # "book" is an authorized scheduling verb, so the restriction has to win explicitly: the run may
+    # report state, but it must not schedule
     g = parse_goal("Book Rough Electrical inspection for permit P-1, but don't make any changes.")
     assert not g.autonomous
     assert {"schedule", "reschedule", "cancel"} <= set(g.prohibited_actions)
@@ -444,8 +438,7 @@ def test_read_only_blocker_question_is_an_answerable_read_not_a_conflict():
 
 
 def test_read_only_grant_cannot_authorize_a_mutation():
-    # "Read only" is an information grant. Paired with a mutation verb it is a
-    # conflict, so the planner stops before any capability call.
+    # "read only" is an information grant
     g = parse_goal("Read only: schedule Rough Electrical inspection for permit P-1.")
     assert g.clarification == "CONSTRAINT_CONFLICT"
     result, cap = run(g)

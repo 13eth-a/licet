@@ -1,8 +1,4 @@
-"""The model boundary: tool-call plumbing, cost reporting, and failure modes.
-
-No network and no key: the OpenAI client is exercised through a fake `responses`
-object, and the planner-facing scripted double is what the loop tests use.
-"""
+"""the model boundary: tool-call plumbing, cost reporting, and failure modes"""
 
 from __future__ import annotations
 
@@ -61,9 +57,6 @@ def _client(responses, **kwargs) -> tuple[OpenAIModel, _FakeOpenAI]:
     return model, fake
 
 
-# --- tool-call plumbing ------------------------------------------------------
-
-
 def test_function_call_becomes_a_decoded_tool_call():
     model, _ = _client(
         [
@@ -87,7 +80,6 @@ def test_function_call_becomes_a_decoded_tool_call():
     assert reply.tool_calls[0].name == "read_page"
     assert reply.tool_calls[0].args == {"include": ["text"]}
     assert reply.tool_calls[0].call_id == "call_1"
-    # the raw blob is kept: the run log should show what the model actually sent
     assert reply.tool_calls[0].raw_args.startswith("{")
     assert (reply.input_tokens, reply.output_tokens) == (1200, 80)
     assert reply.model == "gpt-5.6-sol"
@@ -128,9 +120,6 @@ def test_tool_schema_accepts_objects_and_passthrough_dicts():
     assert tool_schema(already) is already
 
 
-# --- failure modes -----------------------------------------------------------
-
-
 def test_invalid_json_arguments_raise_a_recoverable_model_error():
     model, _ = _client([_Response([_Item(type="function_call", name="click", arguments="{not json")])])
 
@@ -146,7 +135,7 @@ def test_non_object_arguments_are_rejected():
 
 
 def test_a_failing_call_raises_instead_of_returning_an_empty_plan():
-    """An empty plan reads as 'the agent chose to do nothing' — a silent wrong answer."""
+    """an empty plan reads as 'the agent chose to do nothing' — a silent wrong answer"""
     model, fake = _client([RuntimeError("boom"), RuntimeError("boom"), RuntimeError("boom")], max_retries=2)
 
     with pytest.raises(ModelError, match="failed after 3 attempt"):
@@ -179,9 +168,6 @@ def test_build_model_uses_the_configured_slugs():
     assert client.fallback_model == "gpt-5.4-mini"
 
 
-# --- the scripted double -----------------------------------------------------
-
-
 def test_scripted_model_replays_replies_and_records_what_it_was_asked():
     model = ScriptedModel(
         [
@@ -200,17 +186,12 @@ def test_scripted_model_replays_replies_and_records_what_it_was_asked():
 
 
 def test_scripted_model_raises_when_the_loop_overruns_its_script():
-    """A looping planner must fail a test rather than silently pass it."""
+    """a looping planner must fail a test rather than silently pass it"""
     model = ScriptedModel([ModelReply(text="done")])
     asyncio.run(model.reply(system="s", messages=[]))
 
     with pytest.raises(ModelError, match="ran out of replies"):
         asyncio.run(model.reply(system="s", messages=[]))
-
-
-# --- the fallback path -------------------------------------------------------
-# `fallback_model` used to be stored and never read, so a primary-model outage
-# took the run down with a working fallback configured and unused.
 
 
 def test_the_fallback_serves_the_reply_when_the_primary_is_down():

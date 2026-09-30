@@ -56,12 +56,7 @@ class InspectionAction:
 
     @property
     def date_constraints(self) -> DateConstraints:
-        """The bounded date window this action asks for, as a shared value.
-
-        One definition for the executor's selector and the metrics layer's
-        constraint check, so a chosen date is judged by the same rule it was
-        chosen by.
-        """
+        """the bounded date window this action asks for, as a shared value"""
         from datetime import date
         return DateConstraints(
             start=date.fromisoformat(self.date_window_start) if self.date_window_start else None,
@@ -92,9 +87,7 @@ class InspectionSnapshot:
     available_dates: tuple[str, ...] = ()
     required_fields: tuple[str, ...] = ()
     confirmation_number: str | None = None
-    # Stable record identity (RecordRef.as_key form) observed on the page this
-    # snapshot was read from. None means the portal did not independently
-    # assert it; it is never guessed from the displayed permit id.
+    # stable record identity (recordref.as_key form) observed on the page this snapshot was read from
     record_key: str | None = None
 
     @property
@@ -103,12 +96,7 @@ class InspectionSnapshot:
 
     @property
     def is_pending(self) -> bool:
-        """An in-flight request the portal has accepted but not yet scheduled.
-
-        Distinct from a terminal state and from "not scheduled" (which is a
-        requestable state, not an outstanding request). Scheduling a new
-        attempt while one of these exists duplicates the request.
-        """
+        """an in-flight request the portal has accepted but not yet scheduled"""
         return self.status.strip().lower() in {"requested", "pending"}
 
     @property
@@ -134,8 +122,7 @@ class InspectionActionResult:
     error_code: ActionErrorCode | None = None
     before: InspectionSnapshot | None = None
     after: InspectionSnapshot | None = None
-    # Advisory only: available portal dates outside the requested window. Never
-    # selected a mutation; the caller must obtain a new instruction to use one.
+    # advisory only: available portal dates outside the requested window
     alternatives: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:

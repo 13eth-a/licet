@@ -1,25 +1,4 @@
-"""Full read-only inventory of Null Island records (all modules).
-
-Phase 1 — sweep: for each module, direct-GET the module-scoped record grid
-    /portlets/cap/capSearch.do?pageNo=N&column=altID&module=<M>
-        &spaceName=spaces.nullisland.record&isGeneralCAP=Y
-(verified working for module=Planning in ni_probe_module.py; the mode=search
-variant is CSRF-gated but plain pagination GETs ride the session fine).
-Rows carry hidden CAPID1/2/3 inputs; the classic grid also shows a
-Record Type column when configured (Planning showed "Site Plan - Major").
-
-Phase 2 — details: GET capDetail.do per record (works with explicit capID
-params, see ni_probe_detail.py) and read the readonly value(capType) input
-(e.g. "Building/Residential/Mechanical/NA") plus status/app-name/dates.
-
-Goal: match existing sandbox records against Licet's target categories
-(Commercial Alteration, Residential Addition, Commercial Electrical,
-New SFR, Solar, ROW Use, Sign-Temporary).
-
-READ-ONLY. Checkpoints JSON after every page / every record.
-
-Run:  .venv/bin/python scripts/ni_record_inventory.py
-"""
+"""full read-only inventory of null island records (all modules)"""
 
 from __future__ import annotations
 
@@ -67,7 +46,7 @@ async def goto_bounded(page, url: str) -> None:
 
 
 def parse_rows(html: str, module: str) -> list[dict]:
-    """Extract grid rows: alt ID, capID triple, status, record-type column."""
+    """extract grid rows: alt id, capid triple, status, record-type column"""
     rows: list[dict] = []
     for tr in re.split(r"<tr[\s>]", html):
         c1 = re.search(r'name="value\(CAPID1,\d+\)"[^>]*value="([^"]*)"', tr)
@@ -102,7 +81,7 @@ def parse_total_pages(html: str) -> int:
 
 
 async def grid_html(page) -> str:
-    """Largest frame that looks like a record grid (main doc counts too)."""
+    """largest frame that looks like a record grid (main doc counts too)"""
     candidates: list[str] = []
     for fr in page.frames:
         try:
@@ -146,7 +125,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # --- login (same flow as recon1-3) ---
         await goto_bounded(page, AV_URL)
         await asyncio.wait_for(page.wait_for_timeout(5000), 15)
         user = page.locator('input[name="username"]').first
@@ -165,7 +143,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(10000), 20)
         out("Logged in.")
 
-        # --- phase 1: sweep all modules ---
         for module in MODULES:
             page_no = 1
             total_pages = 1
@@ -195,7 +172,6 @@ async def main() -> int:
             sweep_path = save(records, stamp, "sweep")
         out(f"\nPhase 1 done: {len(records)} unique records → {sweep_path}")
 
-        # --- phase 2: capDetail.do per record for the full type ---
         done = 0
         for cap_id, rec in records.items():
             c1, c2, c3 = cap_id.split("-")
@@ -248,7 +224,6 @@ async def main() -> int:
         except Exception:
             pass
 
-    # --- summarize by full type, flag target categories ---
     out(f"\n=== {len(records)} unique records across {len(MODULES)} modules ===")
     by_type: dict[str, list[dict]] = {}
     for r in records.values():

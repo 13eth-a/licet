@@ -1,16 +1,4 @@
-"""Phase 6 safety stop conditions.
-
-The checklist's eleven safety stops, as one closed classification. Every
-deterministic decision and every execution result is mapped to at most one of
-these so a caller can halt, report and audit the run with a stable reason code
-instead of parsing a free-text message.
-
-They are deliberately separate from `licet/agent/stop_conditions.py`: those are
-loop/budget conditions (steps, stalls, approvals), while these are *safety*
-outcomes — a live mutation attempt, an unknown environment, a wrong target, a
-dropped constraint, an unverifiable result. A run may stop for both; the safety
-one is the one that must never be overridden.
-"""
+"""phase 6 safety stop conditions"""
 
 from __future__ import annotations
 
@@ -37,14 +25,12 @@ class SafetyStopCondition(StrEnum):
     UNKNOWN_ACTION_RISK = "UNKNOWN_ACTION_RISK"
 
 
-# The user-constraint codes `UserConstraints.contradiction` can return.
 _CONSTRAINT_CODES = frozenset({
     "READ_ONLY", "SCHEDULING_NOT_ALLOWED", "RESCHEDULING_NOT_ALLOWED",
     "CANCELLATION_NOT_ALLOWED", "PAYMENTS_NOT_ALLOWED", "SUBMISSIONS_NOT_ALLOWED",
     "UPLOADS_NOT_ALLOWED", "APPLICANT_EDITS_NOT_ALLOWED", "RENEWALS_NOT_ALLOWED",
 })
 
-# Execution-result error codes mapped to their safety stop.
 _RESULT_STOPS = {
     "LIVE_MUTATION_BLOCKED": SafetyStopCondition.LIVE_MUTATION_ATTEMPTED,
     "UNKNOWN_ENVIRONMENT": SafetyStopCondition.UNKNOWN_ENVIRONMENT,
@@ -67,15 +53,9 @@ def _action_name(action: str | ProposedAction | None) -> str:
 
 def stop_for_decision(decision: PolicyDecision,
                       action: str | ProposedAction | None = None) -> SafetyStopCondition | None:
-    """The safety stop a policy decision represents, or None if it may proceed.
-
-    ALLOW is the only outcome that yields no stop. CONFIRM is a controlled pause
-    and maps to `MISSING_CONFIRMATION` — the run has not been authorized yet.
-    """
+    """the safety stop a policy decision represents, or none if it may proceed"""
     if decision.allowed and not decision.requires_confirmation:
         return None
-    # `violated_constraint` is the stable code; `reason` carries the detail (e.g.
-    # which identity field mismatched), so the specific checks read the latter.
     code = decision.violated_constraint or ""
     detail = decision.reason or code
     kind = _action_name(action)
@@ -105,11 +85,7 @@ def stop_for_decision(decision: PolicyDecision,
 
 
 def stop_for_result(result) -> SafetyStopCondition | None:
-    """The safety stop an executor result represents, or None on verified success.
-
-    A success that was not independently verified is `UNVERIFIABLE_MUTATION`: the
-    checklist forbids reporting an unconfirmed mutation as a verified success.
-    """
+    """the safety stop an executor result represents, or none on verified success"""
     code = getattr(result, "error_code", None)
     value = getattr(code, "value", code)
     if value in _RESULT_STOPS:
@@ -121,12 +97,7 @@ def stop_for_result(result) -> SafetyStopCondition | None:
 
 def unexpected_payment_screen(requested_action: str | ProposedAction | None,
                               observed_action: str | ProposedAction | None) -> SafetyStopCondition | None:
-    """A payment flow reached when no payment was requested is a hard stop.
-
-    The checklist calls this out because a payment screen can appear without a
-    supported action naming one; reaching it is not implicit authorization to
-    pay, and the run must stop rather than click through.
-    """
+    """a payment flow reached when no payment was requested is a hard stop"""
     if _action_name(observed_action) == "PAY_FEE" and _action_name(requested_action) != "PAY_FEE":
         return SafetyStopCondition.UNEXPECTED_PAYMENT_SCREEN
     return None

@@ -1,8 +1,4 @@
-"""Capture one plan-only flagship using the unchanged product capabilities.
-
-Raw authenticated browser media stays in ignored logs/. Do not publish raw
-recordings without reviewing account/contact information. No mutation is enabled.
-"""
+"""capture one plan-only flagship using the unchanged product capabilities"""
 from __future__ import annotations
 import asyncio
 import json
@@ -25,7 +21,6 @@ GOAL = os.environ.get('LICET_CAPTURE_GOAL', 'Get permit 000000014 ready for its 
 
 class CaptureSession(SolariSession):
     def __init__(self):
-        # Explicit user approval received for this one authenticated recording.
         super().__init__(recording=False)
 
     async def start(self):
@@ -40,7 +35,6 @@ class CaptureSession(SolariSession):
                     await self.screen_recorder.stop()
             finally:
                 await super().close()
-            # The local continuous screencast is the video; no second server-side replay.
         except Exception as exc:
             print('Recording finalization:',type(exc).__name__,flush=True)
 
@@ -57,7 +51,7 @@ async def main():
     start=time.monotonic()
     async def capture_factory(**kwargs):
         live=await factory(**kwargs)
-        # Allow the sandbox postback to settle while recording; preserve verification.
+        # allow the sandbox postback to settle while recording; preserve verification
         live.client.verification_timeout_ms = 45000
         if hasattr(live, "session"):
             recorder = ScreenRecorder(live.client.page, OUT/"screen")
@@ -70,7 +64,7 @@ async def main():
         execute=live.dispatcher.execute
         async def captured(call,state):
             result=await execute(call,state)
-            # Capture real browser reads from the same continuous recording.
+            # capture real browser reads from the same continuous recording
             url=str(result.get('url') or '')
             name = call.get('name') if isinstance(call, dict) else call.name
             if name=='read_page' and result.get('success'):

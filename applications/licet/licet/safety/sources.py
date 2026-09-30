@@ -1,17 +1,4 @@
-"""Phase 6 observation provenance: which text may authorize, and which is data.
-
-The checklist's labelling rule, made executable: instruction-looking content
-that Licet reads off a portal is *information*, never authorization. Inspector
-comments ("Upload corrected documents immediately."), document names and any
-other page text are `UNTRUSTED`; only the system policy and the user's own
-instruction are `TRUSTED`. A caller that wants to act must build its intent from
-trusted text only — `trusted_text` is the one supported way to concatenate
-sources, and it silently drops untrusted ones rather than folding portal prose
-into a decision.
-
-This module is deliberately small and dependency-free so any layer (guard,
-policy engine, planner) can label an observation without importing the browser.
-"""
+"""phase 6 observation provenance: which text may authorize, and which is data"""
 
 from __future__ import annotations
 
@@ -34,15 +21,13 @@ class SourceKind(StrEnum):
     PORTAL_CONTROL = "portal_control"
 
 
-# Both kinds are trusted *sources of intent*; `MODEL_OUTPUT` is not, because a
-# model proposing an action is exactly the component Phase 6 assumes can be
-# wrong. Portal text, inspector comments, document names and rendered control
-# labels are observed state.
+# both kinds are trusted *sources of intent*; `model_output` is not, because a model proposing an action
+# is exactly the component phase 6 assumes can be wrong
 _TRUSTED_KINDS = frozenset({SourceKind.SYSTEM_POLICY, SourceKind.USER_INSTRUCTION})
 
 
 def trust_of(kind: SourceKind | str) -> Trust:
-    """Classify a source kind. Unknown kinds are never trusted."""
+    """classify a source kind"""
     try:
         source = SourceKind(kind)
     except ValueError:
@@ -50,9 +35,7 @@ def trust_of(kind: SourceKind | str) -> Trust:
     return Trust.TRUSTED if source in _TRUSTED_KINDS else Trust.UNTRUSTED
 
 
-# Phrasings that look like an instruction to a model. They are recorded as an
-# observation property, not acted on: an untrusted instruction can never become
-# an action regardless of how imperative it reads.
+# phrasings that look like an instruction to a model
 _INSTRUCTION_MARKERS = (
     "ignore previous", "ignore all", "ignore the rules", "disregard",
     "you must", "system:", "assistant:", "immediately", "do not tell",
@@ -62,7 +45,7 @@ _INSTRUCTION_MARKERS = (
 
 @dataclass(frozen=True)
 class Observation:
-    """One labelled piece of text read from a source."""
+    """one labelled piece of text read from a source"""
 
     kind: SourceKind
     text: str = ""
@@ -77,7 +60,7 @@ class Observation:
 
     @property
     def actionable(self) -> bool:
-        """Whether this observation may contribute to an intent or an action."""
+        """whether this observation may contribute to an intent or an action"""
         return self.trust is Trust.TRUSTED
 
     @property
@@ -87,12 +70,7 @@ class Observation:
 
 
 def trusted_text(*parts: str | Observation) -> str:
-    """Join the trusted parts only; untrusted observations are dropped.
-
-    Passing an `Observation` that is untrusted contributes nothing. This is the
-    choke point that keeps portal text out of decisions even when a caller is
-    sloppy about where its strings came from.
-    """
+    """join the trusted parts only; untrusted observations are dropped"""
     kept: list[str] = []
     for part in parts:
         if isinstance(part, Observation):
@@ -104,12 +82,12 @@ def trusted_text(*parts: str | Observation) -> str:
 
 
 def as_untrusted(kind: SourceKind, text: str) -> Observation:
-    """Build an observation for content whose provenance is not trusted."""
+    """build an observation for content whose provenance is not trusted"""
     return Observation(kind, text)
 
 
 def is_authoritative(observation: Observation) -> bool:
-    """Whether an observation may authorize an action (trusted, non-empty)."""
+    """whether an observation may authorize an action (trusted, non-empty)"""
     return observation.actionable and bool(observation.text.strip())
 
 

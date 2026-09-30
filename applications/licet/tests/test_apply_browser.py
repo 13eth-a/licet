@@ -1,10 +1,4 @@
-"""Tests for the apply flow's local, operator-visible browser.
-
-The bug these pin down: the apply flow's disclaimer is a legal attestation that
-only a human may accept, so the browser it runs in must be one a human can
-reach. Solari's browser is remote with no live view, so the handoff stalled
-invisibly. These tests hold the line on the local, headed default.
-"""
+"""tests for the apply flow's local, operator-visible browser"""
 from __future__ import annotations
 
 import asyncio
@@ -24,7 +18,7 @@ class FakeBrowser:
 
 
 class FakeChromium:
-    """Records every launch() option set; can be made to fail on a given key."""
+    """records every launch() option set; can be made to fail on a given key"""
 
     def __init__(self, fail_on: tuple[str, ...] = ()) -> None:
         self.calls: list[dict] = []
@@ -61,8 +55,6 @@ def local_session(chromium: FakeChromium, *, headless: bool = False,
     return session, driver
 
 
-# --- executable selection --------------------------------------------------
-
 def test_prefers_an_installed_chrome_at_the_expected_path():
     options = ab.chrome_launch_options(
         headless=False, environ={}, is_file=lambda _p: True,
@@ -98,8 +90,6 @@ def test_headless_flag_is_carried_through():
     assert hidden["headless"] is True
 
 
-# --- driver choice ---------------------------------------------------------
-
 def test_default_driver_is_the_local_browser():
     assert ab.apply_browser_choice({}) == ab.LOCAL
 
@@ -110,12 +100,10 @@ def test_only_an_explicit_solari_opt_in_selects_the_remote_browser():
 
 
 def test_unknown_driver_values_fail_closed_to_local():
-    """A typo must not silently drop the human out of the loop."""
+    """a typo must not silently drop the human out of the loop"""
     assert ab.apply_browser_choice({ab.APPLY_BROWSER_ENV: "solar"}) == ab.LOCAL
     assert ab.apply_browser_choice({ab.APPLY_BROWSER_ENV: "cloud"}) == ab.LOCAL
 
-
-# --- launch degradation ----------------------------------------------------
 
 def test_channel_launch_failure_retries_with_the_bundled_browser():
     chromium = FakeChromium(fail_on=("channel",))
@@ -130,7 +118,7 @@ def test_channel_launch_failure_retries_with_the_bundled_browser():
 
 
 def test_executable_launch_failure_is_raised_not_downgraded():
-    """An explicit Chrome path failing is a real error, not a reason to swap."""
+    """an explicit chrome path failing is a real error, not a reason to swap"""
     chromium = FakeChromium(fail_on=("executable_path",))
 
     with pytest.raises(RuntimeError):
@@ -140,8 +128,6 @@ def test_executable_launch_failure_is_raised_not_downgraded():
 
     assert len(chromium.calls) == 1
 
-
-# --- local session lifecycle ----------------------------------------------
 
 def test_start_returns_a_headed_browser_and_close_releases_everything():
     chromium = FakeChromium()
@@ -181,8 +167,6 @@ def test_close_is_idempotent():
     assert driver.stop_calls == 1
 
 
-# --- open_apply_browser ----------------------------------------------------
-
 def test_apply_browser_is_headed_local_by_default():
     chromium = FakeChromium()
     session, driver = local_session(chromium)
@@ -200,7 +184,7 @@ def test_apply_browser_is_headed_local_by_default():
 
 
 def test_solari_opt_in_warns_that_no_human_can_reach_it():
-    """The exact failure that stalled the handoff must be reported up front."""
+    """the exact failure that stalled the handoff must be reported up front"""
     warnings: list[str] = []
     solari_browser = FakeBrowser()
 
@@ -242,7 +226,7 @@ PS = """  693 /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
 
 class FakeRun:
-    """Stands in for subprocess.run, recording every command."""
+    """stands in for subprocess.run, recording every command"""
 
     def __init__(self, ps_output: str = PS, returncode: int = 0,
                  raises: bool = False) -> None:
@@ -260,12 +244,8 @@ class FakeRun:
         return SimpleNamespace(stdout="", returncode=self.returncode)
 
 
-# --- surfacing the window --------------------------------------------------
-
-
 def test_automation_pid_skips_the_operators_chrome_and_helper_children():
-    """Both processes are called "Google Chrome" — the throwaway profile is
-    the only thing that separates the driven one from the operator's own."""
+    """both processes are called \"google chrome\" — the throwaway profile is the only thing that separates the driven one from the operator's own"""
     assert ab.automation_chrome_pid(PS) == 26571
 
 
@@ -290,7 +270,7 @@ def test_surface_window_raises_the_driven_window_and_notifies():
     assert ab.surface_window(run=run, platform="darwin") is True
 
     osascripts = [c for c in run.calls if c[0] == "osascript"]
-    assert len(osascripts) == 2  # raise, then notify
+    assert len(osascripts) == 2
     assert "unix id is 26571" in osascripts[0][2]
     assert "frontmost" in osascripts[0][2]
 
@@ -302,7 +282,7 @@ def test_surface_window_does_nothing_when_no_driven_chrome_exists():
 
 
 def test_surface_window_failure_never_escapes_into_the_run():
-    """A run must not die because a window could not be raised."""
+    """a run must not die because a window could not be raised"""
     assert ab.surface_window(run=FakeRun(raises=True), platform="darwin") is False
     assert ab.surface_window(run=FakeRun(returncode=1), platform="darwin") is False
 

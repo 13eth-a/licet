@@ -21,7 +21,7 @@ def test_load_config_from_mapping():
 
 
 def test_model_defaults_are_openai_ids_that_exist():
-    """The provider swap: slugs are validated config now, not runtime surprises."""
+    """the provider swap: slugs are validated config now, not runtime surprises"""
     config = load_config({})
 
     assert config.agent_model == "gpt-5.6-sol"

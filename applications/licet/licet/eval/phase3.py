@@ -1,17 +1,4 @@
-"""Phase 3 evaluation: deterministic scoring of reasoning over golden states.
-
-The scorer implements the contract's evaluation rules:
-
-- **unsupported blocker count must be zero** — reported with numerator and
-  denominator, and "zero emitted blockers" is never treated as recall;
-- **false-ready count must be zero** — a "ready"/"no blockers" claim with
-  incomplete coverage or unresolved conflicts is a hallucination even when
-  every named blocker is correct;
-- **contradiction recall** — a case whose state carries contradictions must
-  surface them;
-- **abstentions are counted** — a needs_data/partial verdict on an
-  incomplete-input case is the correct answer, not a failure.
-"""
+"""phase 3 evaluation: deterministic scoring of reasoning over golden states"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -30,38 +17,23 @@ class Phase3Case:
     expected_blocker_types: tuple[str, ...] = ()
     forbidden_blocker_types: tuple[str, ...] = ()
     expected_answerability: str | None = None
-    # substrings the rendered answer must contain (rendered from the result
-    # only — never from raw page text)
+    # substrings the rendered answer must contain (rendered from the result only — never from raw page text)
     must_mention: tuple[str, ...] = ()
     # substrings that must not appear as an asserted claim in the answer
     must_not_claim: tuple[str, ...] = ()
-    # (flag, expected_present) pairs on the ReasoningResult, e.g. needed_sections
     expect_flags: tuple[tuple[str, bool], ...] = ()
     expect_uncertainty_on: tuple[str, ...] = ()
-    # The contract requires gate detection to be scored separately from observed
-    # problems, "so cautious language cannot conceal false positives". Type-only
-    # scoring did not enforce that: an unpaid balance classified as a confirmed
-    # gate passed as long as the type was allowed (adversarial review A12).
-    # (blocker_type, classification) pairs.
+    # the contract requires gate detection to be scored separately from observed problems, "so cautious
+    # language cannot conceal false positives"
     expected_classifications: tuple[tuple[str, str], ...] = ()
     forbidden_classifications: tuple[tuple[str, str], ...] = ()
-    # (blocker_type, required_classification) pairs that must be present AND
-    # correctly classified. This is the contract's remaining open metric:
-    # requirement-strength correctness per candidate / blocker, scored separately
-    # from type and from generic classification so a wrong-strength claim cannot
-    # hide behind a correct type or a correct generic label.
+    # (blocker_type, required_classification) pairs that must be present and correctly classified
     expected_strength: tuple[tuple[str, str], ...] = ()
     forbidden_strength: tuple[tuple[str, str], ...] = ()
 
 
 def _asserted(answer: str, claim: str) -> bool:
-    """Whether `claim` appears un-negated in the rendered answer.
-
-    Same semantics as the Phase 1 scorer's `asserts()`: a negation window in
-    the current clause suppresses the claim, so "the evidence does not
-    establish that the balance must be paid" does not count as asserting a
-    payment requirement.
-    """
+    """whether `claim` appears un-negated in the rendered answer"""
     import re
 
     answer_lower = answer.lower()
@@ -107,11 +79,7 @@ def score_case(case: Phase3Case) -> dict[str, object]:
         for kind, unwanted in case.forbidden_classifications
         if classifications.get(kind) == unwanted
     )
-    # Requirement-strength correctness per candidate. The contract leaves this
-    # as the one metric not yet reported; implement it on the blocker
-    # classification vocabulary mapped onto the candidate requirement_strength
-    # where the case explicitly asserts a (type, strength) expectation. Other
-    # cases remain scored on type + generic classification only.
+    # requirement-strength correctness per candidate
     strength_mismatches = sorted(
         f"{kind} strength={strength_by_type.get(kind)!r} (wanted {wanted!r})"
         for kind, wanted in case.expected_strength
@@ -150,8 +118,7 @@ def score_case(case: Phase3Case) -> dict[str, object]:
         for u in result.uncertainties
     ) if case.expect_uncertainty_on else True
     if not case.expect_uncertainty_on and case.expected_answerability in {"partial", "needs_data"}:
-        # A case that EXPECTS abstention fails if the runtime answered
-        # unconditionally instead.
+        # a case that expects abstention fails if the runtime answered unconditionally instead
         uncertainty_ok = result.answerability == case.expected_answerability
 
     answerability_ok = (
@@ -234,16 +201,16 @@ def score_cases(cases: Iterable[Phase3Case]) -> dict[str, object]:
     return {
         "passed": sum(1 for item in results if item["passed"]),
         "total": len(results),
-        # hallucination metric with numerator/denominator (contract rule:
-        # zero emitted blockers is not successful recall)
+        # hallucination metric with numerator/denominator (contract rule: zero emitted blockers is not
+        # successful recall)
         "blockers_emitted": total_blockers_emitted,
         "unsupported_blocker_count": unsupported_blockers,
         "unsupported_blocker_rate": (
             unsupported_blockers / total_blockers_emitted if total_blockers_emitted else 0.0
         ),
         "false_ready_count": false_ready,
-        # gate precision is scored separately from observed problems: a gate
-        # claim that the portal never made is a hallucination too
+        # gate precision is scored separately from observed problems: a gate claim that the portal never
+        # made is a hallucination too
         "confirmed_gates_emitted": confirmed_gates,
         "gate_false_positives": forbidden_classification_hits,
         "misclassified_blockers": sum(
@@ -264,7 +231,7 @@ def score_cases(cases: Iterable[Phase3Case]) -> dict[str, object]:
 
 
 def run_golden_cases() -> dict[str, object]:
-    """Score the full golden set (fixtures + flagship acceptance cases)."""
+    """score the full golden set (fixtures + flagship acceptance cases)"""
     from licet.eval.phase3_fixtures import build_cases
 
     return score_cases(build_cases())

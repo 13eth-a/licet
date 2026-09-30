@@ -1,10 +1,4 @@
-"""Offline adversarial review probes. Failures are findings, not passing tests.
-
-Run with the development environment:
-  .venv/bin/python scripts/phase2_review_probe.py
-No browser, model, credentials, or network is used. The runner probes reuse the
-project's fake client; evidence records source hashes for concurrent development.
-"""
+"""offline adversarial review probes"""
 from __future__ import annotations
 
 import argparse
@@ -45,7 +39,7 @@ def main(output: Path) -> int:
         checks.append(dict(id=case_id, expected=expected, actual=actual,
                            passed=bool(passed), inputs=inputs))
 
-    # Fields not specified in 'wanted' may be present; None forbids cross-field leakage.
+    # fields not specified in 'wanted' may be present; none forbids cross-field leakage
     parse_cases = [
         ('P01_live_record_format', 'Find permit BLD26-00472', {'record_number': 'BLD26-00472', 'zip_code': None}, 'record_number'),
         ('P02_labeled_short_numeric', 'permit 12345', {'record_number': '12345', 'zip_code': None}, 'record_number'),
@@ -74,7 +68,7 @@ def main(output: Path) -> int:
             actual, passed = {'exception': f'{type(exc).__name__}: {exc}'}, False
         record(case_id, {**wanted, 'strategy': method}, actual, passed, text)
 
-    # Unsupported compositional constraints must stop for clarification, not vanish.
+    # unsupported compositional constraints must stop for clarification, not vanish
     reject_cases = [
         ('P14_negated_record', 'Do not use BLD-2026-00123; find BLD-2026-00124'),
         ('P15_alternative_records', 'Find BLD-2026-00123 or BLD-2026-00124'),
@@ -85,7 +79,6 @@ def main(output: Path) -> int:
     for case_id, text in reject_cases:
         try:
             actual = parse_lookup_request(text).model_dump(exclude_none=True)
-            # A parser can legitimately resolve the explicit positive ID in P14.
             passed = case_id == 'P14_negated_record' and actual.get('record_number') == 'BLD-2026-00124'
         except ValueError as exc:
             actual, passed = {'rejected': str(exc)}, True
@@ -143,7 +136,7 @@ def main(output: Path) -> int:
     client, runner, state, result = run_probe({'record_number': 'BLD-1'}, [form, grid, detail_page(number='BLD-2')])
     record('A01_found_despite_opened_mismatch', 'non-FOUND with RECORD_MISMATCH', runner_view(runner,result), result.status is not LookupStatus.FOUND)
 
-    # Unique-match redirects are observed live: search need not show a grid.
+    # unique-match redirects are observed live: search need not show a grid
     client, runner, state, result = run_probe({'record_number': 'BLD-1'}, [form, detail_page(number='BLD-1')])
     record('A02_direct_detail_redirect', 'FOUND and identity verified', runner_view(runner,result), result.status is LookupStatus.FOUND and runner.identity_verified)
 

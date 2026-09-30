@@ -1,15 +1,4 @@
-"""Turn a portal page into the `Permit` schema.
-
-Phase 0 review §4 ended with "nothing constructs a `Permit` — only a test does".
-This closes that: `read_page` output goes in, a `Permit` comes out, with every
-field traced to the page text or URL it came from rather than to a guess.
-
-What it deliberately does *not* do: invent facts. The detail page carries the
-record number, type, status and expiration; the address and applicant live in
-other sections and are only filled when a caller supplies them (e.g. from
-My Records). A missing field stays `None`, because an eval that scores a
-fabricated address is worse than one that scores "unknown".
-"""
+"""turn a portal page into the `permit` schema"""
 
 from __future__ import annotations
 
@@ -19,12 +8,12 @@ from typing import Any
 from licet.browser import accela
 from licet.schema.permit import Fact, Permit, Provenance, RecordRef
 
-# Permit fields arrive as portal text (e.g. "01/31/2026"); parse, never assume.
+# permit fields arrive as portal text (e.g. "01/31/2026"); parse, never assume
 _DATE_FORMATS = ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%d-%b-%Y", "%b %d, %Y")
 
 
 def parse_portal_date(value: str | None) -> dt.date | None:
-    """Parse a portal date string, or None. Never raises on portal text."""
+    """parse a portal date string, or none"""
     text = (value or "").strip()
     if not text:
         return None
@@ -37,7 +26,7 @@ def parse_portal_date(value: str | None) -> dt.date | None:
 
 
 def ref_from_page(data: dict[str, Any]) -> RecordRef | None:
-    """Stable identity for the page being read, from its URL."""
+    """stable identity for the page being read, from its url"""
     parsed = accela.parse_ref_from_url(str(data.get("url") or ""))
     if not parsed:
         return None
@@ -59,11 +48,7 @@ def permit_from_page(
     applicant: str | None = None,
     description: str | None = None,
 ) -> Permit | None:
-    """Build a `Permit` from one `read_page` result.
-
-    Returns None when the page is not a record detail page — an empty `Permit`
-    would read downstream as "a record with no data".
-    """
+    """build a `permit` from one `read_page` result"""
     text = data.get("text") or ""
     header = accela.parse_record_header(text)
     ref = ref_from_page(data)
@@ -82,10 +67,8 @@ def permit_from_page(
         sections=accela.parse_sections(text),
     )
 
-    # Coverage notes (Phase 3): loading markers, empty observations, calendar
-    # scope and truncation are *coverage*, not outstanding requirements. Storing
-    # them as requirements made absence read as an unmet obligation (architecture review
-    # review P1 #5) — e.g. a half-rendered AJAX section becoming "missing work".
+    # coverage notes (phase 3): loading markers, empty observations, calendar scope and truncation are
+    # *coverage*, not outstanding requirements
     if data.get("loading"):
         permit.coverage_notes.append(
             Fact(
@@ -98,8 +81,8 @@ def permit_from_page(
             )
         )
     elif accela.declares_no_inspections(text):
-        # A successful observation of an empty section: "none shown", not "no
-        # work required" and not an extraction failure.
+        # a successful observation of an empty section: "none shown", not "no work required" and not an
+        # extraction failure
         permit.coverage_notes.append(
             Fact(
                 value="no inspection history on this record",
@@ -117,9 +100,7 @@ def permit_from_page(
             )
         )
 
-    # The scheduling wizard's own type list, when this page has it. Offered and
-    # required are different universes (architecture review review P1 #1): `(required)` is the
-    # only requirement signal, and a truncated grid page never proves absence.
+    # the scheduling wizard's own type list, when this page has it
     types = accela.parse_inspection_types(data.get("fields") or [])
     if types:
         permit.schedulable_inspection_types = [option.name for option in types]
@@ -139,9 +120,6 @@ def permit_from_page(
                 )
             )
 
-    # Calendar availability: scope the claim to the months actually observed.
-    # Empty calendar samples from three rendered months say nothing about a
-    # fourth (architecture review review P1 #5).
     if data.get("calendar"):
         months = [month.get("month") or "" for month in data["calendar"]]
         active = sum(len(month.get("active_days") or []) for month in data["calendar"])
@@ -161,13 +139,7 @@ def permit_from_page(
 
 
 def apply_next_action(permit: Permit) -> Permit:
-    """Record what the record is actually waiting on, as a derived fact.
-
-    Only an explicitly REQUIRED, still-unmet inspection becomes a next action;
-    the offered catalog never does (architecture review review P1 #1). When no explicit
-    requirement exists, next_action stays None — an absence of evidence is not
-    an action item.
-    """
+    """record what the record is actually waiting on, as a derived fact"""
     missing = permit.missing_inspections()
     if missing:
         permit.next_action = Fact(

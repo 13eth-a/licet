@@ -1,8 +1,4 @@
-"""Render readable evidence cards and assemble a captioned demo with FFmpeg.
-
-Requires local Chrome, patchright and ffmpeg. Browser material must come from
-phase9_capture_demo.py; synthetic images are never substituted for portal footage.
-"""
+"""render readable evidence cards and assemble a captioned demo with ffmpeg"""
 import asyncio
 import html
 import json

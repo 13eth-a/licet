@@ -1,24 +1,5 @@
 #!/usr/bin/env python
-"""Phase 5 portal-state replay (portal integration review).
-
-Re-derives each counterexample from ``docs/phase5/portal_state_review.md``
-against the current tree. Scope, per the Phase 5 assignment: cases where a
-planner failure is actually **state extraction** — confusing Accela rendering
-producing a bad ``PermitState`` that a correct planner then faithfully acts on
-or blocks on.
-
-The ``legacy`` column reproduces the pre-review extraction behavior verbatim in
-this script (the pre-review Phase 3 extraction is not committed, so no revision
-contains it), so each case is demonstrably a counterexample rather than a
-restatement of the current code. The ``current`` column runs the real adapter,
-real ``understand``, and the real Phase 5 completion gate.
-
-    python scripts/phase5_portal_state_replay.py
-    python scripts/phase5_portal_state_replay.py --json docs/phase5/portal_state_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file. No
-browser, model, credential or live mutation is used.
-"""
+"""phase 5 portal-state replay (portal integration review)"""
 from __future__ import annotations
 
 import argparse
@@ -48,16 +29,13 @@ def payload(text: str) -> dict:
     return {"url": URL, "text": text, "loading": [], "truncated": False}
 
 
-# --- legacy behavior, reproduced from the pre-review tree ---------------------
-
 _LEGACY_DATE_FORMATS = ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%d-%b-%Y", "%b %d, %Y")
 
 from datetime import datetime as _legacy_datetime  # noqa: E402
 
 
 def legacy_normalize_date(value):
-    """The pre-review adapter kept dates raw; only the extractor's money parse
-    knew about currency. Reproduced here for the date-drop simulations below."""
+    """the pre-review adapter kept dates raw; only the extractor's money parse knew about currency"""
     text = str(value or "").strip()
     for fmt in _LEGACY_DATE_FORMATS:
         try:
@@ -68,9 +46,7 @@ def legacy_normalize_date(value):
 
 
 def legacy_inspection_table_dates(text: str) -> list[dict]:
-    """Pre-review table path: dates stayed raw MM/DD/YYYY (H02), a 'Due Date'
-    column defeated fees header recognition, and a result word in the status
-    column produced no result (H06)."""
+    """pre-review table path: dates stayed raw mm/dd/yyyy (h02), a 'due date' column defeated fees header recognition, and a result word in the status column produced no result (h06)"""
     rows = []
     fields = None
     for line in text.splitlines():
@@ -79,7 +55,6 @@ def legacy_inspection_table_dates(text: str) -> list[dict]:
             continue
         cells = [c.strip() for c in line.split("|")]
         if fields is None:
-            # legacy header map: no 'due date' key, no status->result recovery
             if "Completed Date" in cells:
                 fields = ["type" if c.lower().startswith("inspection") else c.lower().replace(" ", "_") for c in cells]
             continue
@@ -93,7 +68,7 @@ def legacy_inspection_table_dates(text: str) -> list[dict]:
 
 
 def legacy_text_rows(text: str) -> list[dict]:
-    """Pre-review text path: the trailing date token was dropped entirely (H02b)."""
+    """pre-review text path: the trailing date token was dropped entirely (h02b)"""
     rows = []
     for line in str(text or "").splitlines():
         line = line.strip()
@@ -127,7 +102,7 @@ def _legacy_result(text: str):
 
 
 def legacy_inspection_coverage(text: str, rows: list) -> str:
-    """Pre-review: rows -> complete, regardless of a declared-empty marker (H05)."""
+    """pre-review: rows -> complete, regardless of a declared-empty marker (h05)"""
     from licet.browser import accela
     if rows:
         return "complete"
@@ -136,10 +111,8 @@ def legacy_inspection_coverage(text: str, rows: list) -> str:
     return "partial"
 
 
-# --- counterexamples -----------------------------------------------------------
-
 def case_h02_mmdd_dates():
-    """Real ACA dates must reach the ISO-consuming ordering logic."""
+    """real aca dates must reach the iso-consuming ordering logic"""
     from licet.phase3.rules import _attempt_order
     from licet.phase3.state import Inspection
 
@@ -147,8 +120,8 @@ def case_h02_mmdd_dates():
             "Rough Electrical | Completed | Failed | 09/18/2026\n"
             "Rough Electrical | Completed | Passed | 09/20/2026")
     legacy_rows = legacy_inspection_table_dates(text)
-    # The pre-review tree kept MM/DD/YYYY in PermitState; _attempt_order only
-    # parses ISO, so a real later-pass was reported as order "unknown".
+    # the pre-review tree kept mm/dd/yyyy in permitstate; _attempt_order only parses iso, so a real
+    # later-pass was reported as order "unknown"
     legacy = [
         r.get("completed_date") for r in legacy_rows
     ] + [
@@ -208,26 +181,17 @@ def case_h03_in_collection():
 
 
 def case_h04_due_date_header():
-    """'Due Date' defeated fee header recognition; the grid degraded to money
-    lines that mangled the description."""
+    """'due date' defeated fee header recognition; the grid degraded to money lines that mangled the description"""
     from licet.phase3.accela_extract import _money_lines_as_rows, _section_table_rows
 
     text = "Fee | Amount | Due Date\nPlan Check Fee | $74.50 | 09/30/2026"
-    # Pre-review header map had no 'due date' key -> header row unmapped ->
-    # zero table rows -> the money-line fallback parsed the mangled line.
     legacy = _money_lines_as_rows(text)
     current = _section_table_rows(text, "fees")
     return legacy, current, bool(current) and current[0].get("description") == "Plan Check Fee"
 
 
 def case_h07_planner_consequence():
-    """The failure mode the assignment names: bad state, good planner.
-
-    The Phase 5 completion gate (``reasoning_is_sound``) refuses both, but for
-    different reasons: the pre-review uncertainty *falsely claimed* attempt
-    order was unknown (the dates are on the page), while the reviewed one names
-    the premise actually missing from the page — the scopes.
-    """
+    """the failure mode the assignment names: bad state, good planner"""
     text = ("Inspection | Status | Result | Completed Date\n"
             "Rough Electrical | Completed | Failed | 09/18/2026\n"
             "Rough Electrical | Completed | Passed | 09/20/2026")
@@ -247,7 +211,7 @@ def case_h07_planner_consequence():
 
 
 def case_positive_control():
-    """Scope rendered + real dates: the pass resolves the failure."""
+    """scope rendered + real dates: the pass resolves the failure"""
     text = ("Inspection | Status | Result | Completed Date | Scope\n"
             "Rough Electrical | Completed | Failed | 09/18/2026 | Unit A\n"
             "Rough Electrical | Completed | Passed | 09/20/2026 | Unit A")

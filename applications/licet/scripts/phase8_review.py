@@ -1,4 +1,4 @@
-"""Reproducible offline benchmark audit artifacts; no model or portal calls."""
+"""reproducible offline benchmark audit artifacts; no model or portal calls"""
 import asyncio
 import json
 from pathlib import Path
@@ -17,14 +17,7 @@ _IDENTITY=None
 
 
 def identity():
-    """The git identity of the code being measured, captured exactly once.
-
-    These reports are themselves tracked files, so asking git for the dirty flag
-    per report would make the second and later reports claim a dirty working tree
-    that only became dirty because the first report was written. The state that
-    matters is the one the run started from; the CLI does not have this problem
-    because it takes its snapshot before writing anything.
-    """
+    """the git identity of the code being measured, captured exactly once"""
     global _IDENTITY
     if _IDENTITY is None:
         from licetbench.__main__ import _commit, _commit_dirty
@@ -72,13 +65,12 @@ if __name__=='__main__':
     variants=report('variants','variants')
     prompts=report('prompts','prompts')
     limited=report('prompts','prompts-step4',max_steps=4)
-    # The holdout is deliberately not gated in CI (see docs/phase8.md); this
-    # deliberate run is where its verdicts are recorded.
+    # the holdout is deliberately not gated in ci (see docs/phase8.md); this deliberate run is where its
+    # verdicts are recorded
     holdout=report('holdout','holdout')
     write_json(compare_reports(limited,prompts),OUT/'configuration-comparison.json')
     noise=asyncio.run(noisy_comparison())
     write_json(noise,OUT/'normal-vs-noisy.json')
-    # Evidence packet for the separately documented human/model semantic audit.
     packet=[]
     for case in build_cases()[:10]:
         scored=score_case(case)

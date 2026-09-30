@@ -1,16 +1,4 @@
-"""Register the NI public-user account end-to-end (write op — one-shot).
-
-Preconditions: ACCELA_TEST_USERNAME in .env; a password is generated here
-and written to .env on success (ACCELA_TEST_PASSWORD).
-
-Flow (mapped by ni_register_recon.py):
-  Login.aspx → click Register → CommunityView/account/new
-  fill txbUserName/txbEmail/txbPassword1/txbPassword2 → reCAPTCHA → submit.
-
-reCAPTCHA policy: if Google serves an interactive challenge (image grid),
-the script STOPS and leaves the browser state on the form for the human to
-solve manually. It never attempts to bypass captcha.
-"""
+"""register the ni public-user account end-to-end (write op — one-shot)"""
 from __future__ import annotations
 
 import asyncio
@@ -38,7 +26,6 @@ def stamp_now() -> str:
 
 
 def gen_password() -> str:
-    # Accela-typical policy: upper+lower+digit+special, 16 chars.
     alphabet = string.ascii_letters + string.digits
     pwd = [
         secrets.choice(string.ascii_uppercase),
@@ -58,16 +45,11 @@ def save_html(tag: str, html: str, stamp: str) -> str:
 
 
 async def set_angular_value(page, selector: str, value: str) -> None:
-    """Fill an Angular-controlled input without clicking: focus + type.
-
-    The PrimeNG form's <label> overlays the input and intercepts pointer
-    events (observed live), so click/fill actionability checks fail;
-    focus() has no hit-target check.
-    """
+    """fill an angular-controlled input without clicking: focus + type"""
     loc = page.locator(selector).first
     await loc.focus()
     await page.keyboard.type(value, delay=45)
-    await page.keyboard.press("Tab")  # blur → touched state for validators
+    await page.keyboard.press("Tab")
     await page.wait_for_timeout(300)
 
 
@@ -78,7 +60,7 @@ async def main() -> int:
         out("ACCELA_TEST_USERNAME is empty — aborting.")
         return 2
     password = gen_password()
-    username = EMAIL.split("@")[0][:30]  # txbUserName (login name), max 40ish
+    username = EMAIL.split("@")[0][:30]
 
     solari = Solari(api_key=os.environ["SOLARI_API_KEY"].strip())
     browser = await asyncio.wait_for(solari.launch(), 120)
@@ -86,7 +68,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # 1. login page → Register
         await asyncio.wait_for(
             page.goto(f"{CITIZEN}/Login.aspx", timeout=45000,
                       wait_until="domcontentloaded"),
@@ -98,7 +79,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(3000), 8)
         out(f"register page: {page.url[:120]}")
 
-        # 2. fill the Angular form
         await set_angular_value(page, "#txbUserName", username)
         await set_angular_value(page, "#txbEmail", EMAIL)
         await set_angular_value(page, "#txbPassword1", password)
@@ -108,7 +88,6 @@ async def main() -> int:
         )
         out(f"filled: user={username} email={EMAIL} (password hidden)")
 
-        # 3. reCAPTCHA status
         await asyncio.wait_for(page.wait_for_timeout(2000), 6)
         recap = await page.evaluate(
             """() => {
@@ -118,7 +97,6 @@ async def main() -> int:
         )
         out(f"recaptcha sitekey: {recap}")
 
-        # 4. try to click the recaptcha checkbox (inside its iframe)
         challenge = False
         for fr in page.frames:
             if "recaptcha/api2/bframe" not in fr.url and "recaptcha/api2/anchor" not in fr.url:
@@ -138,7 +116,6 @@ async def main() -> int:
         )
 
         if challenge:
-            # did we get an image challenge (interactive) or a silent pass?
             solved = False
             for fr in page.frames:
                 if "recaptcha" not in fr.url:
@@ -159,7 +136,6 @@ async def main() -> int:
                     solved = True
             out("no interactive challenge detected — proceeding to submit")
 
-        # 5. submit
         submit_loc = page.locator(
             "button:has-text('Register'), input[type='submit'][value*='Register'], "
             "button:has-text('Create'), a:has-text('Register')"

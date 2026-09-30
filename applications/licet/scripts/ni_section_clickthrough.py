@@ -1,32 +1,4 @@
-"""Live section click-through on a record detail page — READ-ONLY.
-
-Closes the gap left by `scripts/ni_dispatcher_replay.py`: the record detail
-renders `Record Info | Payments | Attachments` (plus `Schedule an Inspection`),
-but nobody had clicked *into* those postback links through the dispatcher.
-
-ACA section links are JS `__doPostBack` anchors, not URLs, so the checks are
-content-based: after a click the visible text must change, the flow must stay
-`record_detail`, and the URL is expected to stay put (recorded as an
-observation — it is why section state cannot come from the URL).
-
-Live observations that shaped this script (2026-09-20):
-
-- **`Attachments` is rendered but not actionable** on these records: the anchor
-  exists in the DOM and is never visible, so a click is impossible. The client
-  reports that as `not_actionable` (naming the matched-but-hidden selector),
-  which is a different problem from `not_found` — and the distinction was added
-  because this run exposed it.
-- Sections are **not** per-view: `Payments` was clickable from the `Record Info`
-  view, so the summary round-trip is convenience, not a requirement. Each
-  section is still opened from the summary so the checks stay comparable.
-
-The section clicks deliberately carry **no** `intent`, so they exercise the
-benign-label resolution path. Nothing is submitted, scheduled, paid or
-attested; the scheduling entry is probed, then abandoned without interacting
-with the wizard.
-
-Run:  .venv/bin/python scripts/ni_section_clickthrough.py
-"""
+"""live section click-through on a record detail page — read-only"""
 
 from __future__ import annotations
 
@@ -50,7 +22,6 @@ OUTDIR = Path("logs/ni_backoffice")
 TARGET_RECORD = "BLD26-00472"
 SECOND_RECORD = "BLD26-00467"
 
-# (link text, markers that suggest the right section opened, expected_to_open)
 SECTIONS: tuple[tuple[str, tuple[str, ...], bool], ...] = (
     ("Record Info", ("Record Details", "Work Location", "Applicant"), True),
     ("Payments", ("Fee", "Payment", "Balance", "Total"), True),
@@ -140,7 +111,6 @@ async def main() -> int:
         )
         before_url = outcome.get("url")
 
-        # --- the actual click-through -------------------------------------
         for index, (label, markers, should_open) in enumerate(SECTIONS):
             if index:
                 await dispatcher.execute(
@@ -166,9 +136,8 @@ async def main() -> int:
                     f"err={error.get('kind')}",
                 )
             else:
-                # The portal renders this link without making it actionable;
-                # the contract is that we say so precisely, never NOT_FOUND and
-                # never a silent no-op.
+                # the portal renders this link without making it actionable; the contract is that we say
+                # so precisely, never not_found and never a silent no-op
                 found.check(
                     f"'{label}' opens or is reported dead-but-rendered",
                     clicked or error.get("kind") == "not_actionable",
@@ -209,8 +178,7 @@ async def main() -> int:
                 "screenshot": str(shot),
             }
 
-            # sections are not per-view: check that another section is still
-            # reachable from inside this one
+            # sections are not per-view: check that another section is still reachable from inside this one
             if index + 1 < len(SECTIONS):
                 other = SECTIONS[index + 1][0]
                 probe = await dispatcher.execute(
@@ -233,7 +201,6 @@ async def main() -> int:
             "the planner must track the open section in state",
         )
 
-        # --- is the dead Attachments link record-specific or universal? ---
         second_url = _detail_link(SECOND_RECORD)
         await dispatcher.execute({"name": "navigate", "args": {"url": second_url}}, state)
         await _text(client)
@@ -245,7 +212,6 @@ async def main() -> int:
             f"success={probe['success']} kind={(probe['error'] or {}).get('kind')}",
         )
 
-        # --- scheduling entry, probed and abandoned -----------------------
         await dispatcher.execute({"name": "navigate", "args": {"url": detail_url}}, state)
         outcome = await dispatcher.execute(
             {

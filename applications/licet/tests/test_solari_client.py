@@ -1,11 +1,4 @@
-"""Client tests driven by a fake page — no live Solari session needed.
-
-The fake implements the `PageLike` surface documented in
-`licet/browser/solari_client.py`, so every behaviour the live portal forced on
-us (single-dispatch verification, masked keystrokes, mask neutralization, postback
-settling, frame/popup-aware reads, an ACA error page that is an HTTP 200) is
-verified offline.
-"""
+"""client tests driven by a fake page — no live solari session needed"""
 
 from __future__ import annotations
 
@@ -49,7 +42,7 @@ class FakeKeyboard:
 
 
 class FakeLocator:
-    """`config is None` means "no such element"; `{}` means present by default."""
+    """`config is none` means \"no such element\"; `{}` means present by default"""
 
     def __init__(self, page: "FakePage", selector: str, config: dict[str, Any] | None) -> None:
         self.page = page
@@ -82,8 +75,8 @@ class FakeLocator:
         if effect:
             effect(self.page)
         error = config.get("click_error")
-        # A force-click is the fallback that usually works; it only fails when
-        # the test says the element is genuinely unusable.
+        # a force-click is the fallback that usually works; it only fails when the test says the element
+        # is genuinely unusable
         if error and (not force or config.get("force_fails", False)):
             raise RuntimeError(error)
         navigates_to = config.get("navigates_to")
@@ -102,11 +95,6 @@ class FakeLocator:
     async def input_value(self) -> str:
         if self.values:
             value = self.values.pop(0)
-            # Persist on the shared config so it survives the fresh FakeLocator
-            # each poll creates; an exhausted sequence models a control that has
-            # settled at its last scripted readback, not one that silently
-            # returns the written value (which would turn a mismatch fixture into
-            # a success once the deadline allowed enough polls).
             if self.config is not None:
                 self.config["_last_readback"] = value
             return value
@@ -145,7 +133,6 @@ class FakeLocator:
             raise RuntimeError(config["select_error"])
 
 
-
 class FakeFrame:
     def __init__(
         self,
@@ -161,7 +148,6 @@ class FakeFrame:
         self._locators = dict(locators or {})
         self._text = text
         self._title = title
-        # successive body texts, for AJAX sections that finish rendering later
         self._text_sequence = list(text_sequence or [])
         self.page: FakePage | None = None
 
@@ -253,15 +239,7 @@ class FakePage(FakeFrame):
 
 
 def _client(page: FakePage) -> SolariClient:
-    # The verification budget must be load-tolerant: `_verify_action` only returns
-    # `verified` after two consecutive agreeing samples, and a 20 ms deadline could
-    # expire first under full-suite CPU load, failing intermittently
-    # (`test_select_reports_auto_postback`, 2026-09-25). 200 ms is still far below
-    # the 0.5 s guards the deadline tests rely on.
     return SolariClient(page, settle_ms=0, verification_timeout_ms=200, verification_poll_ms=1)
-
-
-# --- click: timeout reconciliation, postback races, missing elements -------
 
 
 def test_click_timeout_is_not_force_clicked_or_retried():
@@ -288,11 +266,7 @@ def test_click_reports_not_found_without_retrying():
 
 
 def test_hidden_match_is_not_actionable_not_missing():
-    """ACA renders dead nav items and section views hide links that exist.
-
-    The planner's recovery differs (find another route vs re-check the
-    selector), so the two cases must not collapse into one error.
-    """
+    """aca renders dead nav items and section views hide links that exist"""
     page = FakePage(locators={"a:has-text('Attachments')": {"visible": False}})
     result = asyncio.run(_client(page).click(Target(text="Attachments")))
 
@@ -358,9 +332,6 @@ def test_disabled_scheduling_continue_is_never_force_clicked():
     assert page.clicks == []
 
 
-# --- typing: MaskedEdit needs real keystrokes ------------------------------
-
-
 def test_masked_field_uses_keystrokes_not_fill():
     page = FakePage(
         locators={
@@ -374,7 +345,7 @@ def test_masked_field_uses_keystrokes_not_fill():
 
     assert result.ok and result.data["masked"] is True
     assert page.typed == ["09012026"]
-    assert page.fills == []  # fill() is ignored by MaskedEdit
+    assert page.fills == []
     assert page.presses == ["ControlOrMeta+A", "Delete"]
 
 
@@ -390,9 +361,6 @@ def test_plain_field_readback_mismatch_does_not_report_success():
     result = asyncio.run(_client(page).type_text(Target(selector="name"), "Licet Eval"))
     assert not result.ok
     assert page.typed == []
-
-
-# --- selects: auto-postback -----------------------------------------------
 
 
 def test_select_reports_auto_postback():
@@ -414,18 +382,14 @@ def test_select_falls_back_to_value_when_label_is_unavailable():
 
 
 def test_select_fails_when_readback_is_empty():
-    # select_option() can succeed (no exception) on a disabled/no-op ACA option
-    # and still leave the control blank — that must not read as success.
+    # select_option() can succeed (no exception) on a disabled/no-op aca option and still leave the
+    # control blank — that must not read as success
     page = FakePage(locators={"ddl": {"value_sequence": [""] * 100}})
     result = asyncio.run(_client(page).select(Target(selector="ddl"), "Search by Address"))
 
     assert result.ok is False
     assert result.error.kind is BrowserError.ACTION_OUTCOME_UNKNOWN
-    # no postback settle attempted once the readback shows nothing was selected
     assert accela.MASK_NEUTRALIZER_JS not in page.injected
-
-
-# --- read_page: the observations the planner actually needs ---------------
 
 
 def test_read_page_reports_flow_fields_validation_and_notices():
@@ -457,11 +421,7 @@ def test_read_page_flags_popup_and_login_frames():
 
 
 def test_read_page_flags_a_half_rendered_section():
-    """ACA sections load over AJAX; a mid-load read claims there is nothing.
-
-    Reporting that state stops the planner from concluding "no inspections on
-    this record" from a page that had not finished rendering.
-    """
+    """aca sections load over ajax; a mid-load read claims there is nothing"""
     page = FakePage(text="Inspections | Loading... | Post")
     data = asyncio.run(_client(page).read_page()).data
     assert data["loading"] == ["loading..."]
@@ -502,9 +462,6 @@ def test_read_page_truncates_large_bodies():
     data = asyncio.run(_client(page).read_page()).data
     assert data["truncated"] is True
     assert len(data["text"]) == 4000
-
-
-# --- navigate / login -----------------------------------------------------
 
 
 def test_navigate_recognises_the_aca_error_page():
@@ -568,16 +525,10 @@ def test_login_operates_the_sso_iframe_without_echoing_credentials():
     result = asyncio.run(_client(page).login("tester@example.test", "hunter2"))
 
     assert result.ok
-    assert result.data["authenticated"] is True  # landed off the login URL
+    assert result.data["authenticated"] is True
     assert "hunter2" not in str(result.as_dict())  # credentials never echoed
 
 
-# --- targeting: a bare control id is not a CSS selector ---------------------
-
-# Live failure 2026-09-20: the field inventory listed
-# `ctl00_phPopup_gvInspectionType_ctl08_rdInspectionType`, and clicking it with
-# by="selector" matched nothing across 12 frames because the id was passed to
-# Playwright verbatim. The label click worked, which masked the bug.
 def test_bare_control_id_resolves_as_an_id_selector():
     candidates = Target(selector="ctl00_phPopup_gvInspectionType_ctl08_rdInspectionType").candidates()
 
@@ -596,7 +547,7 @@ def test_css_selector_with_combinators_is_not_treated_as_an_id():
 
 
 def test_page_text_refines_flow_position_on_read_page():
-    """The wizard's steps share one URL; the visible text is the signal."""
+    """the wizard's steps share one url; the visible text is the signal"""
 
     async def run():
         page = FakePage(
@@ -615,16 +566,12 @@ def test_page_text_refines_flow_position_on_read_page():
     assert result.data["flow"] == {"flow": "schedule_inspection", "step": "select_type", "page": None}
 
 
-# --- login verification: a successful login must not read as a failure ------
-
-# The live planner run on 2026-09-20 authenticated fine and still reported
-# `authenticated=False`, because the SSO postback leaves the URL on Login.aspx
-# for a moment. A false alarm here is expensive: it is indistinguishable from a
-# real failure, so a whole suite can run anonymously while looking healthy.
+# the live planner run on 2026-09-20 authenticated fine and still reported `authenticated=false`, because
+# the sso postback leaves the url on login.aspx for a moment
 
 
 class _DelayedRedirectPage(FakePage):
-    """A page whose URL only changes after the postback finishes settling."""
+    """a page whose url only changes after the postback finishes settling"""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -662,7 +609,7 @@ def test_login_waits_for_a_delayed_redirect_instead_of_calling_it_a_failure():
 
     result = asyncio.run(_client(page).login("tester@example.test", "hunter2"))
 
-    assert page.waits >= 2  # it actually polled
+    assert page.waits >= 2
     assert result.data["authenticated"] is True
     assert result.data["landed_on"] == dashboard
 
@@ -683,7 +630,7 @@ def test_login_reports_failure_when_the_page_never_leaves_the_login_form():
 
 
 def test_login_accepts_a_signed_in_page_even_on_an_odd_url():
-    """Some agencies keep a Login.aspx URL while rendering the dashboard."""
+    """some agencies keep a login.aspx url while rendering the dashboard"""
     page = FakePage(
         url="about:blank",
         html="<html>login</html>",
@@ -822,13 +769,7 @@ def test_verification_deadline_also_bounds_a_hung_observation():
 
 
 def test_click_waits_for_delayed_transition_without_replaying():
-    """The transition lands on a later observation, not after a wall-clock delay.
-
-    A `sleep(0.005)` companion task raced the 20ms verification deadline under
-    full-suite load and failed intermittently (2026-09-25); tying the change to
-    a poll count makes the same behaviour deterministic, exactly as the
-    postback case above does.
-    """
+    """the transition lands on a later observation, not after a wall-clock delay"""
 
     class LateTransitionPage(FakePage):
         def __init__(self, **kwargs) -> None:
@@ -839,7 +780,7 @@ def test_click_waits_for_delayed_transition_without_replaying():
             result = await super().evaluate(script, **kwargs)
             if 'const controls =' in script:
                 self.observations += 1
-                if self.observations >= 2:  # the new section renders on a later poll
+                if self.observations >= 2:
                     self._text = "New section"
             return result
 
@@ -892,9 +833,7 @@ def test_postback_select_does_not_succeed_on_value_change_alone():
 
 
 def test_postback_select_waits_for_delayed_document_replacement():
-    """The document replacement lands *after* the first observation, not after a
-    wall-clock delay — a sleep here raced the 20ms verification deadline under
-    full-suite load and failed intermittently (2026-09-20)."""
+    """the document replacement lands *after* the first observation, not after a wall-clock delay — a sleep here raced the 20ms verification deadline under full-suite load and failed intermittently (2026-09-20)"""
 
     class LatePostbackPage(FakePage):
         def __init__(self, **kwargs) -> None:
@@ -905,7 +844,7 @@ def test_postback_select_waits_for_delayed_document_replacement():
             result = await super().evaluate(script, **kwargs)
             if 'const controls =' in script:
                 self.observations += 1
-                if self.observations >= 2:  # replacement lands on a later poll
+                if self.observations >= 2:
                     self.document_id = 1
             return result
 

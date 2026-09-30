@@ -1,4 +1,4 @@
-"""Command-line entry point: ``python -m licetbench run``."""
+"""command-line entry point: ``python -m licetbench run``"""
 from __future__ import annotations
 
 import argparse
@@ -35,11 +35,7 @@ def _commit() -> str | None:
 
 
 def _commit_dirty() -> bool | None:
-    """Whether the recorded commit describes the code that actually ran.
-
-    A regression entry keyed on a commit hash is only traceable if the tree was
-    clean; on a dirty tree the hash names a revision the run did not use.
-    """
+    """whether the recorded commit describes the code that actually ran"""
     status = _git("status", "--porcelain")
     return None if status is None else bool(status.strip())
 

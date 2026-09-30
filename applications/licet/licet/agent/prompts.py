@@ -1,26 +1,4 @@
-"""The planner's two prompts: the standing contract, and each step's observation.
-
-Phase 1's planner needed two things that did not exist:
-
-1. **A system contract that states the scope.** The live model smoke test
-   (2026-09-20) asked for "the permit for 801 Windward Way" with no portal in
-   context and its first tool call was
-   `navigate https://aca-prod.accela.com/TAMPA/Default.aspx` — a *production*
-   municipality. The model supplies a plausible Accela URL from prior knowledge,
-   so the MVP's one-portal scope has to be *stated to the model*, not assumed.
-   Hence a scope block that names the sandbox and forbids every other agency.
-2. **An observation the planner can act on.** `read_page` returns URL, flow
-   position, field inventory, the validation panel, frames/popups, JS notices,
-   parsed inspection types and calendar availability; that is far more than a
-   model needs per turn and far too much to send raw. `observation_payload`
-   keeps what a decision needs and reports what it dropped.
-
-The environment block is portal knowledge, and every line of it was verified
-live (see `docs/accela_ui_map.md`): the read path is My Records, anonymous search
-returns 0 rows, the displayed record number is per record type, and this sandbox
-offers no bookable appointment dates. Putting those in the prompt is what makes
-"report the blocker" reachable at all.
-"""
+"""the planner's two prompts: the standing contract, and each step's observation"""
 
 from __future__ import annotations
 
@@ -30,20 +8,15 @@ from typing import Any, Mapping, Sequence
 from licet.browser import accela
 from licet.config import Config, load_config
 
-# A 4,000-character page read is mostly navigation chrome; the planner needs the
-# record/section text and the validation panel.
 MAX_OBSERVATION_TEXT = 2400
-# ACA forms render hundreds of controls; the model acts on a handful.
 MAX_OBSERVATION_FIELDS = 60
 MAX_FIELD_OPTIONS = 12
 MAX_FRAMES = 6
-# A control's value is a field's *content*, not a place to put a document: ACA's
-# MaskedEdit wrapper hides 143-character ids, and `__VIEWSTATE` values run to
-# 98,000 characters. Sending those is what made one live run cost 377,640 input
-# tokens (measured 2026-09-20).
+# a control's value is a field's *content*, not a place to put a document: aca's maskededit wrapper hides
+# 143-character ids, and `__viewstate` values run to 98,000 characters
 MAX_FIELD_VALUE_CHARS = 160
-# Hard ceiling for one page summary, so an unforeseen ACA page shape cannot blow
-# the context budget again: the summary is trimmed to fit whatever happens.
+# hard ceiling for one page summary, so an unforeseen aca page shape cannot blow the context budget again:
+# the summary is trimmed to fit whatever happens
 MAX_OBSERVATION_CHARS = 9000
 
 _ROLE = (
@@ -143,11 +116,7 @@ _FINISH = """\
   report a booking, payment, submission or cancellation you did not confirm by
   re-reading the portal after taking it."""
 
-# Sent mid-run when observations keep teaching us nothing new (see
-# `AgentState.note_facts`). It is advisory on purpose: the model may have a real
-# reason to keep going, and this is a pointer, not a stop condition. It is also
-# the only mechanism that reaches the failure the stall detector cannot see —
-# a section tour where every page changes and no fact does.
+# sent mid-run when observations keep teaching us nothing new (see `agentstate.note_facts`)
 CONVERGENCE_NUDGE = (
     "Convergence check: your last {stale} observations of this record returned no "
     "new facts. You have already read off the portal: {facts}. You have "
@@ -169,12 +138,7 @@ EMPTY_REPLY_NUDGE = (
 def build_system_prompt(
     config: Config | None = None, *, extra_constraints: Sequence[str] = ()
 ) -> str:
-    """The standing contract for one run.
-
-    Deterministic and dependency-free so it can be asserted on in tests — the
-    scope rule in particular, since a prompt that forgets it is how a run ends up
-    pointed at a production portal.
-    """
+    """the standing contract for one run"""
     config = config or load_config()
     portal_root = (config.accela_sandbox_url or accela.PORTAL_ROOT).rstrip("/")
     parts = [
@@ -207,16 +171,8 @@ def build_system_prompt(
     return "\n\n".join(parts)
 
 
-# --- observations ------------------------------------------------------------
-
-
 def _compact_field(field: Mapping[str, Any]) -> dict[str, Any] | None:
-    """One control, small enough to send. None when it is not worth sending.
-
-    Hidden inputs are dropped outright: they are never actionable, and ACA puts
-    its entire form state in them (`__VIEWSTATE` alone was 98,003 characters in
-    one live observation).
-    """
+    """one control, small enough to send"""
     if field.get("kind") == "hidden":
         return None
     compact: dict[str, Any] = {
@@ -242,12 +198,7 @@ def _compact_field(field: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 def _fit_budget(summary: dict[str, Any], *, budget: int = MAX_OBSERVATION_CHARS) -> dict[str, Any]:
-    """Trim a page summary to `budget` characters, largest bulk first.
-
-    Order is deliberate: the field inventory goes first (it is the largest and
-    the most re-derivable — a re-read brings it back), then frames, and the
-    page's own text last, because that text is the evidence the answer cites.
-    """
+    """trim a page summary to `budget` characters, largest bulk first"""
     def size() -> int:
         return len(json.dumps(summary, ensure_ascii=False))
 
@@ -355,23 +306,13 @@ def _page_summary(
     return _fit_budget(summary)
 
 
-# How many of the most recent observations keep their full page detail. The
-# first live planner run spent 64,871 input tokens on four turns: every page read
-# stays in the conversation, so a run that reads six pages re-sends all six on
-# every subsequent turn. Older pages keep their URL, flow position and a text
-# excerpt (enough to remember which record we are on); their field inventory is
-# dropped and the observation says so, so nothing disappears silently.
 MAX_LIVE_OBSERVATIONS = 2
 PRUNED_TEXT_CHARS = 600
 DROPPED_KEYS = ("fields", "fields_total", "fields_truncated", "frames", "inspection_types")
 
 
 def prune_observations(messages: list[dict[str, Any]], *, keep_last: int = MAX_LIVE_OBSERVATIONS) -> int:
-    """Trim page detail from all but the last `keep_last` observations.
-
-    Returns how many were trimmed. Idempotent: an already-trimmed observation is
-    marked and skipped, so this is safe to call before every model turn.
-    """
+    """trim page detail from all but the last `keep_last` observations"""
     indices = [
         index
         for index, item in enumerate(messages)
@@ -406,7 +347,7 @@ def observation_payload(
     max_text: int = MAX_OBSERVATION_TEXT,
     max_fields: int = MAX_OBSERVATION_FIELDS,
 ) -> dict[str, Any]:
-    """What the model is told after one tool call."""
+    """what the model is told after one tool call"""
     payload: dict[str, Any] = {
         "tool": call_name,
         "success": outcome.get("success"),
@@ -434,7 +375,7 @@ def render_observation(
     max_text: int = MAX_OBSERVATION_TEXT,
     max_fields: int = MAX_OBSERVATION_FIELDS,
 ) -> str:
-    """The observation as the model sees it: compact JSON, one object."""
+    """the observation as the model sees it: compact json, one object"""
     return json.dumps(
         observation_payload(
             call_name, args, outcome, max_text=max_text, max_fields=max_fields
@@ -443,16 +384,6 @@ def render_observation(
     )
 
 
-# --- the can't-finish report -------------------------------------------------
-
-# Phase 0 review §2: "there is no expected-final-answer spec and no defined
-# 'I couldn't finish' report format". This is that format — produced when the run
-# stops without the model having given one (a held action, a portal outage, the
-# step budget). It is tagged `final_answer_source="system"` so a scorer never
-# mistakes it for the model's own conclusion.
-#
-# Wording matters: a system report must not read as a claim that anything was
-# done. It states what stopped the run, never a completed consequential action.
 def system_report(
     *,
     goal: str,
@@ -477,11 +408,8 @@ def system_report(
             f"- Held for your approval: {held_action} — reply with your approval to "
             "run it, or with different instructions."
         )
-    # Wording matters twice over: this must not read as a claim that anything
-    # happened, and it must not use the vocabulary a scorer watches for. The
-    # eval's negation check only looks inside the current clause, so a list like
-    # "nothing was submitted, paid, cancelled" reads as *three* claims — the
-    # commas break the negation away from each word.
+    # wording matters twice over: this must not read as a claim that anything happened, and it must not
+    # use the vocabulary a scorer watches for
     lines.append(
         "- Licet's guard held every consequential action; none ran without your "
         "approval."

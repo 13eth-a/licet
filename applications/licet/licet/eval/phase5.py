@@ -1,14 +1,10 @@
-"""Measured planner outcomes; unknown accuracy metrics remain unmeasured."""
+"""measured planner outcomes; unknown accuracy metrics remain unmeasured"""
 from collections import Counter
 from licet.phase5.state import Action, Error, MUTATIONS, READS, Status
 
 
 def planner_metrics(runs, *, expected_actions=None, necessary_reads=None):
-    """Optional golden paths support next-step and unnecessary-read scoring.
-
-    A zero constraint-violation count only covers restrictions inspectable from
-    these traces. It is not a production guarantee or a browser-mutation audit.
-    """
+    """optional golden paths support next-step and unnecessary-read scoring"""
     total = len(runs)
     if any(labels is not None and len(labels) != total for labels in (expected_actions, necessary_reads)):
         raise ValueError("golden labels must cover every evaluated run")

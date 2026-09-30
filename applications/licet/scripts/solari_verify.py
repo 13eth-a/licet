@@ -1,17 +1,4 @@
-"""Live Solari verification pass for the Accela UI map.
-
-Phase 0 checklist: open the portal through Solari, read content, click,
-fill, submit, handle dropdowns, test screenshots, and record anything
-Solari struggles with.
-
-Run:  .venv/bin/python scripts/solari_verify.py
-
-Each step prints a PASS/FAIL line; nothing is scheduled or submitted —
-this is read-only exploration plus the anonymous search postback (which
-is an Automatic-risk action per licet/safety/risk_levels.py).
-Transcribe results into docs/accela_ui_map.md (Solari compatibility
-table) afterwards.
-"""
+"""live solari verification pass for the accela ui map"""
 
 from __future__ import annotations
 
@@ -28,23 +15,18 @@ load_dotenv()
 PORTALS = {
     "omaha": {
         "search": "https://aca-prod.accela.com/OMAHA/Cap/CapHome.aspx?TabName=Home&module=Permits",
-        "example": "PLB-10-00951",  # example format shown on Omaha's search page
+        "example": "PLB-10-00951",
     },
     "nullisland": {
-        # Accela's official public sandbox (see developer.accela.com/docs/construct-appSandbox.html)
         "search": "https://aca-test.accela.com/nullisland/Cap/CapHome.aspx?TabName=Home&module=Building",
-        "example": "",  # no known record number yet; filled interactively if found
+        "example": "",
     },
 }
-# Public probe record from licet/eval/records.py (Meridian, anonymous-readable).
 RECORD_URL = (
     "https://aca-prod.accela.com/meridian?Module=Dev-Services&TabName=Dev-Services"
     "&capID1=22CAP&capID2=00000&capID3=006RZ&agencyCode=MERIDIAN&IsToShowInspection="
 )
 PERMIT_INPUT = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSPermitNumber"
-# Address mode swaps the whole form for APO-style controls (live-verified:
-# Omaha and Null Island both drop txtGSStreetName when Search-by-Address is
-# selected). Match either ID family by suffix.
 STREET_SELECTORS = (
     'input[id$="txtAPO_Search_by_Address_StreetName"], '
     'input[id$="txtGSStreetName"]'
@@ -62,29 +44,26 @@ def log_step(results: Results, name: str, ok: bool, detail: str = "") -> None:
 
 
 async def settle(page, seconds: float = 8.0) -> None:
-    """Wait for a WebForms postback to finish without relying on networkidle."""
+    """wait for a webforms postback to finish without relying on networkidle"""
     try:
         await page.wait_for_load_state("load", timeout=seconds * 1000)
     except Exception:
-        pass  # slow postback — proceed; step checks validate what rendered
+        pass
 
 
 MASK_CSS = ".ACA_MaskDiv, #divGlobalLoadingMask { display: none !important; }"
 
 
 async def neutralize_loading_mask(page) -> None:
-    """ACA's global loading mask (a Silverlight-era overlay iframe) stays in
-    the DOM 'hidden' but still intercepts pointer events, breaking clicks
-    (live-verified 2026-09-18). Remove it after every postback."""
+    """aca's global loading mask (a silverlight-era overlay iframe) stays in the dom 'hidden' but still intercepts pointer events, breaking clicks (live-verified 2026-09-18)"""
     try:
         await page.add_style_tag(content=MASK_CSS)
     except Exception:
-        pass  # navigation raced the injection — next call retries
+        pass
 
 
 async def safe_click(page, selector: str, timeout: int = 8000) -> None:
-    """Click the first match, with a short normal attempt then force (bypasses
-    the overlay hit-target check and postback races)."""
+    """click the first match, with a short normal attempt then force (bypasses the overlay hit-target check and postback races)"""
     loc = page.locator(selector).first
     try:
         await loc.click(timeout=timeout)
@@ -93,12 +72,7 @@ async def safe_click(page, selector: str, timeout: int = 8000) -> None:
 
 
 async def safe_submit(page, field_selector: str, timeout: int = 10000) -> str:
-    """Submit an ACA search the way a human would, with fallbacks.
-
-    ACA's #btnSearch anchor carries a ButtonDisabled class whose enabling
-    trigger we haven't identified (live-verified: typing + blur does not
-    enable it). Chain: Enter key in the field → JS-un-disable + click →
-    force click. Returns which path fired, or 'none'."""
+    """submit an aca search the way a human would, with fallbacks"""
     await page.keyboard.press("Enter")
     await page.wait_for_timeout(1500)
     btn_class = ""
@@ -108,7 +82,7 @@ async def safe_submit(page, field_selector: str, timeout: int = 10000) -> str:
         pass
     if "ButtonDisabled" not in btn_class:
         return "enter-key (button enabled itself)"
-    try:  # JS-un-disable then click
+    try:
         await page.evaluate(
             "() => { const b = document.querySelector('a#btnSearch');"
             " if (b) { b.classList.remove('ButtonDisabled'); b.disabled = false; } }"
@@ -148,13 +122,10 @@ async def main() -> int:
     try:
         page = await browser.new_page()
 
-        # 0. Neutralize ACA's pointer-eating loading mask for this session.
-        #    (Re-applied after every navigation below.)
         await neutralize_loading_mask(page)
         page.on("load", lambda _: asyncio.ensure_future(
             neutralize_loading_mask(page)))
 
-        # 1. Open the portal through Solari
         try:
             await page.goto(search_url, wait_until="domcontentloaded", timeout=45000)
             await settle(page)
@@ -163,7 +134,6 @@ async def main() -> int:
             log_step(results, "open_portal", False, repr(exc))
             return _summarize(results)
 
-        # 2. Read visible page content
         try:
             body = await page.locator("body").inner_text()
             has_form = await page.locator(PERMIT_INPUT).count() > 0
@@ -176,14 +146,11 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "read_page", False, repr(exc))
 
-        # 3. Fill a search field — like a human. ACA enables the search button
-        #    from key events, not value-set events: page.fill() leaves the
-        #    button disabled (live-verified 2026-09-18); page.type() doesn't.
         try:
-            probe_number = portal["example"] or "22CAP"  # generic probe if no known number
+            probe_number = portal["example"] or "22CAP"
             await page.click(PERMIT_INPUT)
             await page.type(PERMIT_INPUT, probe_number, delay=60)
-            await page.keyboard.press("Tab")  # blur — ACA enables controls on blur too
+            await page.keyboard.press("Tab")
             await page.wait_for_timeout(800)
             typed = await page.input_value(PERMIT_INPUT)
             btn = page.locator(SEARCH_BUTTON)
@@ -193,9 +160,6 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "fill_field", False, repr(exc))
 
-        # 4. Submit the search (anchor triggers a JS postback). Record which
-        #    submission path actually fired — the disabled-button mystery is a
-        #    documented finding.
         try:
             before = await page.content()
             path = await safe_submit(page, PERMIT_INPUT)
@@ -203,8 +167,8 @@ async def main() -> int:
             after = await page.content()
             changed = after != before
             body = await page.locator("body").inner_text()
-            # A real executed search must surface the probe record number
-            # (Omaha's own documented example) in the results region.
+            # a real executed search must surface the probe record number (omaha's own documented example)
+            # in the results region
             saw_probe = probe_number in body
             has_rows = bool(re.search(r"(Records? Found|1 - \d+|Record #)", body))
             outcome = (
@@ -217,7 +181,6 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "submit_search", False, repr(exc))
 
-        # 5. Screenshot / page-state capture
         try:
             shot = os.path.join(SHOTS_DIR, f"{stamp}_search.png")
             await page.screenshot(path=shot, full_page=False)
@@ -225,7 +188,6 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "screenshot", False, repr(exc))
 
-        # 6. Dropdown handling (auto-postback select — done last: it reloads the form)
         try:
             await page.goto(search_url, wait_until="domcontentloaded", timeout=45000)
             await settle(page)
@@ -247,16 +209,10 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "dropdown_postback", False, repr(exc))
 
-        # 7. Real user flow on the Null Island sandbox: address search →
-        #    click a result row → record detail. (The Meridian deep link was
-        #    verified separately: Meridian gates anonymous record views behind
-        #    an "approved Address/Parcel Verification" — documented finding.)
         try:
             ni = PORTALS["nullisland"]["search"]
             await page.goto(ni, wait_until="domcontentloaded", timeout=45000)
             await settle(page)
-            # a) try address mode; fall back to permit-number wildcard if this
-            #    agency's search-type dropdown lacks an address option
             opts = await page.locator(f"{SEARCH_TYPE} option").all_text_contents()
             addr = next((o for o in opts if re.search(r"address", o, re.I)), None)
             mode = "permit-number (default)"
@@ -265,14 +221,9 @@ async def main() -> int:
                 await settle(page, 12)
                 await neutralize_loading_mask(page)
                 mode = f"address ({addr!r})"
-            # b) widen the default date window — sandbox test data often sits
-            #    outside it (the invisible date-filter gotcha)
             start = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSStartDate"
             if await page.locator(start).count():
                 await page.fill(start, "01/01/1990")
-            # discover the street field at runtime: agency address modes use
-            # different ID families (txtGSStreetName / txtAPO_Search_by_Address_*
-            # / others), so grep the visible text inputs for a Street-ish ID
             input_ids = await page.eval_on_selector_all(
                 '#PlaceHolderMain input[type="text"]',
                 "els => els.map(e => e.id).filter(Boolean)"
@@ -313,13 +264,11 @@ async def main() -> int:
         except Exception as exc:
             log_step(results, "search_to_record", False, repr(exc))
 
-        # 8. Auth/session note — anonymous run; login survival needs the test account.
         cookies = await page.context.cookies()
         aca_cookies = [c["name"] for c in cookies if "accela" in c.get("domain", "")]
         log_step(results, "session_cookies", len(aca_cookies) > 0,
                  f"{len(aca_cookies)} accela cookies set (login-survival test needs ACCELA_TEST_USERNAME)")
 
-        # Final screenshot of whatever state we ended in
         try:
             shot = os.path.join(SHOTS_DIR, f"{stamp}_final.png")
             await page.screenshot(path=shot, full_page=False)
@@ -327,7 +276,7 @@ async def main() -> int:
         except Exception:
             pass
     finally:
-        await browser.close()  # releases the session slot (see solari-cookbook)
+        await browser.close()
 
     return _summarize(results)
 

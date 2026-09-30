@@ -1,17 +1,4 @@
-"""Read-only recon of the Null Island back office (Classic Admin) via Solari.
-
-Purpose: figure out how to obtain test records for Licet evals — existing
-record inventory, the record-creation path, and Public Access settings —
-per Accela's sandbox docs (developer.accela.com/docs/construct-appSandbox.html):
-
-    Agency: nullisland   User: developer   Password: accela
-    https://nullisland-test-av.accela.com
-
-READ-ONLY: navigation, menu clicks, and record *searches* only. Nothing is
-created, edited, or scheduled. Diagnostics + screenshots → logs/ni_backoffice/.
-
-Run:  .venv/bin/python scripts/ni_backoffice_recon.py
-"""
+"""read-only recon of the null island back office (classic admin) via solari"""
 
 from __future__ import annotations
 
@@ -55,7 +42,6 @@ async def dump_state(page, label: str) -> None:
             out(f"   {c}")
     except Exception as exc:
         out(f"   (control dump failed: {exc})")
-    # visible link/button texts — the menu inventory
     try:
         texts = await page.eval_on_selector_all(
             "a, button",
@@ -107,7 +93,6 @@ async def main() -> int:
     try:
         page = await browser.new_page()
 
-        # 1. login page
         await page.goto(AV_URL, timeout=60000)
         await page.wait_for_timeout(5000)
         await dump_state(page, "login page")
@@ -117,7 +102,6 @@ async def main() -> int:
             f.write(html)
         out(f"   [dump] {os.path.join(SHOTS, 'login_dump.html')}")
 
-        # 2. discover login inputs at runtime (form may be JS-rendered)
         pwd = await find_first_visible(
             page,
             ['input[type="password"]'],
@@ -159,7 +143,6 @@ async def main() -> int:
         await pwd.fill(PASSWORD)
         await shoot(page, f"{stamp}_02_filled")
 
-        # 3. submit — submit button or Enter
         submit = await find_first_visible(
             page,
             [
@@ -182,7 +165,6 @@ async def main() -> int:
             f.write(html)
         out(f"   [dump] {os.path.join(SHOTS, 'after_login_dump.html')}")
 
-        # frames inventory (Jetspeed portlets often live in iframes)
         for i, fr in enumerate(page.frames):
             out(f"   frame[{i}] url={fr.url[:140]}")
 

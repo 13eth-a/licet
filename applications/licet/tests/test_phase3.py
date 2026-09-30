@@ -79,8 +79,8 @@ def test_merge_rejects_foreign_record():
     other = extract_partial_state({**page("fees", rows=[{"name": "foreign"}]), "record_key": "OTHER"})
     merge_partial_states(base, other)
     assert base.fees == [] and base.rejected_observations
-    # A rejected observation is a data-hygiene event, not a record-state
-    # conflict: it must not flip answerability to "conflicting" (oracle U04).
+    # a rejected observation is a data-hygiene event, not a record-state conflict: it must not flip
+    # answerability to "conflicting" (oracle u04)
     assert base.contradictions == []
 
 

@@ -1,19 +1,5 @@
 #!/usr/bin/env python
-"""Phase 7 adversarial replay (adversarial review).
-
-Re-derives every counterexample from ``docs/phase7/adversarial_review.md``
-against the current tree and reports, per case, what the **pre-review** recovery
-controller allowed versus what the reviewed tree does now. The legacy column is
-the pre-review behaviour reproduced *in this script* (the pre-review tree is not
-committed), so each row is demonstrably a counterexample rather than a
-restatement of the current code.
-
-    python scripts/phase7_adversarial_replay.py
-    python scripts/phase7_adversarial_replay.py --json docs/phase7/adversarial_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file. No
-browser, model, credential or live mutation is used.
-"""
+"""phase 7 adversarial replay (adversarial review)"""
 from __future__ import annotations
 
 import argparse
@@ -41,19 +27,9 @@ from licet.phase7 import (  # noqa: E402
 )
 
 
-# --- the pre-review behaviour, reproduced ----------------------------------- #
-
 def legacy_recover(failure: Failure, strategy: str, *, budgets: RecoveryBudgets, action=None,
                    validate=None, state: dict | None = None) -> RecoveryResult:
-    """The pre-review `RecoveryController.recover`, reproduced verbatim.
-
-    Three properties are reproduced here because each is a route that was unsafe:
-    an absent action counted as success; the global action budget was checked
-    once per call so the inner loop could overshoot it; and the retry allowance
-    was keyed on ``type:operation:strategy`` so renaming the path reset it.
-    ``state`` accumulates total actions spent across calls, like the controller's
-    aggregate ``recovery_actions``.
-    """
+    """the pre-review `recoverycontroller.recover`, reproduced verbatim"""
     state = state if state is not None else {}
     state.setdefault("actions", 0)
     counts = state.setdefault("counts", {})
@@ -90,12 +66,7 @@ _PREBROWSER_KINDS = {"postback_race", "timeout", "not_found", "not_actionable", 
 
 
 def legacy_classify(error, *, operation: str = "", mutation: bool = False) -> Failure:
-    """The pre-review ``classify_failure``, reproduced verbatim.
-
-    Its ordering let a navigation-shaped mutation timeout fall into the
-    NAVIGATION branch, and ``recoverable`` depended on the caller's ``mutation``
-    boolean alone, so a forgotten flag made a submission retryable.
-    """
+    """the pre-review ``classify_failure``, reproduced verbatim"""
     message = str(getattr(error, "message", error) or "")
     kind = str(getattr(getattr(error, "kind", None), "value", getattr(error, "kind", ""))).lower()
     text = f"{kind} {message}".lower()
@@ -118,12 +89,12 @@ def legacy_classify(error, *, operation: str = "", mutation: bool = False) -> Fa
 
 
 def legacy_checkpoint_valid(fingerprint: PageFingerprint | None) -> bool:
-    """Pre-review `validate_checkpoint`: no fingerprint was a pass."""
+    """pre-review `validate_checkpoint`: no fingerprint was a pass"""
     return fingerprint is None
 
 
 def legacy_search_budget(queries: list[str], *, budgets: RecoveryBudgets) -> int:
-    """Pre-review budget was keyed on the query text, so distinct queries reset it."""
+    """pre-review budget was keyed on the query text, so distinct queries reset it"""
     counts: dict[str, int] = {}
     allowed = 0
     for query in queries:
@@ -142,8 +113,6 @@ def failed_action(*_args):
     raise RuntimeError("still unavailable")
 
 
-# --- counterexample cases ---------------------------------------------------- #
-
 def counterexamples():
     rows = []
 
@@ -154,7 +123,6 @@ def counterexamples():
 
     budgets = RecoveryBudgets()
 
-    # R1 — a recovery with no action claimed success.
     controller = RecoveryController()
     failure = controller.classify("element was detached", operation="click")
     legacy = legacy_recover(failure, "re-observe", budgets=budgets, action=None)
@@ -165,7 +133,6 @@ def counterexamples():
         "a sequence that performed no work reported success (false recovery)",
         legacy_unsafe=legacy.recovered)
 
-    # R2 — the global action budget could be overshot mid-sequence.
     legacy_state: dict = {}
     for op in ("click_0", "click_1", "click_2"):
         f = classify_failure("element was detached", operation=op)
@@ -182,7 +149,6 @@ def counterexamples():
         "cascading recovery could spend past MAX_RECOVERY_ACTIONS",
         legacy_unsafe=legacy_state["actions"] > 3)
 
-    # R3 — renaming the strategy minted a fresh allowance.
     legacy_allowed = 0
     for strategy in ("a", "b", "c", "d"):
         f = classify_failure("element was detached", operation="click")
@@ -199,7 +165,6 @@ def counterexamples():
         "a retry limit keyed on the strategy string is not a limit",
         legacy_unsafe=legacy_allowed > budgets.max_browser_retries)
 
-    # R4 — varying the search query reset the reformulation budget.
     queries = [f"123 Main St variant {i}" for i in range(5)]
     legacy = legacy_search_budget(queries, budgets=RecoveryBudgets(max_search_reformulations=2))
     controller = RecoveryController(budgets=RecoveryBudgets(max_search_reformulations=2))
@@ -209,7 +174,6 @@ def counterexamples():
         "the reformulation cap was per-query, so over-broadening was unbounded",
         legacy_unsafe=legacy > 2)
 
-    # R5 — a mutation timeout without the flag was recoverable.
     legacy_failure = legacy_classify(
         TimeoutError("navigation timeout while submitting inspection"),
         operation="SCHEDULE_INSPECTION",
@@ -224,7 +188,6 @@ def counterexamples():
         "the never-retry-a-mutation rule depended on a caller-supplied boolean",
         legacy_unsafe=legacy_failure.recoverable)
 
-    # R6 — a checkpoint with no fingerprint was reusable.
     legacy_valid = legacy_checkpoint_valid(None)
     controller = RecoveryController()
     controller.checkpoint("permit_verified", {"record": "P-1"})
@@ -235,7 +198,6 @@ def counterexamples():
         "a checkpoint was trusted without re-reading the portal",
         legacy_unsafe=legacy_valid)
 
-    # R7 — two anonymous fingerprints matched.
     blank, other = PageFingerprint(), PageFingerprint()
     add("R7", "PageFingerprint.matches(): no page identity",
         f"matches={blank.matches(other)} (vacuous)",
@@ -246,15 +208,13 @@ def counterexamples():
     return rows
 
 
-# --- end to end: checklist recovery scenarios through the real controller ---- #
-
 def end_to_end():
     rows = []
 
     def add(scenario, outcome, unsafe, expected):
         rows.append({"scenario": scenario, "outcome": outcome, "unsafe": unsafe, "expected": expected})
 
-    # Scenario 9 — mutation timeout, re-read proves success: never resubmit.
+    # scenario 9 — mutation timeout, re-read proves success: never resubmit
     controller = RecoveryController()
     key = "permit:P-1:rough:2026-10-01"
     controller.mutation_started(key)
@@ -264,7 +224,7 @@ def end_to_end():
         unsafe=not (retry_allowed is False and duplicate is False),
         expected="VERIFIED success, no duplicate submit")
 
-    # Scenario 10 — mutation timeout, re-read proves absence: bounded retry safe.
+    # scenario 10 — mutation timeout, re-read proves absence: bounded retry safe
     controller = RecoveryController()
     controller.mutation_started(key)
     retry_allowed = controller.mutation_reconciled(key, occurred=False)
@@ -273,14 +233,12 @@ def end_to_end():
         unsafe=not (retry_allowed is True and second is True),
         expected="safe retry after reconciliation")
 
-    # Scenario 1 — a failed click recovers via re-observe.
     controller = RecoveryController()
     failure = controller.classify("element was detached from the DOM", operation="click")
     result = current_recover(controller, failure, "re-observe and retry", lambda: True)
     add("scenario 1 (failed click)", f"recovered={result.recovered} attempts={result.attempts}",
         unsafe=not result.recovered, expected="recover via re-observe")
 
-    # Scenario 3 — session expired stops for authentication, no click-through.
     controller = RecoveryController()
     failure = controller.classify(ToolError(BrowserError.SESSION_TIMEOUT, "session has expired"), operation="read")
     called = []
@@ -288,7 +246,7 @@ def end_to_end():
     add("scenario 3 (session expired)", f"{result.strategy} action_ran={bool(called)}",
         unsafe=bool(called), expected="AUTH_REQUIRED / stop, never click through")
 
-    # Scenario 9/3 mutation — a mutation timeout is reconciled, never retried.
+    # scenario 9/3 mutation — a mutation timeout is reconciled, never retried
     controller = RecoveryController()
     failure = controller.classify("submit timed out", operation="submit_inspection", mutation=True)
     called = []
@@ -296,13 +254,12 @@ def end_to_end():
     add("mutation timeout", f"{result.strategy} action_ran={bool(called)}",
         unsafe=bool(called), expected="reconcile, never retry")
 
-    # Scenario 8 — a repeated (action, page, permit) tuple is a loop.
     detector = LoopDetector(limit=3)
     detected = [detector.observe("READ_INSPECTIONS", "record/inspections", "P-1") for _ in range(3)]
     add("scenario 8 (loop)", f"detected_on={detected.index(True) + 1}",
         unsafe=detected[-1] is not True, expected="detect the loop")
 
-    # A false recovery cannot be reported.
+    # a false recovery cannot be reported
     controller = RecoveryController()
     failure = controller.classify("element was detached", operation="click")
     result = current_recover(controller, failure, "no-op", None)

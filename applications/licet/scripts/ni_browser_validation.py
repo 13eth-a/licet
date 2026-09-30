@@ -1,9 +1,4 @@
-"""Read-only Phase 1 acceptance: search -> known record -> inspections.
-
-Uses runtime primitives exclusively for mutations; DOM reads provide independent
-acceptance evidence. Stops on the first unverified action; never retries a run.
-Run: .venv/bin/python scripts/ni_browser_validation.py --runs 10
-"""
+"""read-only phase 1 acceptance: search -> known record -> inspections"""
 from __future__ import annotations
 
 import argparse
@@ -51,8 +46,7 @@ async def main(runs: int, inject_click_timeout: bool = False, verification_timeo
         auth = await asyncio.wait_for(client.authenticate(), 120)
         check("authenticated", auth.ok and auth.data.get("authenticated"))
         if inject_click_timeout:
-            # Controlled adapter fault after a real, read-only search click.
-            # This tests reconciliation without manufacturing a second click.
+            # controlled adapter fault after a real, read-only search click
             resolve = client._resolve
             report["injected_timeout"] = {"kind": "after_search_click", "dispatches": 0}
 
@@ -92,9 +86,8 @@ async def main(runs: int, inject_click_timeout: bool = False, verification_timeo
                 .map(e => ({id:e.id, text:e.textContent.trim(), title:e.title,
                     visible:!!e.getClientRects().length, href:e.getAttribute('href')}))""")
             report["search_controls"] = search_controls
-            # Preserve the live selector evidence in the report.
+            # preserve the live selector evidence in the report
             save()
-            # Exercise both directions of a real native auto-postback dropdown.
             options = await client.page.locator(SEARCH_TYPE).evaluate(
                 "e => [...e.options].map(o => ({label:o.label,value:o.value,selected:o.selected}))")
             report["search_options"] = options
@@ -110,7 +103,6 @@ async def main(runs: int, inject_click_timeout: bool = False, verification_timeo
                       and report["injected_timeout"]["dispatches"] == index)
             result = await step("read_page")
             check(f"run {index}: known record returned", RECORD in result["data"]["text"])
-            # Some ACA configurations navigate directly for a unique match.
             if "capdetail.aspx" not in (result.get("url") or "").lower():
                 record_links = await client.page.evaluate(r"""() => [...document.querySelectorAll('a')]
                     .filter(e => !!e.getClientRects().length && /^(BLD\d{2}-\d+|\d{9})$/.test(e.textContent.trim()))
@@ -143,7 +135,7 @@ async def main(runs: int, inject_click_timeout: bool = False, verification_timeo
                 observed_state = await asyncio.wait_for(client._action_state(), 10)
                 report["failure_readiness"] = [{k: frame.get(k) for k in
                     ("url", "busy", "document_id", "postbacks_completed")} for frame in observed_state["frames"]]
-                # Diagnostics only: no mask neutralization or action replay.
+                # diagnostics only: no mask neutralization or action replay
                 report["failure_dom"] = await asyncio.wait_for(client.page.evaluate('''() => ({
                     buttons: [...document.querySelectorAll('a,button')].filter(e => e.id === 'btnSearch').map(e =>
                         ({id:e.id, cls:e.className, disabled:e.disabled, href:e.getAttribute('href'),

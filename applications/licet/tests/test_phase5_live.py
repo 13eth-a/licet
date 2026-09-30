@@ -1,10 +1,4 @@
-"""Offline tests for the live Phase 5 capability wiring's pure mapping helpers.
-
-The network/session half of `licet.eval.phase5_live` cannot run in the suite, so
-every decision it makes about portal data is factored into pure functions and
-pinned here: record-key parsing, inspection-status mapping, and the option /
-evidence / history construction the planner's selection provider returns.
-"""
+"""offline tests for the live phase 5 capability wiring's pure mapping helpers"""
 from __future__ import annotations
 
 import asyncio
@@ -29,7 +23,7 @@ from tests.test_phase4_accela_portal import FakeClient, FakeFrame
 
 
 class CatalogClient(FakeClient):
-    """HTML-backed frame fake: the production client parses radio label markers from markup."""
+    """html-backed frame fake: the production client parses radio label markers from markup"""
 
     async def read_page(self, *, include=None, max_text=4000):
         from licet.browser.solari_client import ToolResult
@@ -159,13 +153,7 @@ def test_open_wizard_reuses_current_type_grid_instead_of_clicking_hidden_opener(
 
 
 def test_open_wizard_lands_on_the_inspection_view_before_the_opener():
-    """The opener sits in a collapsed dropdown on the plain detail URL.
-
-    Measured live 2026-09-30: present in the DOM but laid out at 0x0, so the
-    click is refused as `not_actionable` and the wizard never opens. ACA's own
-    `IsToShowInspection=yes` view renders the panel, which is what makes the
-    opener clickable at all.
-    """
+    """the opener sits in a collapsed dropdown on the plain detail url"""
     client = CatalogClient(types=("Rough", "Electrical Final"), url=RECORD_URL)
     portal = LiveInspectionPortal(ToolDispatcher(client), record_ref=REF, today=lambda: date(2026, 9, 20))
 
@@ -180,11 +168,7 @@ def test_open_wizard_lands_on_the_inspection_view_before_the_opener():
 
 
 def test_catalog_separates_a_wizard_that_never_opened_from_a_missing_count():
-    """A missing declared count has two causes; the generic message hid which.
-
-    That ambiguity sent the whole 2026-09-30 investigation three layers off
-    target, to a page the wizard was supposed to have replaced.
-    """
+    """a missing declared count has two causes; the generic message hid which"""
     client = CatalogClient(types=("Rough",), url=RECORD_URL, no_scheduling_link=True)
     portal = LiveInspectionPortal(ToolDispatcher(client), record_ref=REF, today=lambda: date(2026, 9, 20))
 
@@ -374,7 +358,7 @@ _MONTH_ABBREVIATIONS = (
 
 
 def _month_strip(start_year: int, start_month: int, count: int):
-    """(month label, active days) windows of consecutive months."""
+    """(month label, active days) windows of consecutive months"""
     months = []
     year, month = start_year, start_month
     for _ in range(count):
@@ -386,9 +370,7 @@ def _month_strip(start_year: int, start_month: int, count: int):
 
 
 def test_calendar_search_pages_past_the_old_twelve_window_ceiling_into_2027():
-    """The 2026-09-30 capacity run stopped at Sep-Nov 2026 and said nothing
-    about 2027+. The ceiling is now 36 windows, so a deep scan keeps clicking
-    `Next »` into later years instead of giving up a year out."""
+    """the 2026-09-30 capacity run stopped at sep-nov 2026 and said nothing about 2027+"""
     portal, dates, clicks = _scan_windows(_month_strip(2026, 9, 20), max_windows=20)
 
     assert not dates
@@ -402,12 +384,7 @@ def test_calendar_search_pages_past_the_old_twelve_window_ceiling_into_2027():
 
 
 def test_calendar_search_stops_on_the_requested_horizon_month():
-    """An explicit end date turns a deep scan into a definitive negative.
-
-    Sep 2026 + 15 months is Dec 2027, so the scan must stop there with
-    `requested_window_exhausted` rather than running to its window budget and
-    reporting an unknown horizon.
-    """
+    """an explicit end date turns a deep scan into a definitive negative"""
     from licet.phase4.dates import DateConstraints
 
     portal, dates, clicks = _scan_windows(

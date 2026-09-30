@@ -1,16 +1,4 @@
-"""Phase 4 adapter resilience: bounded retries and fail-closed unmapped flows.
-
-Two rules are pinned here:
-
-1. **Only read/settle steps are retried, and only a bounded number of times.**
-   A commit click is never replayed — the executor reconciles a commit by
-   re-reading state, so an adapter-level retry of the commit would be a
-   double-submit risk.
-2. **Unmapped flows fail closed.** Neither the reschedule nor the cancel control
-   was ever captured (no owned record held a scheduled inspection), so routing a
-   reschedule through the new-request wizard would create a second appointment.
-   The adapter refuses instead.
-"""
+"""phase 4 adapter resilience: bounded retries and fail-closed unmapped flows"""
 from __future__ import annotations
 
 import pytest
@@ -35,7 +23,7 @@ RECORD_REF = {
 
 
 class FlakyClient(FakeClient):
-    """Fails the first N reads / waits, modelling a slow or dropped render."""
+    """fails the first n reads / waits, modelling a slow or dropped render"""
 
     def __init__(self, *, fail_reads: int = 0, fail_waits: int = 0, **kwargs):
         super().__init__(**kwargs)
@@ -59,7 +47,7 @@ class FlakyClient(FakeClient):
 
 
 class CommitFailingClient(FakeClient):
-    """Records and fails every click on the wizard's confirm step."""
+    """records and fails every click on the wizard's confirm step"""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -71,9 +59,6 @@ class CommitFailingClient(FakeClient):
             self.commit_clicks += 1
             return ToolResult(ok=False, url=self.page.url, data={})
         return await super().click(target)
-
-
-# --- bounded retries on read/settle ------------------------------------------
 
 
 def test_a_transient_read_failure_is_retried_before_concluding_unknown():
@@ -93,14 +78,14 @@ def test_a_timed_out_settle_wait_is_retried_before_reading():
 
 
 def test_a_permanently_failing_read_is_bounded_and_reports_unknown():
-    # No browser read ever succeeds: the adapter must degrade to an explicit
-    # unknown after a fixed number of attempts, not loop.
+    # no browser read ever succeeds: the adapter must degrade to an explicit unknown after a fixed number
+    # of attempts, not loop
     client = FlakyClient(fail_reads=999)
     portal = AccelaInspectionPortal(dispatcher_over(client))
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
     assert snapshot.status.startswith("Unknown")
     assert snapshot.eligible is False
-    assert client.read_calls == 2  # exactly `_READ_ATTEMPTS`
+    assert client.read_calls == 2
 
 
 def test_a_failed_commit_click_is_never_retried():
@@ -111,9 +96,6 @@ def test_a_failed_commit_click_is_never_retried():
             make_action(), portal_type="Electrical Final", selected_date="2026-09-24"
         ))
     assert client.commit_clicks == 1  # attempted once, not replayed
-
-
-# --- unmapped flows fail closed ----------------------------------------------
 
 
 def test_adapter_refuses_reschedule_rather_than_driving_the_new_request_wizard():
@@ -137,9 +119,6 @@ def test_adapter_still_refuses_cancellation_with_its_original_reason():
     assert client.clicks == []
 
 
-# --- commit-intent acknowledgement -------------------------------------------
-
-
 def _confirm_state() -> AgentState:
     state = AgentState(goal="reschedule the appointment")
     state.flow_name = "schedule_inspection"
@@ -157,8 +136,8 @@ def test_a_reschedule_commit_intent_is_acknowledged_not_relabelled():
 
 
 def test_a_benign_intent_still_cannot_bypass_the_commit_point():
-    # Adding reschedule to the acknowledging set must not reopen the hole:
-    # a non-committing intent on the confirm step still resolves to the commit.
+    # adding reschedule to the acknowledging set must not reopen the hole: a non-committing intent on the
+    # confirm step still resolves to the commit
     resolution = resolve_action(
         ToolCall("click", {"target": "Continue", "by": "text",
                            "intent": "read_record"}),

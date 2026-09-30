@@ -1,9 +1,4 @@
-"""Conservative extraction from normalized Accela section observations.
-
-Adapters may provide ``records``/``rows`` as mappings, or a simple ``text``
-observation. This module intentionally does not use an LLM and does not infer
-requirements from offered inspection types.
-"""
+"""conservative extraction from normalized accela section observations"""
 from __future__ import annotations
 
 import hashlib
@@ -40,9 +35,8 @@ def _coverage(data: Mapping[str, Any], section: str, has_rows: bool) -> Coverage
     except ValueError:
         status = CoverageStatus.PARSE_FAILED
     note = _norm(data.get("coverage_note"))
-    # Coverage honesty (architecture review review P1 #5): a declared-complete section that is
-    # still rendering, or whose source text was cut off, is only a partial view.
-    # The uncertainty stays visible instead of licensing "no entries" claims.
+    # coverage honesty (architecture review review p1 #5): a declared-complete section that is still
+    # rendering, or whose source text was cut off, is only a partial view
     if data.get("loading") and status == CoverageStatus.COMPLETE:
         status = CoverageStatus.PARTIAL
         note = "; ".join(filter(None, [note, "section was still loading when read"]))
@@ -78,8 +72,8 @@ def normalize_permit_status(raw: str | None) -> str | None:
 def normalize_lifecycle(raw: str | None) -> str | None:
     text = (raw or "").strip().lower()
     if not text:
-        # No status shown at all is unknown lifecycle — never fabricated into
-        # "pending" (pending is a claim the portal must make).
+        # no status shown at all is unknown lifecycle — never fabricated into "pending" (pending is a
+        # claim the portal must make)
         return None
     if text in {"not scheduled", "awaiting", "pending"}:
         return "PENDING"
@@ -102,7 +96,7 @@ def normalize_result(raw: str | None) -> str | None:
         return "PASSED"
     if text in {"partial", "partial pass", "conditionally passed"}:
         return "PARTIAL"
-    # Completed is lifecycle only; it is intentionally not a result.
+    # completed is lifecycle only; it is intentionally not a result
     return None
 
 
@@ -112,7 +106,7 @@ def _rows(data: Mapping[str, Any]) -> list[Mapping[str, Any]]:
 
 
 def extract_partial_state(observation: Mapping[str, Any], *, section: str | Section | None = None) -> PermitState:
-    """Extract one observation into a partial state; no fields are guessed."""
+    """extract one observation into a partial state; no fields are guessed"""
     name = str(section or observation.get("section") or "overview").lower()
     state = PermitState(record_key=_norm(observation.get("record_key")))
     raw_text = str(observation.get("text") or "")
@@ -157,8 +151,8 @@ def extract_partial_state(observation: Mapping[str, Any], *, section: str | Sect
                 lifecycle_normalized=normalize_lifecycle(raw_status), result_normalized=normalize_result(raw_result),
             )
             state.inspections.append(inspection)
-        # Offered types are catalog facts; ACA's own `(required)` marker is the
-        # only requirement signal and is kept as its own fact (never merged).
+        # offered types are catalog facts; aca's own `(required)` marker is the only requirement signal
+        # and is kept as its own fact (never merged)
         for offer in observation.get("offered_types") or []:
             if isinstance(offer, Mapping) and _norm(offer.get("name")):
                 state.facts.append(Fact("offered_type", offer["name"], evidence_ids=[ev.id], confidence=ev.confidence, raw_value=str(offer)))
@@ -173,9 +167,7 @@ def extract_partial_state(observation: Mapping[str, Any], *, section: str | Sect
             except ValueError: parsed = None
             paid = row.get("paid") if isinstance(row.get("paid"), bool) else None
             due = row.get("due") if isinstance(row.get("due"), bool) else None
-            # `balance` is a money fact only. A fee blocks a stage when the
-            # portal says so — explicit gate text on the fee row or an explicit
-            # payment-required condition — never because a balance exists.
+            # `balance` is a money fact only
             balance = row.get("balance")
             try: balance_amount = float(str(balance).replace("$", "").replace(",", "")) if balance is not None else None
             except ValueError: balance_amount = None
@@ -196,12 +188,7 @@ def extract_partial_state(observation: Mapping[str, Any], *, section: str | Sect
 
 
 def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitState:
-    """Merge same-record observations without replacing known data with blanks.
-
-    Foreign-record observations are rejected (and recorded in
-    ``rejected_observations``), never merged (architecture review case U04). Conflicting
-    values are retained as contradictions with the competing raw values visible.
-    """
+    """merge same-record observations without replacing known data with blanks"""
     for part in partials:
         if base.record_key and part.record_key and base.record_key != part.record_key:
             base.rejected_observations.append(
@@ -217,9 +204,8 @@ def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitSta
                 base.contradictions.append(f"conflicting {key}: {current!r} vs {incoming!r}")
         base.evidence.update(part.evidence)
         base.coverage.update(part.coverage)
-        # Facts are shared observations when their evidence agrees; when the
-        # evidence differs, keep both so competing values stay visible (the
-        # contract forbids last-write-wins on same-field facts).
+        # facts are shared observations when their evidence agrees; when the evidence differs, keep both
+        # so competing values stay visible (the contract forbids last-write-wins on same-field facts)
         for fact in part.facts:
             if not any(
                 x.field == fact.field and x.value == fact.value
@@ -237,10 +223,7 @@ def merge_partial_states(base: PermitState, *partials: PermitState) -> PermitSta
     return base
 
 
-# Scalar fields whose disagreement between two same-record reads is a real
-# conflict the answer must surface. The inherited merge filled blanks only, so a
-# fee read as unpaid and later read as paid kept the stale value silently
-# (review A9) — the opposite of "retain competing values".
+# scalar fields whose disagreement between two same-record reads is a real conflict the answer must surface
 _CONFLICT_FIELDS = {
     "paid", "due", "status", "result", "amount", "balance", "required",
     "downloadable", "completed_date", "scheduled_date", "lifecycle_normalized",

@@ -1,4 +1,4 @@
-"""Stable LicetBench v1 task and result contracts."""
+"""stable licetbench v1 task and result contracts"""
 
 from __future__ import annotations
 
@@ -13,13 +13,7 @@ _IMMUTABLE_MESSAGE = "benchmark goldens are immutable; derive a new task with da
 
 
 class FrozenDict(dict):
-    """A dict that refuses in-place mutation.
-
-    Goldens are the thing under test, so a caller must not be able to edit one
-    in place and change a later run in the same process. Subclassing `dict` and
-    `list` keeps JSON, CSV and digest output byte-identical to plain containers,
-    and immutability means a copy is free to share the same object.
-    """
+    """a dict that refuses in-place mutation"""
 
     def _reject_mutation(self, *args, **kwargs):
         raise TypeError(_IMMUTABLE_MESSAGE)
@@ -41,7 +35,7 @@ class FrozenDict(dict):
 
 
 class FrozenList(list):
-    """A list that refuses in-place mutation; see `FrozenDict`."""
+    """a list that refuses in-place mutation; see `frozendict`"""
 
     def _reject_mutation(self, *args, **kwargs):
         raise TypeError(_IMMUTABLE_MESSAGE)
@@ -67,7 +61,7 @@ class FrozenList(list):
 
 
 def freeze_golden(value):
-    """Recursively make a golden value read-only, preserving container types."""
+    """recursively make a golden value read-only, preserving container types"""
     if isinstance(value, (FrozenDict, FrozenList)):
         return value
     if isinstance(value, dict):
@@ -116,8 +110,8 @@ class BenchmarkTask:
     def __post_init__(self) -> None:
         for name in ("allowed_actions", "prohibited_actions", "tags"):
             object.__setattr__(self, name, tuple(getattr(self, name)))
-        # Frozen dataclass fields are not enough: the goldens themselves are
-        # dicts, so they are frozen recursively too.
+        # frozen dataclass fields are not enough: the goldens themselves are dicts, so they are frozen
+        # recursively too
         object.__setattr__(self, "initial_state", freeze_golden(self.initial_state))
         object.__setattr__(self, "expected_outcome", freeze_golden(self.expected_outcome))
         if not self.id.strip():

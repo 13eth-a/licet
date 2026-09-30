@@ -1,10 +1,4 @@
-"""Phase 3 integration: ACA adapter, read-only retrieval, renderer, errors.
-
-These cover the pieces the Phase 3 checklist adds on top of the golden
-reasoning set: the page-to-observation adapter for real ``read_page`` payloads,
-the bounded read-only retrieval runner (which must never emit a mutation), the
-narrative renderer (which must never invent claims), and the error taxonomy.
-"""
+"""phase 3 integration: aca adapter, read-only retrieval, renderer, errors"""
 from __future__ import annotations
 
 import asyncio
@@ -23,8 +17,6 @@ from licet.phase3.render import render_answer
 from licet.phase3.runner import Phase3RetrievalRunner, RetrievalOutcome, run_retrieval
 from licet.phase3.state import CoverageStatus, PermitState
 
-# A read_page payload shaped exactly like the real client's (the planning test's
-# captured Null Island record detail).
 RECORD_URL = (
     "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
     "&TabName=Building&capID1=REC26&capID2=00000&capID3=000QB"
@@ -50,9 +42,6 @@ RECORD_PAGE_DATA = {
 }
 
 
-# --- the error taxonomy ------------------------------------------------------
-
-
 def test_phase3_error_codes_carry_sections():
     error = Phase3Error(Phase3ErrorCode.HISTORY_PARSE_FAILED, "bad rows", section="history")
     assert error.code is Phase3ErrorCode.HISTORY_PARSE_FAILED
@@ -61,7 +50,7 @@ def test_phase3_error_codes_carry_sections():
         "section": "history",
         "message": "bad rows",
     }
-    assert accela_extract is not None  # adapter imported alongside
+    assert accela_extract is not None
 
 
 def test_section_error_codes_map_to_sections():
@@ -73,9 +62,6 @@ def test_section_error_codes_map_to_sections():
     assert Phase3ErrorCode.STATE_EXTRACTION_FAILED.value == "STATE_EXTRACTION_FAILED"
 
 
-# --- the ACA adapter: read_page -> observations ------------------------------
-
-
 def test_adapter_reads_the_record_header_without_inventing_fields():
     observation = accela_extract.overview_observation(RECORD_PAGE_DATA)
     assert observation["record_key"] == "NULLISLAND/Building/REC26/00000/000QB"
@@ -84,7 +70,6 @@ def test_adapter_reads_the_record_header_without_inventing_fields():
     assert fields["record_type"] == "Commercial Alteration"
     assert fields["status"] == "Submitted"
     assert fields["expiration_date"] == "01/31/2026"
-    # nothing outside the labeled lines may be guessed
     assert "applicant" not in fields
     assert "address" not in fields
 
@@ -136,11 +121,8 @@ def test_adapter_end_to_end_into_phase3_state():
     assert state.evidence and state.facts
 
 
-# --- the retrieval runner: read-only, bounded, benign ------------------------
-
-
 class RetrievalFakeClient:
-    """Scripted client: records calls, answers read_page with queued payloads."""
+    """scripted client: records calls, answers read_page with queued payloads"""
 
     def __init__(self, url: str, reads: list[dict]) -> None:
         self.url = url
@@ -204,12 +186,8 @@ def test_runner_drives_benign_clicks_and_merges_observations():
     # the only click is the section's benign label; the guard resolved it
     clicks = [call for call in client.calls if call[0] == "click"]
     assert clicks and "Inspections" in clicks[0][1]["target"]
-    # the observation actually landed in the state: the text-line rows
-    # validated against the lifecycle/result vocabularies, and the wizard's
-    # (required) marker became a fact. Coverage is PARTIAL, not complete: this
-    # fixture's declared-empty marker ("You have not added any inspections.")
-    # sits beside a parsed row, so the page shape is self-contradicting and the
-    # read must not claim complete coverage of it (portal integration Phase 5 review H05).
+    # the observation actually landed in the state: the text-line rows validated against the
+    # lifecycle/result vocabularies, and the wizard's (required) marker became a fact
     assert state.coverage["inspections"].status == CoverageStatus.PARTIAL
     assert state.inspections and state.inspections[0].failed
     assert any(f.field == "required_type" for f in state.facts)
@@ -226,13 +204,11 @@ def test_runner_fails_closed_without_record_identity():
         )
     )
     assert outcome.sections_failed == ["fees"]
-    assert client.calls == []  # nothing was executed at all
+    assert client.calls == []
 
 
 class HiddenWrapperClient(RetrievalFakeClient):
-    """Fakes the live 2026-09-25 failure shape: the exact-label anchor exists
-    in the DOM but is never visible, so the click reports `not_actionable` —
-    the dead-but-rendered wrapper the click-through script documented."""
+    """fakes the live 2026-09-25 failure shape: the exact-label anchor exists in the dom but is never visible, so the click reports `not_actionable` — the dead-but-rendered wrapper the click-through script documented"""
 
     def __init__(self, url: str, reads: list[dict]) -> None:
         super().__init__(url, reads)
@@ -256,8 +232,7 @@ class HiddenWrapperClient(RetrievalFakeClient):
 
 
 def test_runner_falls_back_when_exact_label_is_dead_but_rendered():
-    """portal integration Phase 9: `not_actionable` on 'Inspections' must try the label the
-    portal actually renders, not report the whole section unavailable."""
+    """portal integration phase 9: `not_actionable` on 'inspections' must try the label the portal actually renders, not report the whole section unavailable"""
     inspections_read = dict(
         RECORD_PAGE_DATA,
         text=RECORD_PAGE_TEXT + "Electrical Rough | Completed | Corrections Required",
@@ -283,8 +258,7 @@ def test_runner_falls_back_when_exact_label_is_dead_but_rendered():
 
 
 def test_runner_reports_unavailable_after_all_label_variants_fail():
-    """When every variant is dead-but-rendered, the section stays failed and
-    the loop does not grow an unbounded click budget."""
+    """when every variant is dead-but-rendered, the section stays failed and the loop does not grow an unbounded click budget"""
     client = HiddenWrapperClient(RECORD_URL, [dict(RECORD_PAGE_DATA, text="Record 000000014: Commercial Alteration")])
     client.section_opened = True  # never lets a section click succeed
 
@@ -318,8 +292,7 @@ def test_runner_reports_unavailable_after_all_label_variants_fail():
 
 
 def test_runner_refuses_a_non_benign_section_click(monkeypatch):
-    """A label that the guard resolves to anything other than a benign read
-    target is refused even when the click itself succeeded."""
+    """a label that the guard resolves to anything other than a benign read target is refused even when the click itself succeeded"""
     from licet.browser import dispatcher as dispatcher_module
 
     def hostile_resolution(call, state):
@@ -331,7 +304,7 @@ def test_runner_refuses_a_non_benign_section_click(monkeypatch):
 
     monkeypatch.setattr(dispatcher_module, "resolve_action", hostile_resolution)
     client = HiddenWrapperClient(RECORD_URL, [dict(RECORD_PAGE_DATA), dict(RECORD_PAGE_DATA)])
-    client.section_opened = True  # the click itself succeeds
+    client.section_opened = True
     dispatcher = _dispatch(client)
     state = PermitState(record_key="NULLISLAND/Building/REC26/00000/000QB")
     runner = Phase3RetrievalRunner(
@@ -350,7 +323,7 @@ def test_runner_refuses_a_non_benign_section_click(monkeypatch):
 
 
 def test_runner_never_emits_mutation_intents():
-    """Every dispatcher call the runner builds must be a read-path action."""
+    """every dispatcher call the runner builds must be a read-path action"""
     client = RetrievalFakeClient(RECORD_URL, [dict(RECORD_PAGE_DATA)])
     dispatcher = _dispatch(client)
     state = PermitState(record_key="k")
@@ -387,7 +360,7 @@ def test_run_retrieval_sync_wrapper():
 
 
 def test_runner_rejects_a_state_keyed_to_a_different_record():
-    """The merge guard still applies to retrieval: no cross-record leakage."""
+    """the merge guard still applies to retrieval: no cross-record leakage"""
     client = RetrievalFakeClient(RECORD_URL, [dict(RECORD_PAGE_DATA)])
     state = PermitState(record_key="NULLISLAND/Building/REC26/00000/OTHER")
     outcome = run_retrieval(
@@ -396,12 +369,9 @@ def test_runner_rejects_a_state_keyed_to_a_different_record():
         _dispatch(client),
         record_ref={"capID1": "REC26", "capID2": "00000", "capID3": "000QB"},
     )
-    assert outcome.sections_retrieved == ["overview"]  # read happened
-    assert state.record_number is None  # but nothing merged
+    assert outcome.sections_retrieved == ["overview"]
+    assert state.record_number is None
     assert state.rejected_observations
-
-
-# --- the renderer: no new claims, no lost distinctions ----------------------
 
 
 def _result_for(state: PermitState, question: str):
@@ -431,7 +401,7 @@ def test_renderer_never_upgrades_requirement_strength():
     result = _result_for(state, "What is blocking approval?")
     answer = render_answer(result)
     assert "potential impediment" in answer
-    assert "Required:" not in answer  # no gate evidence -> no required action
+    assert "Required:" not in answer
 
 
 def test_renderer_surfaces_contradictions_and_needed_sections():
@@ -455,11 +425,8 @@ def test_renderer_partial_answer_names_the_missing_section():
     assert "conditions" in answer and "history" in answer
 
 
-# --- integration: adapter -> state -> understand -> render -------------------
-
-
 def test_flagship_pipeline_over_real_page_shapes():
-    """The Phase 3 flagship on adapter-shaped inputs, end to end."""
+    """the phase 3 flagship on adapter-shaped inputs, end to end"""
     key = "NULLISLAND/Building/REC26/00000/9F001"
     overview = accela_extract.overview_observation(
         dict(RECORD_PAGE_DATA, url=RECORD_URL.replace("000QB", "9F001"),
@@ -476,7 +443,6 @@ def test_flagship_pipeline_over_real_page_shapes():
     )
     result = understand(state, "Why is this permit not moving forward, and what needs to happen next?")
     answer = render_answer(result)
-    # facts are stated, execution stays disabled
     assert "Issued" in answer
     assert "Rough Electrical inspection did not pass" in answer
     assert result.execution_allowed is False

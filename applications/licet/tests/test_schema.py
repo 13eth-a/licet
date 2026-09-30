@@ -41,16 +41,12 @@ def test_permit_roundtrip_full():
     assert permit.inspections[0].status == "Passed"
     assert permit.inspections[0].status_normalized is InspectionStatus.PASSED
     assert permit.fees[0].paid is True
-    # a plain string is still accepted, but lands as a Fact with provenance
     assert permit.next_action.value == "Schedule final inspection"
     assert permit.next_action.provenance is Provenance.DERIVED
 
 
-# --- what the eight Null Island records actually look like ------------------
-
-
 def _row_use_permit() -> Permit:
-    """BLD26-00472, as captured from My Records + the detail deep link."""
+    """bld26-00472, as captured from my records + the detail deep link"""
     return Permit(
         permit_id="BLD26-00472",
         address="91 Commerce Ave, 00001 United States",
@@ -79,7 +75,7 @@ def test_record_ref_builds_the_verified_deep_link():
 
 
 def test_display_id_is_not_identity():
-    """Commercial Alteration renders 000000014 while others render BLD26-004xx."""
+    """commercial alteration renders 000000014 while others render bld26-004xx"""
     commercial = RecordRef(
         cap_id1="REC26", cap_id2="00000", cap_id3="000QB", display_id="000000014"
     )
@@ -91,7 +87,7 @@ def test_display_id_is_not_identity():
 
 def test_status_is_kept_raw_and_normalized():
     permit = _row_use_permit()
-    assert permit.status == "Submitted"  # portal's own string
+    assert permit.status == "Submitted"
     assert permit.status_normalized is PermitStatus.SUBMITTED
     assert normalize_permit_status("Insp Scheduled") is PermitStatus.UNKNOWN
     assert normalize_permit_status("") is PermitStatus.UNKNOWN
@@ -101,8 +97,6 @@ def test_submitted_is_not_issued_and_expiration_is_config_not_outcome():
     permit = _row_use_permit()
     assert permit.submitted_date is not None
     assert permit.issued_date is None
-    # 01/31/2026 is agency config on a Submitted record, so "expired?" would be
-    # the wrong inference — the two dates stay distinguishable.
     assert permit.expiration_date is not None
     assert permit.status_normalized is not PermitStatus.EXPIRED
 
@@ -130,21 +124,13 @@ def test_documents_and_requirements_accept_plain_strings_but_keep_provenance():
         next_action="Schedule final inspection",
     )
     assert permit.documents[0] == Document(name="plan.pdf")
-    # Phase 3 (architecture review review P1 #3): a bare string has unknown provenance — it is
-    # never silently promoted to a portal fact.
     assert permit.outstanding_requirements[0].provenance is Provenance.UNATTRIBUTED
-    # an inferred next action is marked as inferred, so evals can tell it apart
-    # from something the portal actually stated
     assert permit.next_action.provenance is Provenance.DERIVED
     assert isinstance(permit.next_action, Fact)
 
 
 def test_missing_inspections_is_the_next_inspection_answer():
-    """Only explicitly REQUIRED types minus completing history are missing.
-
-    The offered catalog is not a checklist (architecture review review P1 #1): a failed or
-    scheduled attempt also means the type is not "done".
-    """
+    """only explicitly required types minus completing history are missing"""
     permit = Permit(
         permit_id="BLD26-00470",
         address="87 Commerce Ave",
@@ -172,4 +158,4 @@ def test_fee_keeps_float_and_text():
     assert fee.amount == 150.0
     assert fee.amount_text == "150.00"
     text_only = Fee(description="Permit fee", amount_text="$1,234.56")
-    assert text_only.amount is None  # portal text with no parsed value
+    assert text_only.amount is None

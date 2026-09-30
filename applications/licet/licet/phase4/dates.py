@@ -32,10 +32,7 @@ def _next_week(reference: dt.date) -> tuple[dt.date, dt.date]:
 
 
 def normalize_date_constraints(text: str | None, *, reference: dt.date | None = None) -> DateConstraints:
-    """Convert bounded supported instructions to concrete inclusive dates.
-
-    Unknown temporal language raises rather than silently widening the window.
-    """
+    """convert bounded supported instructions to concrete inclusive dates"""
     reference = reference or dt.date.today()
     lowered = (text or "").casefold().strip()
     start = end = preferred = None
@@ -67,8 +64,7 @@ def normalize_date_constraints(text: str | None, *, reference: dt.date | None = 
 
 
 def _parsed_dates(available: list[str] | tuple[str, ...]) -> list[tuple[dt.date, str]]:
-    """Parse, drop unparseable values, and collapse duplicate days to the first
-    spelling seen (a day is one day regardless of how the portal renders it)."""
+    """parse, drop unparseable values, and collapse duplicate days to the first spelling seen (a day is one day regardless of how the portal renders it)"""
     parsed: list[tuple[dt.date, str]] = []
     seen: set[dt.date] = set()
     for raw in available:
@@ -84,15 +80,14 @@ def _parsed_dates(available: list[str] | tuple[str, ...]) -> list[tuple[dt.date,
 
 
 def _is_selectable(value: dt.date, constraints: DateConstraints) -> bool:
-    """Whether selection may pick this day: inside the window, and — when the
-    user named an exact day — exactly that day."""
+    """whether selection may pick this day: inside the window, and — when the user named an exact day — exactly that day"""
     if not constraints.allows(value):
         return False
     return constraints.preferred is None or value == constraints.preferred
 
 
 def _distance_from_window(value: dt.date, constraints: DateConstraints) -> int:
-    """Days between an unselectable day and the nearest edge of the request."""
+    """days between an unselectable day and the nearest edge of the request"""
     if constraints.start and value < constraints.start:
         return (constraints.start - value).days
     if constraints.end and value > constraints.end:
@@ -103,23 +98,17 @@ def _distance_from_window(value: dt.date, constraints: DateConstraints) -> int:
 
 
 def select_date(available: list[str] | tuple[str, ...], constraints: DateConstraints) -> str | None:
-    """Select the chronologically earliest allowed portal date; never expand bounds."""
+    """select the chronologically earliest allowed portal date; never expand bounds"""
     selectable = [(value, raw) for value, raw in _parsed_dates(available) if _is_selectable(value, constraints)]
     if constraints.preferred:
-        # A requested exact date (e.g. "Friday") is never silently swapped for
-        # another allowed day: the caller must report the constraint failure.
+        # a requested exact date (e.g. "friday") is never silently swapped for another allowed day: the
+        # caller must report the constraint failure
         return selectable[0][1] if selectable else None
     return min(selectable, default=(None, None))[1]
 
 
 def available_dates_from_calendar(months: object, *, reference: dt.date | None = None) -> list[str]:
-    """ISO dates a portal calendar offers, from `accela.resolve_calendar_months`
-    output (`(year, month, active_days)` tuples, in render order).
-
-    Months whose caption did not resolve to a real month carry `(0, 0, ...)` and
-    are skipped — their days would be invented dates. Output is sorted and
-    deduplicated so it feeds `select_date` deterministically.
-    """
+    """iso dates a portal calendar offers, from `accela.resolve_calendar_months` output (`(year, month, active_days)` tuples, in render order)"""
     dates: set[str] = set()
     for entry in months or ():
         try:
@@ -137,22 +126,14 @@ def available_dates_from_calendar(months: object, *, reference: dt.date | None =
 
 
 def within_constraints(value: dt.date, constraints: DateConstraints) -> bool:
-    """Public form of the selection predicate, for callers checking a date they
-    did not choose (e.g. verifying a portal-reported appointment date)."""
+    """public form of the selection predicate, for callers checking a date they did not choose (e.g. verifying a portal-reported appointment date)"""
     return _is_selectable(value, constraints)
 
 
 def closest_alternatives(
     available: list[str] | tuple[str, ...], constraints: DateConstraints, *, limit: int = 3
 ) -> list[str]:
-    """Portal dates nearest the request, for *reporting* only.
-
-    This is the checklist's "return closest alternatives if allowed": it never
-    widens the window and never selects. The caller must surface the list to the
-    user and obtain an explicit new instruction before any alternative is used,
-    because acting on one would be exactly the silent expansion the date layer
-    exists to prevent. Nearest-to-the-window first, ties chronological.
-    """
+    """portal dates nearest the request, for *reporting* only"""
     alternatives = [
         (value, raw) for value, raw in _parsed_dates(available) if not _is_selectable(value, constraints)
     ]

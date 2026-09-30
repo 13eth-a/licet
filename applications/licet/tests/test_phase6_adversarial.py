@@ -1,16 +1,4 @@
-"""Phase 6 adversarial safety regressions (adversarial review portion).
-
-Each test pins one route by which a buggy or adversarial planner could mutate a
-live municipal record, act on the wrong permit or inspection, execute without a
-valid confirmation, reuse a stale approval, duplicate a mutation, drop a user
-constraint, or claim success it never verified. They drive the **real** policy
-engine, executor, capabilities adapter and (where the harness allows) the real
-Phase 5 planner — not a re-implementation of them.
-
-Threat model, per the Phase 6 assignment: assume `licet.phase5.planner` and any
-model behind it are wrong or hostile. Nothing here grants the planner a new
-capability; every expectation is that the deterministic layer still says no.
-"""
+"""phase 6 adversarial safety regressions (adversarial review portion)"""
 from __future__ import annotations
 
 import asyncio
@@ -71,12 +59,7 @@ def cancel(**overrides):
 
 
 class Portal:
-    """Minimal `InspectionPortal` double that declares its own environment.
-
-    `read_inspection_state` serves `before` first and `after` on every later
-    read, so a mutation's re-read is a separate observation. `submits` is the
-    ground truth every test asserts on: an empty list means nothing was sent.
-    """
+    """minimal `inspectionportal` double that declares its own environment"""
 
     environment = Environment.SANDBOX
 
@@ -96,12 +79,7 @@ class Portal:
 
 
 class AnonymousPortal(Portal):
-    """The same double with no environmental identity at all.
-
-    This is what a protocol-only fake, a brand-new agency portal, or an Accela
-    deployment on a vanity domain looks like to `detect_environment`: there is
-    no explicit environment and no recognisable host. Phase 6 says UNKNOWN.
-    """
+    """the same double with no environmental identity at all"""
 
     environment = None
 
@@ -115,11 +93,6 @@ def identity(**overrides):
               "inspection_id": "I-1"}
     values.update(overrides)
     return RecordIdentity(**values)
-
-
-# ============================================================================
-# P1 — an unclassified portal must not silently lose its policy layer
-# ============================================================================
 
 
 def test_unclassified_portal_cannot_schedule():
@@ -152,8 +125,8 @@ def test_unclassified_portal_cannot_reschedule():
      snap(status="Scheduled", scheduled_date=DATE)),
 ])
 def test_live_portal_blocks_every_supported_mutation(action, before):
-    # Every pre-check passes, so the *only* thing standing between this action and
-    # a live municipal record is the environment gate.
+    # every pre-check passes, so the *only* thing standing between this action and a live municipal record
+    # is the environment gate
     portal = Portal(before)
     portal.environment = Environment.LIVE_READ_ONLY
     result = executor(portal).execute(action, eligible_types=[TYPE], available_dates=[DATE],
@@ -172,7 +145,7 @@ def test_policy_refuses_a_cancellation_that_names_no_target_inspection():
 
 
 def test_sandbox_declared_explicitly_still_schedules():
-    # Positive control: the fail-closed default must not break a declared sandbox.
+    # positive control: the fail-closed default must not break a declared sandbox
     portal = Portal(snap(), after=snap(status="Scheduled", scheduled_date=DATE))
     result = executor(portal).execute(schedule(), eligible_types=[TYPE], available_dates=[DATE])
     assert result.success and result.verified
@@ -185,21 +158,15 @@ def test_sandbox_declared_explicitly_still_schedules():
     "https://sandbox.aca-test.accela.com/record",
 ])
 def test_a_non_sandbox_host_is_never_classified_as_sandbox(url):
-    # Never SANDBOX: an impostor host must fail towards read-only, not towards
-    # "safe to mutate". Only the exact known sandbox host is sandbox.
+    # never sandbox: an impostor host must fail towards read-only, not towards "safe to mutate"
     assert environment_from_url(url) is not Environment.SANDBOX
     assert environment_from_url("https://aca-test.accela.com/anything") is Environment.SANDBOX
 
 
 def test_explicit_sandbox_environment_wins_over_a_live_looking_url():
-    # Only the caller may declare sandbox; detection never upgrades to it.
+    # only the caller may declare sandbox; detection never upgrades to it
     assert environment_from_url("https://aca-test.accela.com/x") is Environment.SANDBOX
     assert environment_from_url("https://aca-prod.accela.com/x") is Environment.LIVE_READ_ONLY
-
-
-# ============================================================================
-# P2 — identity must not pass when the observation omits what the action targets
-# ============================================================================
 
 
 def test_identity_observation_missing_inspection_type_is_unverified():
@@ -216,8 +183,8 @@ def test_identity_observation_missing_existing_date_is_unverified():
 
 
 def test_identity_accepts_a_word_order_variant_from_the_same_portal():
-    # `match_inspection_type` is the project's definition of "same type"; the
-    # identity gate must not contradict it and refuse a legitimate schedule.
+    # `match_inspection_type` is the project's definition of "same type"; the identity gate must not
+    # contradict it and refuse a legitimate schedule
     check = verify_identity(ProposedAction("RESCHEDULE_INSPECTION", permit_id=PERMIT,
                                            inspection_id="I-1", inspection_type=TYPE),
                             identity(inspection_type="Electrical - Rough"))
@@ -246,11 +213,6 @@ def test_executor_refuses_when_the_portal_read_omits_the_type():
     assert result.error_code in {ActionErrorCode.RECORD_IDENTITY_UNVERIFIED, ActionErrorCode.STATE_MISMATCH}
 
 
-# ============================================================================
-# P3 — a consequential mutation needs a bound, single-use approval
-# ============================================================================
-
-
 def approval_for(action, **overrides):
     values = {"action_type": action.action_type, "permit_id": action.permit_id,
               "target": action.inspection_type or "", "consequence": "test approval",
@@ -271,8 +233,8 @@ def test_bound_approval_authorizes_exactly_one_execution():
     portal = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     first = executor(portal).execute(cancel(), eligible_types=[TYPE], approval=approval)
     assert first.success and len(portal.submits) == 1
-    # A second, independent executor whose pre-checks all pass again: the only
-    # thing refusing it is the spent approval itself.
+    # a second, independent executor whose pre-checks all pass again: the only thing refusing it is the
+    # spent approval itself
     again = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     second = executor(again).execute(cancel(), eligible_types=[TYPE], approval=approval)
     assert second.error_code is ActionErrorCode.ACTION_REQUIRES_CONFIRMATION
@@ -286,7 +248,7 @@ def test_approval_for_one_permit_cannot_authorize_another():
     result = executor(portal).execute(other, eligible_types=[TYPE], approval=approval)
     assert not result.success
     assert portal.submits == []
-    # The refusal is the approval's scope, not an accident of portal state.
+    # the refusal is the approval's scope, not an accident of portal state
     engine = PolicyEngine(environment=Environment.SANDBOX)
     decision = engine.decide(
         ProposedAction("CANCEL_INSPECTION", permit_id="P-2", target=TYPE,
@@ -297,7 +259,7 @@ def test_approval_for_one_permit_cannot_authorize_another():
 
 def test_approval_for_one_inspection_cannot_authorize_another():
     portal = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
-    approval = approval_for(cancel())  # names inspection I-1
+    approval = approval_for(cancel())
     other = InspectionAction("cancel", PERMIT, TYPE, existing_inspection_id="I-2")
     result = executor(portal).execute(other, eligible_types=[TYPE], approval=approval)
     assert portal.submits == []
@@ -320,17 +282,16 @@ def test_expired_approval_is_refused():
 
 
 def test_a_copied_approval_cannot_authorize_twice():
-    # The object's `used` flag is mutable state a caller can deepcopy; the
-    # engine's record of what it has already authorized is not. the architecture review’s
-    # architecture review is the source of this case.
+    # the object's `used` flag is mutable state a caller can deepcopy; the engine's record of what it has
+    # already authorized is not. the architecture review’s architecture review is the source of this case
     engine = PolicyEngine(environment=Environment.SANDBOX)
     action = ProposedAction("CANCEL_INSPECTION", permit_id=PERMIT, target=TYPE, inspection_type=TYPE,
                             inspection_id="I-1", record_key=RECORD_KEY, existing_date="2026-09-25")
     observed = identity(existing_date="2026-09-25")
     issued = engine.decide(action, observed_identity=observed).confirmation
     assert issued is not None
-    # The copy is taken while the original is still fresh, so the object's own
-    # `used` flag cannot be what refuses it: only the engine's record can.
+    # the copy is taken while the original is still fresh, so the object's own `used` flag cannot be what
+    # refuses it: only the engine's record can
     copied = copy.deepcopy(issued)
     assert copied.used is False
     assert engine.decide(action, observed_identity=observed, confirmation=issued).allowed
@@ -362,7 +323,7 @@ def test_a_duplicate_reservation_never_claims_a_second_slot():
 
 
 def test_required_inputs_are_enforced_even_without_record_verification():
-    # `verify_record=False` is an identity shortcut, not a completeness shortcut.
+    # `verify_record=false` is an identity shortcut, not a completeness shortcut
     engine = PolicyEngine(environment=Environment.SANDBOX)
     action = ProposedAction("SCHEDULE_INSPECTION", permit_id=PERMIT, target=TYPE, inspection_type=TYPE,
                             required_inputs=("phone",))
@@ -371,11 +332,8 @@ def test_required_inputs_are_enforced_even_without_record_verification():
 
 
 def test_the_policy_layer_is_never_weaker_than_the_dispatcher_guard():
-    # Two vocabularies describe the same action space: the dispatcher's
-    # (`risk_levels.KNOWN_ACTIONS`) and the policy's. If the guard calls an action
-    # consequential and the policy quietly treats the same name as a read, then
-    # moving a call from one layer to the other silently drops the gate. Policy is
-    # allowed to be stricter; it is never allowed to be weaker.
+    # two vocabularies describe the same action space: the dispatcher's (`risk_levels.known_actions`) and
+    # the policy's
     from licet.safety.policy import ACTION_RISKS, normalize_action
     from licet.safety.risk_levels import KNOWN_ACTIONS, RiskLevel, classify
 
@@ -398,31 +356,6 @@ def test_the_closed_vocabulary_covers_the_planners_own_verbs():
 
     unclassified = [item.value for item in Action if normalize_action(item.value) not in ACTION_RISKS]
     assert unclassified == [], f"planner verbs with no deterministic decision: {unclassified}"
-
-
-# --- Fixture coverage: close the documented adverse-fixture gap ---------------
-# The Phase 6 handoff documents two adversarial/fixture concerns that are not
-# fully locked by the existing suite yet:
-#
-#  1. The dispatcher's `KNOWN_ACTIONS` catalogue and the policy engine's
-#     `ACTION_RISKS` catalogue are supposed to be the same closed vocabulary.
-#     Today three dispatcher-known names (`delete_record`, `register_account`,
-#     `withdraw_application`) sit in `risk_levels.KNOWN_ACTIONS` and therefore
-#     reach the guard, but they have no entry in `ACTION_RISKS`, so at the
-#     policy layer they currently classify by fallback (`PROHIBITED`) rather
-#     than by an explicit fixture decision. That distinction matters
-#     adversarially: a policy layer that implicitly inherits its answer from
-#     the guard is one that can silently drift when either catalogue is edited.
-#
-#  2. The existing parity test only checks the actions that already have an
-#     `ACTION_RISKS` entry. It therefore does not prove that every action the
-#     guard *can receive* also has a deterministic policy decision. This lane
-#     closes that: every `KNOWN_ACTIONS` entry must map to a real
-#     `ACTION_RISKS` entry, and policy must be no weaker than the guard on the
-#     full intersection, including the three above.
-#
-# No live portal, no browser: these are offline vocabulary/fixture assertions
-# against the same enforcement modules the rest of the suite exercises.
 
 
 def _guard_rank(action: str) -> int:
@@ -455,9 +388,7 @@ def test_the_dispatchers_known_actions_all_have_a_deterministic_policy_entry():
 
 @pytest.mark.parametrize("action", sorted(__import__("licet.safety.risk_levels", fromlist=["KNOWN_ACTIONS"]).KNOWN_ACTIONS))
 def test_policy_is_never_weaker_than_the_guard_for_the_full_vocabulary(action):
-    """Two independent enforcement layers must agree on direction: policy may be
-    stricter than the guard, but it may not wave through an action the guard
-    blocks or holds."""
+    """two independent enforcement layers must agree on direction: policy may be stricter than the guard, but it may not wave through an action the guard blocks or holds"""
     from licet.safety.policy import ACTION_RISKS, normalize_action
     from licet.safety.risk_levels import classify
 
@@ -470,10 +401,7 @@ def test_policy_is_never_weaker_than_the_guard_for_the_full_vocabulary(action):
 def test_invented_dispatcher_verbs_are_denied_by_the_policy_layer_in_every_environment():
     from licet.safety.policy import ACTION_RISKS, Environment, PolicyVerdict, ProposedAction, PolicyEngine
 
-    # Action names the dispatcher is explicitly *not* allowed to emit. The guard
-    # currently classifies these as CONFIRMATION_REQUIRED, which already blocks
-    # them; the policy layer's job is to give them an explicit, documented
-    # decision that survives vocabulary edits, not to rely on that fallback.
+    # action names the dispatcher is explicitly *not* allowed to emit
     invented = ("delete_record", "register_account", "withdraw_application")
     for verb in invented:
         assert verb in __import__("licet.safety.risk_levels", fromlist=["KNOWN_ACTIONS"]).KNOWN_ACTIONS, verb
@@ -485,17 +413,15 @@ def test_invented_dispatcher_verbs_are_denied_by_the_policy_layer_in_every_envir
             assert decision.risk_level is ActionRisk.PROHIBITED, (
                 f"{verb} in {environment.value} resolved to {decision.risk_level.name}"
             )
-            # These currently resolve through the PROHIBITED catalogue path, which
-            # is the documented fixture decision for this Solar lane. If the engine
-            # ever switches them to UNKNOWN_ACTION_RISK, that is a vocabulary-policy
-            # regression, not a safer outcome.
+            # these currently resolve through the prohibited catalogue path, which is the documented
+            # fixture decision for this solar lane
             assert decision.violated_constraint in ("PROHIBITED_ACTION", "UNKNOWN_ACTION_RISK")
 
 
 def test_the_dispatcher_records_the_page_it_reads_into_the_state():
-    # The guard authorizes a mutation against `state.current_url`, so the only
-    # component that reads pages must record what it saw: without it every call
-    # the Accela adapter made looked like an unknown environment.
+    # the guard authorizes a mutation against `state.current_url`, so the only component that reads pages
+    # must record what it saw: without it every call the accela adapter made looked like an unknown
+    # environment
     from licet.agent.state import AgentState
     from licet.browser.dispatcher import ToolDispatcher
     from tests.conftest import DETAIL_URL
@@ -560,11 +486,6 @@ def test_broad_user_approval_does_not_unlock_consequential_actions():
     assert fee.verdict is PolicyVerdict.CONFIRM
 
 
-# ============================================================================
-# Capabilities and planner: the approval must survive the pause, not be minted
-# ============================================================================
-
-
 def planner_capabilities(portal, *, environment=Environment.SANDBOX, **kwargs):
     def context(world):
         return SelectionContext(world.permit_id, world.record_key, world.snapshot_id, True,
@@ -589,7 +510,7 @@ def scheduled_world():
 
 
 def approval_for_proposal(proposal, **overrides):
-    """The approval a caller builds from the exact proposal it will execute."""
+    """the approval a caller builds from the exact proposal it will execute"""
     values = {
         "action_type": proposal.action_type, "permit_id": proposal.permit_id,
         "target": proposal.inspection_type or proposal.existing_inspection_id or "",
@@ -658,14 +579,13 @@ def test_capabilities_refuse_a_live_portal_even_with_an_approval():
 
 
 class RecordingCapabilities:
-    """Planner-level double that records exactly what the planner passed down."""
+    """planner-level double that records exactly what the planner passed down"""
 
     def __init__(self):
         self.calls = []
 
     async def perform(self, action, goal, world, *, confirmed=False, approval=None):
         self.calls.append({"action": action, "confirmed": confirmed, "approval": approval})
-        # The record the goal named, so the planner's own identity gate is happy.
         permit = goal.permit_id or PERMIT
         if action == Action.FIND_PERMIT:
             world.permit_id, world.record_key, world.snapshot_id, world.permit_verified = permit, RECORD_KEY, "s1", True
@@ -721,11 +641,6 @@ def test_a_consumed_planner_approval_cannot_be_replayed():
     with pytest.raises(ValueError):
         asyncio.run(planner.resume(paused, token=token, approved=True))
     assert len([c for c in capabilities.calls if c["action"] == Action.CANCEL_INSPECTION]) == 1
-
-
-# ============================================================================
-# Mutation idempotency, retries and timeout reconciliation
-# ============================================================================
 
 
 def test_timeout_after_a_successful_commit_is_reconciled_not_replayed():
@@ -792,16 +707,7 @@ def test_reconciled_success_blocks_the_same_mutation_again():
     assert not replay.allowed and replay.reason == "MUTATION_ALREADY_COMPLETED"
 
 
-# ============================================================================
-# Constraints, untrusted portal text and unknown actions
-# ============================================================================
-
-
-# The checklist's constraint phrases, each with the action it must forbid and the
-# planner operation it maps to. Phase 6 enforces them in `UserConstraints`; the
-# run's own constraint enforcement is Phase 5's immutable `Goal`. The two
-# definitions of "what the user forbade" must never disagree about the same
-# sentence, so both sides are asserted here.
+# the checklist's constraint phrases, each with the action it must forbid and the planner operation it maps to
 CONSTRAINT_PARITY = [
     ("Don't spend money", "PAY_FEE", None),
     ("Read only", "SCHEDULE_INSPECTION", "schedule"),
@@ -904,9 +810,7 @@ def test_invented_planner_verbs_are_denied_in_every_environment():
     None,
 ])
 def test_the_primitive_layer_refuses_every_mutation_outside_a_sandbox(action, url):
-    # The dispatcher's guard is the layer that actually clicks. A live municipal
-    # record is not mutated because a human approved a click, and an environment
-    # that cannot be established must not mutate at all.
+    # the dispatcher's guard is the layer that actually clicks
     from licet.agent.state import AgentState
     from licet.safety.guard import GuardDecision, authorize
 
@@ -914,7 +818,7 @@ def test_the_primitive_layer_refuses_every_mutation_outside_a_sandbox(action, ur
     state.request_approval(action, "user said yes")
     state.grant_approval()
     assert authorize(action, state).decision is GuardDecision.BLOCK
-    # Reads stay open in every environment: live read-only is the normal mode.
+    # reads stay open in every environment: live read-only is the normal mode
     assert authorize("read_inspection_history", state).decision is GuardDecision.ALLOW
 
 
@@ -929,8 +833,6 @@ def test_the_primitive_layer_allows_a_mutation_in_a_declared_sandbox():
 
 
 def test_a_model_intent_cannot_relabel_a_commit_as_a_read():
-    # The model supplies both the target and the intent, so the control's own text
-    # has to outrank a milder label.
     from licet.agent.state import AgentState
     from licet.browser.dispatcher import ToolCall, resolve_action
     from licet.safety.guard import GuardDecision, authorize
@@ -948,10 +850,8 @@ def test_a_model_intent_cannot_relabel_a_commit_as_a_read():
     ("https://permits.example.gov/Accela/Cap/CapDetail.aspx", "unclassified portal"),
 ])
 def test_the_deepest_layer_refuses_to_commit_outside_a_sandbox(url, match):
-    # Even if a caller skipped the executor entirely, the only class that touches
-    # the DOM commits only against a page it identifies as sandbox. The
-    # environment is re-derived from the page being driven, so a stale
-    # construction-time value cannot authorize it either.
+    # even if a caller skipped the executor entirely, the only class that touches the dom commits only
+    # against a page it identifies as sandbox
     from licet.phase4.accela_portal import AccelaInspectionPortal
     portal = AccelaInspectionPortal(dispatcher_over(AdapterClient(url=url)))
     portal.environment = Environment.SANDBOX  # configuration must not outrank observation
@@ -980,18 +880,8 @@ def test_blocked_actions_are_audited_without_an_execution_event():
     assert not [event for event in engine.audit_log.events if event.policy_decision == "EXECUTION"]
 
 
-# ============================================================================
-# End to end: the whole Phase 2–6 pipeline must not mutate a live portal
-# ============================================================================
-
-
 class PipelinePortal(Portal):
-    """The integration harness's portal: echoes the record it is asked about.
-
-    `before` is not-scheduled, every read after a submit reports the appointment
-    the portal accepted, so the planner's independent re-read is a real second
-    observation rather than a replay of the first.
-    """
+    """the integration harness's portal: echoes the record it is asked about"""
 
     def __init__(self, environment):
         super().__init__(snap())

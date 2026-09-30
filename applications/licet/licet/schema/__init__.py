@@ -1,1 +1,1 @@
-"""Package init for licet.schema."""
+"""package init for licet.schema"""

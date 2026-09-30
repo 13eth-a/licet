@@ -1,4 +1,4 @@
-"""Offline tests for the read-only calendar horizon survey's durable progress log."""
+"""offline tests for the read-only calendar horizon survey's durable progress log"""
 from __future__ import annotations
 
 import asyncio

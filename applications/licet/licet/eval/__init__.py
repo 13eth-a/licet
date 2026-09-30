@@ -1,1 +1,1 @@
-"""Package init for licet.eval."""
+"""package init for licet.eval"""

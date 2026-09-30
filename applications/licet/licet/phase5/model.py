@@ -1,4 +1,4 @@
-"""Optional model choice among currently valid semantic steps, no browser tools."""
+"""optional model choice among currently valid semantic steps, no browser tools"""
 import json
 from licet.phase5.state import Action
 

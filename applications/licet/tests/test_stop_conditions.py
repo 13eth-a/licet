@@ -74,7 +74,7 @@ def test_max_steps_is_overridable_per_run():
 
 
 def test_failure_counter_is_scoped_to_page_and_args():
-    """One flaky selector failing once on two pages is not a repeated failure."""
+    """one flaky selector failing once on two pages is not a repeated failure"""
     state = _state()
     for page in ("search_results", "record_details"):
         state.current_page = page
@@ -93,7 +93,7 @@ def test_repeated_failure_stops_on_third_attempt_of_same_key():
 
 
 def test_success_resets_the_failure_counter():
-    """Retry-then-succeed must not keep counting toward the stop condition."""
+    """retry-then-succeed must not keep counting toward the stop condition"""
     state = _state()
     state.current_page = "record_details"
     args = {"selector": "#continue"}
@@ -105,22 +105,15 @@ def test_success_resets_the_failure_counter():
 
 
 def test_stall_detection_resets_when_the_url_changes():
-    """Stall accounting needs a content signature: position alone is not enough.
-
-    The live runs added the step and then the content to this check, because each
-    omission stopped a run that was making progress (`CapDetail.aspx` serves every
-    wizard step and every record section). A caller that has no page content to
-    fingerprint only records where it is.
-    """
+    """stall accounting needs a content signature: position alone is not enough"""
     state = _state()
     url = "https://aca-test.accela.com/NULLISLAND/Cap/CapEdit.aspx?stepNumber=3"
-    # the first sighting of a URL is not a stall; each repeat increments
+    # the first sighting of a url is not a stall; each repeat increments
     assert state.observe_page(url=url, page="contact", signature="one") == 0
     for expected in range(1, MAX_STALLED_STEPS):
         assert state.observe_page(url=url, page="contact", signature="one") == expected
     assert state.observe_page(url=url, page="contact", signature="one") == MAX_STALLED_STEPS
     assert check_stop_condition(state) is StopCondition.REPEATED_ACTION_FAILED
-    # a postback that actually advances resets the counter
     assert state.observe_page(url=url + "&pageNumber=2", page="detail", signature="two") == 0
     assert check_stop_condition(state) is None
 
@@ -129,7 +122,7 @@ def test_a_click_that_returns_no_page_is_not_a_stall_step():
     state = _state()
     url = "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?capID3=000QB"
     state.observe_page(url=url, page="summary", signature="page")
-    for _ in range(4):  # clicks and screenshots carry no page text
+    for _ in range(4):
         state.observe_page(url=url, page="summary", signature=None)
 
     assert state.stalled_steps == 0
@@ -142,7 +135,6 @@ def test_recent_actions_detect_repeated_action_state_pairs():
     assert state.record_action("click", "Search", state="results") is False
     assert state.record_action("click", "Search", state="results") is True
     assert state.repeated_action("click", "Search", state="results") == 3
-    # A different page state is a different action-state pair.
     assert state.record_action("click", "Search", state="form") is False
 
 

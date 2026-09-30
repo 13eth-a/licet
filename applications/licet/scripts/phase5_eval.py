@@ -1,8 +1,4 @@
-"""Repeat the scripted flagship goal; publish outcomes, traces and metrics.
-
-No browser, model, credential, or live mutation is used. This is deterministic
-planner acceptance, not evidence of ten successful live portal mutations.
-"""
+"""repeat the scripted flagship goal; publish outcomes, traces and metrics"""
 import argparse
 import asyncio
 import json

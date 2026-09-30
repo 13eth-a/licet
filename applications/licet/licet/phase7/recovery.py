@@ -1,9 +1,4 @@
-"""Centralized, bounded recovery for browser and semantic execution.
-
-The controller is deterministic and side-effect free unless a caller supplies a
-recovery callback. In particular, mutation failures are never retried by this
-module: the Phase 4 executor must reconcile their outcome first.
-"""
+"""centralized, bounded recovery for browser and semantic execution"""
 
 from __future__ import annotations
 
@@ -85,9 +80,8 @@ class PageFingerprint:
 
     def matches(self, other: "PageFingerprint", *, include_text: bool = True,
                 require_identity: bool = False) -> bool:
-        # Two observations that both failed to establish *which* page this is
-        # (no URL, no record number) must not be treated as the same page: an
-        # all-None identity is missing evidence, not a match.
+        # two observations that both failed to establish *which* page this is (no url, no record number)
+        # must not be treated as the same page: an all-none identity is missing evidence, not a match
         if require_identity:
             if self.url is None and self.record_number is None:
                 return False
@@ -280,16 +274,7 @@ _MUTATION_OPERATION_VERBS = (
 
 
 def _mutation_risk(*, mutation: bool, operation: str, text: str) -> bool:
-    """True when a failure touches a state-changing operation.
-
-    The ``mutation`` flag is authoritative but caller-supplied. A controller
-    that trusted it alone could be handed a submission timeout whose message
-    happened to read like navigation, classify it recoverable, and retry it.
-    Any strong mutation signal — the explicit flag, a mutation verb in the
-    operation name, or the word "mutation" in the error — therefore marks the
-    failure unrecoverable, so a forgotten flag fails safe instead of
-    double-submitting.
-    """
+    """true when a failure touches a state-changing operation"""
     if mutation:
         return True
     if any(verb in operation.lower() for verb in _MUTATION_OPERATION_VERBS):
@@ -299,7 +284,7 @@ def _mutation_risk(*, mutation: bool, operation: str, text: str) -> bool:
 
 def classify_failure(error: Any, *, operation: str = "", mutation: bool = False,
                      evidence: Mapping[str, Any] | None = None) -> Failure:
-    """Classify strings, ToolError-like objects, and semantic exceptions."""
+    """classify strings, toolerror-like objects, and semantic exceptions"""
     message = str(getattr(error, "message", error) or "")
     kind = str(getattr(getattr(error, "kind", None), "value", getattr(error, "kind", ""))).lower()
     text = f"{kind} {message}".lower()
@@ -331,8 +316,8 @@ def classify_failure(error: Any, *, operation: str = "", mutation: bool = False,
     else:
         failure_type = FailureType.STATE
     if mutation:
-        # The caller knows this is a mutation; the taxonomy must say so even
-        # when the message happened to look like navigation or a search miss.
+        # the caller knows this is a mutation; the taxonomy must say so even when the message happened to
+        # look like navigation or a search miss
         failure_type = FailureType.MUTATION
     risky = _mutation_risk(mutation=mutation, operation=operation, text=text)
     recoverable = not risky and not any(phrase in text for phrase in _TERMINAL_PHRASES)
@@ -344,7 +329,7 @@ def classify_failure(error: Any, *, operation: str = "", mutation: bool = False,
 
 
 class RecoveryController:
-    """Own all recovery budgets, trace entries, checkpoints, and safe strategies."""
+    """own all recovery budgets, trace entries, checkpoints, and safe strategies"""
 
     def __init__(self, *, budgets: RecoveryBudgets | None = None) -> None:
         self.budgets = budgets or RecoveryBudgets()
@@ -358,7 +343,7 @@ class RecoveryController:
         self._mutation_retries: Counter[str] = Counter()
 
     def begin_run(self) -> None:
-        """Start isolated per-run budgets, observations and metrics."""
+        """start isolated per-run budgets, observations and metrics"""
         self.stats = RecoveryStats()
         self.trace.clear()
         self.checkpoints.clear()
@@ -384,14 +369,7 @@ class RecoveryController:
         return point
 
     def validate_checkpoint(self, name: str, fingerprint: PageFingerprint | None = None) -> bool:
-        """A checkpoint is reusable only with fresh, identity-bearing evidence.
-
-        Validation with no fingerprint (either the checkpoint was stored
-        without one or the caller supplies none) is a failure, not a pass: the
-        checklist requires the portal to be re-read before a checkpoint is
-        trusted, and a checkpoint whose page identity is unknown cannot be
-        distinguished from a wrong page.
-        """
+        """a checkpoint is reusable only with fresh, identity-bearing evidence"""
         point = self.checkpoints.get(name)
         stored = point.fingerprint if point else None
         identity_known = bool(stored and (stored.url or stored.record_number))
@@ -404,12 +382,7 @@ class RecoveryController:
         return valid
 
     def allow_search_reformulation(self, query: str) -> bool:
-        """Cap reformulations per *run*, not per query string.
-
-        A limit keyed on the query text is trivially evaded by varying the
-        query — which is exactly what reformulation does — so the budget is
-        spent globally and the query is only recorded for the trace.
-        """
+        """cap reformulations per *run*, not per query string"""
         if self.stats.search_reformulations >= self.budgets.max_search_reformulations:
             self._trace("SEARCH_REFORMULATION_BLOCKED", query=query,
                         attempts=self.stats.search_reformulations)
@@ -449,16 +422,11 @@ class RecoveryController:
         return result
 
     def replan_required(self) -> bool:
-        """True when stalled progress has reached ``max_no_progress``.
-
-        The checklist's "2 consecutive NO_PROGRESS → force replan" signal.
-        Callers must consult it (and then ``allow_replan``); the controller can
-        express the trigger but cannot replan on its own.
-        """
+        """true when stalled progress has reached ``max_no_progress``"""
         return self.progress.consecutive_no_progress >= self.budgets.max_no_progress
 
     def mutation_started(self, operation_key: str) -> bool:
-        """Reserve a mutation key; false means a duplicate attempt was blocked."""
+        """reserve a mutation key; false means a duplicate attempt was blocked"""
         if operation_key in self._mutation_keys:
             self.stats.duplicate_mutation_attempts += 1
             self._trace("MUTATION_BLOCKED", reason="duplicate mutation key", operation_key=operation_key)
@@ -468,13 +436,7 @@ class RecoveryController:
         return True
 
     def mutation_reconciled(self, operation_key: str, *, occurred: bool | None) -> bool:
-        """Reconcile a reserved mutation after re-reading the portal.
-
-        Returns True only when the mutation is proven *absent* and the key may
-        therefore be re-reserved for a bounded retry (checklist scenario 10).
-        A mutation that occurred, or a key that was never reserved, returns
-        False and is never replayed (scenario 9).
-        """
+        """reconcile a reserved mutation after re-reading the portal"""
         if occurred is not False:
             self.stats.mutation_reconciliations += 1
             self._trace("MUTATION_RECONCILED", operation_key=operation_key, occurred=occurred)
@@ -494,11 +456,7 @@ class RecoveryController:
                       action: Callable[[], Any] | None = None,
                       *, new_state: str | None = None,
                       validate: Callable[[Any], bool] | None = None) -> RecoveryResult:
-        """Run at most one bounded, classified recovery sequence.
-
-        ``action`` must be a safe read/navigation action. Mutation failures are
-        always returned as unrecoverable so callers must reconcile externally.
-        """
+        """run at most one bounded, classified recovery sequence"""
         if failure.mutation or failure.failure_type is FailureType.MUTATION:
             result = RecoveryResult(False, "RECONCILE_MUTATION_STATE", 0,
                                     error="mutation outcome must be reconciled before any retry")
@@ -509,8 +467,8 @@ class RecoveryController:
             FailureType.BROWSER, FailureType.NAVIGATION, FailureType.PORTAL
         }
         max_attempts = self.budgets.max_browser_retries if browser_like else self.budgets.max_recovery_actions
-        # Budget by (failure type, operation) rather than by strategy string, so
-        # renaming the recovery path cannot mint a fresh allowance.
+        # budget by (failure type, operation) rather than by strategy string, so renaming the recovery
+        # path cannot mint a fresh allowance
         sequence_key = f"{failure.failure_type.value}:{failure.operation}"
         remaining = self.budgets.max_recovery_actions - self.stats.recovery_actions
         if not failure.recoverable or self._counts[sequence_key] >= max_attempts or remaining <= 0:
@@ -519,15 +477,15 @@ class RecoveryController:
             self._trace("RECOVERY", failure=failure.as_dict(), result=result.as_dict())
             return result
         if action is None or validate is None:
-            # A recovery sequence with nothing to run cannot claim success; a
-            # missing action is a caller bug, not a recovered failure.
+            # a recovery sequence with nothing to run cannot claim success; a missing action is a caller
+            # bug, not a recovered failure
             result = RecoveryResult(False, "NO_RECOVERY_ACTION" if action is None else "NO_RECOVERY_VALIDATOR", 0,
                                     error="recovery requires an action and independent state validator")
             self.stats.false_recovery_blocked += 1
             self._trace("FALSE_RECOVERY_BLOCKED", failure=failure.as_dict(), result=result.as_dict())
             return result
         self.stats.recovery_attempts += 1
-        # A single sequence may not spend past the run's global action budget.
+        # a single sequence may not spend past the run's global action budget
         max_attempts = min(max_attempts - self._counts[sequence_key], remaining)
         attempts = 0
         last_error = None

@@ -1,8 +1,4 @@
-"""Private loopback connection between the Licet UI and the real sandbox agent.
-
-Credentials remain in the existing local .env. Requests always run plan-only.
-A random session token is required, including for browser images and reports.
-"""
+"""private loopback connection between the licet ui and the real sandbox agent"""
 from __future__ import annotations
 
 import json
@@ -64,7 +60,7 @@ class Bridge:
                 try:
                     result['trace'].append(json.loads(line))
                 except json.JSONDecodeError:
-                    pass  # The agent may be writing its final line.
+                    pass
         report = self.output / 'run.json'
         if report.exists():
             try:
@@ -82,7 +78,7 @@ class Bridge:
     def frame(self):
         if not self.output:
             return None
-        # Agent-created files only; no caller-supplied paths and no login captures.
+        # agent-created files only; no caller-supplied paths and no login captures
         paths = list((self.output / 'screen').glob('*.jpg')) + list(self.output.glob('portal-*.png'))
         return max(paths, key=lambda p: p.stat().st_mtime_ns) if paths else None
 
@@ -90,7 +86,7 @@ class Bridge:
 def handler_for(bridge):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):
-            pass  # Never log bearer tokens or user requests.
+            pass  # never log bearer tokens or user requests
 
         def allowed(self):
             return (self.headers.get('Host') == f'127.0.0.1:{PORT}'
@@ -144,7 +140,7 @@ def handler_for(bridge):
             if not self.authenticated():
                 return
             if self.path == '/booking-replay':
-                # Fixed offline harness only; no request parameters or live I/O.
+                # fixed offline harness only; no request parameters or live i/o
                 from scripts.booking_replay_evidence import run_replay
                 try:
                     return self.reply(200, run_replay())
@@ -175,8 +171,7 @@ def main():
     fd = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, 'w') as f:
         f.write(bridge.token)
-    # URL fragments stay in the browser and are removed immediately by the UI.
-    # This file is private; it contains only a random per-process pairing key.
+    # url fragments stay in the browser and are removed immediately by the ui
     pairing = directory / 'connect.html'
     fd = os.open(pairing, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, 'w') as f:

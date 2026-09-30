@@ -1,24 +1,4 @@
-"""Deterministic Phase 3 findings.
-
-Rules only promote facts when the portal supplies the required evidence. In
-particular (architecture review review P1 #1/#5, contract "What counts as a blocker"):
-
-- an unpaid fee is a money fact; it is a gate only with explicit gate evidence
-  (fee gate text or an explicit payment-required condition), never from the
-  existence of a balance;
-- a failed inspection is an observed problem, never authority to schedule —
-  no reinspection candidate is emitted when a follow-up is already scheduled
-  or when attempt ordering is unknown;
-- offered inspection types are never required work; only ACA's own
-  ``(required)`` marker (carried as a ``required_type`` fact) can produce an
-  unmet-requirement candidate, and even that stays a candidate, not a blocker;
-- coverage states (unavailable/parse-failed sections) are uncertainties about
-  knowledge, never permit defects.
-
-Blockers carry an explainable ``rank`` (lower = presented first) and are
-ordered by classification, then rank — presentation order, never evidence that
-the first item is legally required first (reasoning contract, ranking policy).
-"""
+"""deterministic phase 3 findings"""
 from __future__ import annotations
 
 import datetime as _dt
@@ -43,11 +23,6 @@ class DeterministicFindings:
     uncertainties: list[str] = field(default_factory=list)
 
 
-# Deterministic, explainable ranking (reasoning contract: explicit
-# administrative holds, failed prerequisites, explicit missing required
-# documents, explicit outstanding required inspections, payment gates,
-# informational issues). Ranks order presentation; they do not claim that the
-# first item is operationally first.
 _RANK: dict[str, int] = {
     "active_condition": 10,
     "failed_inspection": 20,
@@ -63,11 +38,6 @@ def _sort_key(blocker: Blocker) -> tuple[int, int]:
     return (class_order.get(blocker.classification, 3), _RANK.get(blocker.type, 60))
 
 
-# --- condition activity ----------------------------------------------------
-# Agency labels are matched exactly after harmless normalization, and an
-# unrecognized label stays unknown (architecture review review P1 #2, applied to conditions).
-# Substring matching here previously promoted "Hold released" to a confirmed
-# gate and "No warning" to an observed problem (adversarial review A1).
 _ACTIVE_CONDITION_LABELS = {
     "active", "open", "outstanding", "in force", "in effect", "in place",
     "not satisfied", "unsatisfied", "unresolved", "violation", "warning",
@@ -81,8 +51,8 @@ _INACTIVE_CONDITION_LABELS = {
     "canceled", "inactive", "withdrawn", "expired", "superseded",
     "no longer applies", "not applicable", "n/a", "none",
 }
-# Only an explicit administrative hold is a *gate*; other active conditions are
-# observed problems with unknown scope.
+# only an explicit administrative hold is a *gate*; other active conditions are observed problems with
+# unknown scope
 _GATE_CONDITION_LABELS = {
     "hold", "on hold", "active hold", "administrative hold", "suspended",
     "suspension", "stop work", "stop work order",
@@ -94,7 +64,7 @@ def _condition_label(condition) -> str:
 
 
 def _condition_activity(condition) -> str:
-    """``active`` / ``inactive`` / ``unknown`` from the portal's own label."""
+    """``active`` / ``inactive`` / ``unknown`` from the portal's own label"""
     label = _condition_label(condition)
     if not label:
         return "unknown"
@@ -109,8 +79,8 @@ def _condition_is_gate(condition) -> bool:
     return _condition_label(condition) in _GATE_CONDITION_LABELS
 
 
-# A required document is a blocker only when the portal states the requirement
-# is unmet. "Pending"/"Under review" say nothing about satisfaction (review A11).
+# a required document is a blocker only when the portal states the requirement is unmet. "pending"/"under
+# review" say nothing about satisfaction (review a11)
 _MISSING_DOCUMENT_LABELS = {
     "missing", "not received", "not submitted", "not uploaded", "outstanding",
     "incomplete", "required", "delinquent", "void",
@@ -121,14 +91,8 @@ _AMBIGUOUS_DOCUMENT_LABELS = {
 }
 
 
-# --- money -----------------------------------------------------------------
-
 def _fee_outstanding(fee) -> float | None:
-    """The amount that is actually still owed, number first.
-
-    ``amount_text`` is a raw capture and can disagree with the parsed balance
-    (review A8): "$74.50" was reported for a row whose balance was $100.00.
-    """
+    """the amount that is actually still owed, number first"""
     return fee.balance if fee.balance is not None else fee.amount
 
 
@@ -139,11 +103,6 @@ def format_fee_amount(fee) -> str:
     return fee.amount_text or "an unquantified amount"
 
 
-# --- payment gates ---------------------------------------------------------
-# A gate is a portal statement. Two adversarial failures are guarded here: an
-# explicit negation ("No payment is required before issuance") must not become a
-# gate, and the gated stage must come from the wording rather than being
-# assumed to be issuance (review A2/A3).
 _NEGATED_PAYMENT_RE = re.compile(
     r"\b(no|not|never|without)\b[^.;]{0,40}"
     r"\b(pay|paid|payment|payments|fee|fees|balance|charge|charges|money)\b"
@@ -168,7 +127,7 @@ def _stage_from_text(text: str) -> str | None:
 
 
 def _payment_gate_evidence(fee, state) -> tuple[str, str | None] | None:
-    """Return ``(gate wording, affected stage)`` when the portal states one."""
+    """return ``(gate wording, affected stage)`` when the portal states one"""
     if fee.gate_text and not _NEGATED_PAYMENT_RE.search(fee.gate_text.lower()):
         return fee.gate_text, _stage_from_text(fee.gate_text)
     for condition in state.conditions:
@@ -180,10 +139,6 @@ def _payment_gate_evidence(fee, state) -> tuple[str, str | None] | None:
     return None
 
 
-# --- comment and history wording -------------------------------------------
-# "Corrections Required" beside a Passed result is conflicting evidence; "No
-# corrections required" beside a Passed result is a clean pass. The former
-# substring test (``"correction" in comments``) flagged both (review A5).
 _NEGATED_CORRECTION_RE = re.compile(
     r"\b(no|not|none|without|zero|free of|clear of)\b[^.;]{0,24}\bcorrections?\b"
 )
@@ -193,15 +148,15 @@ _CORRECTION_REQUIRED_RE = re.compile(
 
 
 def comment_requests_correction(text: str) -> bool:
-    """Whether a linked comment states that corrections are *outstanding*."""
+    """whether a linked comment states that corrections are *outstanding*"""
     lowered = (text or "").lower()
     if _NEGATED_CORRECTION_RE.search(lowered):
         return False
     return bool(_CORRECTION_REQUIRED_RE.search(lowered))
 
 
-# "Permit expired" is an explicit expiration event; "permit not expired" is the
-# opposite statement and must not be read as one (review A6).
+# "permit expired" is an explicit expiration event; "permit not expired" is the opposite statement and
+# must not be read as one (review a6)
 _NEGATED_EXPIRY_RE = re.compile(r"\b(no|not|never|without|before|prior to)\b[^.;]{0,24}\bexpir")
 
 
@@ -211,8 +166,6 @@ def explicit_expiration_event(text: str) -> bool:
         return False
     return bool(re.search(r"\bexpired\b", lowered))
 
-
-# --- attempt ordering -------------------------------------------------------
 
 def _iso_date(value: str | None):
     if not value:
@@ -224,13 +177,7 @@ def _iso_date(value: str | None):
 
 
 def _attempt_order(failed, passed) -> str:
-    """``later`` / ``earlier`` / ``unknown`` / ``incomparable``.
-
-    Only a *later* pass can supersede a failure. The inherited resolution step
-    ignored chronology and silently dropped a failure that followed a pass
-    (review A4). Unknown or non-ISO dates stay ``unknown`` rather than being
-    ordered by screen position.
-    """
+    """``later`` / ``earlier`` / ``unknown`` / ``incomparable``"""
     if failed.scope and passed.scope and failed.scope != passed.scope:
         return "incomparable"
     earlier, later = _iso_date(failed.completed_date), _iso_date(passed.completed_date)
@@ -245,8 +192,8 @@ def _attempt_order(failed, passed) -> str:
 
 def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
     result = DeterministicFindings(contradictions=list(state.contradictions))
-    # Explicit expiration is a portal fact; a configured date alone is not an
-    # expired state (architecture review case S02).
+    # explicit expiration is a portal fact; a configured date alone is not an expired state (architecture
+    # review case s02)
     if state.status_normalized == "EXPIRED":
         result.blockers.append(
             Blocker("expired_permit", "Portal reports the permit as expired", "Overview",
@@ -255,13 +202,13 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
     for condition in state.conditions:
         activity = _condition_activity(condition)
         if activity == "inactive":
-            # "Hold released", "Corrections complete", "Satisfied": a resolved
-            # condition is history, never a current blocker (review A1).
+            # "hold released", "corrections complete", "satisfied": a resolved condition is history, never
+            # a current blocker (review a1)
             continue
         if activity == "unknown":
             if condition.status:
-                # An unrecognized agency label cannot become a blocker, and it
-                # must never become a confirmed gate; it stays an uncertainty.
+                # an unrecognized agency label cannot become a blocker, and it must never become a
+                # confirmed gate; it stays an uncertainty
                 result.uncertainties.append(
                     Uncertainty(
                         f"Condition {condition.description!r} has status "
@@ -284,9 +231,9 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
         )
     for inspection in state.inspections:
         if not inspection.failed:
-            # A passed result with a correction-required comment on the same
-            # attempt is unresolved conflicting evidence, not a pass to report
-            # or a failure to invent (architecture review case F04).
+            # a passed result with a correction-required comment on the same attempt is unresolved
+            # conflicting evidence, not a pass to report or a failure to invent (architecture review case
+            # f04)
             if inspection.passed and comment_requests_correction(inspection.comments):
                 result.contradictions.append(
                     f"{inspection.type}: result is {inspection.raw_result!r} but the "
@@ -300,18 +247,14 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     inspection.evidence_ids + inspection.comment_evidence_ids, _RANK["failed_inspection"])
         )
         same_type = [x for x in state.inspections if x.type.lower() == inspection.type.lower()]
-        # Latest-attempt honesty (architecture review case H05): same-type fail+pass attempts
-        # leave "which outcome is current" unresolved only when ordering is NOT
-        # establishable — a missing date on either attempt, or a date tie.
-        # Differing known dates DO establish order (H01); known dates equal
-        # remain ambiguous. No scheduling or correction candidates may be
-        # emitted while ordering is unresolved — both would presume the failure
-        # is the current outcome.
+        # latest-attempt honesty (architecture review case h05): same-type fail+pass attempts leave "which
+        # outcome is current" unresolved only when ordering is not establishable — a missing date on
+        # either attempt, or a date tie
         unordered_conflict = any(
             x is not inspection
             and x.passed
-            # different explicit scopes are different requirements (H04) —
-            # their outcomes cannot resolve or order this attempt's
+            # different explicit scopes are different requirements (h04) — their outcomes cannot resolve
+            # or order this attempt's
             and (
                 inspection.scope is None
                 or x.scope == inspection.scope
@@ -345,8 +288,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                                 "likely", ["correction completion"],
                                 inspection.evidence_ids + inspection.comment_evidence_ids)
         )
-        # A bare failure is not authority to schedule (architecture review case H02): if a
-        # same-type attempt is already scheduled, reinspection is arranged.
+        # a bare failure is not authority to schedule (architecture review case h02): if a same-type
+        # attempt is already scheduled, reinspection is arranged
         if any(x.lifecycle_normalized == "SCHEDULED" for x in same_type):
             result.uncertainties.append(
                 Uncertainty(
@@ -367,9 +310,9 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     .72, False, "possible", ["correction completion"], inspection.evidence_ids,
                 )
             )
-    # A completed attempt with no recorded outcome (architecture review case S04): the
-    # lifecycle is a fact, the result is unknown — never guessed either way,
-    # and the unknown outcome can change any current-outcome answer.
+    # a completed attempt with no recorded outcome (architecture review case s04): the lifecycle is a
+    # fact, the result is unknown — never guessed either way, and the unknown outcome can change any
+    # current-outcome answer
     for inspection in state.inspections:
         if inspection.lifecycle_normalized == "COMPLETED" and not inspection.result_normalized:
             result.uncertainties.append(
@@ -382,8 +325,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     True,
                 )
             )
-    # Explicitly required inspections with no completing attempt: a candidate,
-    # never a blocker (the catalog itself never becomes work).
+    # explicitly required inspections with no completing attempt: a candidate, never a blocker (the
+    # catalog itself never becomes work)
     for fact in state.facts:
         if fact.field != "required_type" or not fact.value:
             continue
@@ -403,10 +346,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 )
             )
     for fee in state.fees:
-        # Non-payment is a portal statement, never an assumption: a fee whose
-        # payment state is absent stays unknown. The inherited rule asserted
-        # "remains unpaid" beside its own "payment state not shown" fact
-        # (review A7).
+        # non-payment is a portal statement, never an assumption: a fee whose payment state is absent
+        # stays unknown
         if fee.paid is not False:
             if fee.due is True and fee.paid is None:
                 result.uncertainties.append(
@@ -423,11 +364,10 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
             continue
         outstanding = _fee_outstanding(fee)
         if outstanding is not None and outstanding <= 0:
-            # A zeroed balance is not an outstanding amount (review A10).
+            # a zeroed balance is not an outstanding amount (review a10)
             continue
-        # Explicit gate evidence only: the portal words the gate on the fee row
-        # or in a condition (architecture review case B02). Words like "balance due" describe
-        # money; they do not gate a stage (architecture review case B01).
+        # explicit gate evidence only: the portal words the gate on the fee row or in a condition
+        # (architecture review case b02)
         gate = _payment_gate_evidence(fee, state)
         classification = "confirmed_gate" if gate else "potential_impediment"
         stage = gate[1] if gate else None
@@ -476,8 +416,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                         document.evidence_ids, _RANK["missing_required_document"])
             )
         elif status in _AMBIGUOUS_DOCUMENT_LABELS:
-            # "Pending" is not "missing": the document requirement stays open
-            # as an uncertainty until the portal states an outcome (review A11).
+            # "pending" is not "missing": the document requirement stays open as an uncertainty until the
+            # portal states an outcome (review a11)
             result.uncertainties.append(
                 Uncertainty(
                     f"Required document {document.name!r} is shown as {document.status!r}; "
@@ -489,8 +429,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 )
             )
     for section, coverage in state.coverage.items():
-        # Coverage states are knowledge limitations, never permit defects
-        # (architecture review case U02): they become uncertainties, not blockers.
+        # coverage states are knowledge limitations, never permit defects (architecture review case u02):
+        # they become uncertainties, not blockers
         if coverage.status in {CoverageStatus.UNAVAILABLE, CoverageStatus.PARSE_FAILED}:
             result.uncertainties.append(
                 Uncertainty(
@@ -502,10 +442,8 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                     True,
                 )
             )
-    # A pass resolves a prior failure only when the same scope is explicit
-    # (architecture review cases H01/H04) AND the pass is established as later (review A4).
-    # With unknown ordering the failure stays open; with an *earlier* pass the
-    # failure is the latest established outcome and must stay a blocker.
+    # a pass resolves a prior failure only when the same scope is explicit (architecture review cases
+    # h01/h04) and the pass is established as later (review a4)
     for failed in (x for x in state.inspections if x.failed):
         matching_pass = next(
             (
@@ -534,15 +472,10 @@ def derive_deterministic_findings(state: PermitState) -> DeterministicFindings:
                 if failed.type.lower() not in a.action.lower()
             ]
         elif order == "earlier":
-            # The portal's dates establish the failure as the current outcome;
-            # the earlier pass neither resolves it nor removes its candidates.
             continue
         else:
-            # Order may be fully established here (e.g. both dates known, pass
-            # later) with only the *scope* unknown — or ordering itself may be
-            # unknown. Name the actual missing premise instead of asserting a
-            # fact-free "same scope": with dates now reliably extracted, the
-            # wording must not contradict the evidence it cites (portal integration review H07).
+            # order may be fully established here (e.g. both dates known, pass later) with only the
+            # *scope* unknown — or ordering itself may be unknown
             if failed.scope is None and matching_pass.scope is None and order == "later":
                 premise = ("both attempts' scopes are not shown, so whether the pass "
                            "addresses the failed attempt is not established")

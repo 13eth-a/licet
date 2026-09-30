@@ -1,29 +1,4 @@
-"""Phase 5 live acceptance run — the exit-gate harness.
-
-Runs the *real* stack for one goal: Phase 2 lookup -> Phase 3 read/reason ->
-Phase 4 selection/preflight/execution, with the goal-based planner choosing each
-semantic action. No shortcut around the product path is added here.
-
-SAFE BY DEFAULT. A bare run cannot execute a mutation: every mutation action is
-put behind an explicit approval pause (`confirmation_required`), and the harness
-never resumes one. `--execute` restores the product defaults (schedule/reschedule
-automatic, cancellation still needs confirmation). Even then, the policy layer,
-preflight and executor gate the action exactly as in the product — the harness
-adds no permission.
-
-The captured `LIVE_PLAN_ONLY_ACCEPTANCE` evidence is from Accela's `aca-test`
-host (classified by Licet as sandbox), run plan-only: its identity-verified
-calendar had no active dates in Sep–Nov 2026. Cost and signature disclosure
-remain unknown, and no mutation was attempted. The acceptance summary reports
-those facts separately; it does not imply that the calendar was checked beyond
-those observed months or that a real booking occurred.
-
-Run:
-    .venv/bin/python scripts/ni_phase5_acceptance.py \
-        "Get permit BLD26-00469 ready for its next inspection."          # plan-only
-    .venv/bin/python scripts/ni_phase5_acceptance.py \
-        "Get permit BLD26-00469 ready for its next inspection." --execute
-"""
+"""phase 5 live acceptance run — the exit-gate harness"""
 from __future__ import annotations
 
 import argparse
@@ -96,9 +71,6 @@ async def main(argv: list[str] | None = None) -> int:
         confirmation = frozenset() if args.execute else frozenset(MUTATIONS)
         run = None
         for attempt in range(1, args.attempts + 1):
-            # A fresh session per attempt: a session left mid-flow by a flaky
-            # step wedges the next run (observed live), and re-using one would
-            # make the retry itself untrustworthy.
             live = await build_live_capabilities(logger=logger)
             out(f"login: authenticated  (run log: {logger.path})")
             try:
@@ -117,8 +89,8 @@ async def main(argv: list[str] | None = None) -> int:
             })
             out(f"attempt {attempt}: status={run.status.value} error={run.error.value if run.error else None}"
                 f" steps={record['metrics']['semantic_steps']}")
-            # A BLOCKED run here is how an intermittent live tool failure surfaces;
-            # any other status is a real planner outcome and is not retried.
+            # a blocked run here is how an intermittent live tool failure surfaces; any other status is a
+            # real planner outcome and is not retried
             if run.status != Status.BLOCKED:
                 break
         final = run.report()

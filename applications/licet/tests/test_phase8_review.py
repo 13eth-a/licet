@@ -84,8 +84,8 @@ def test_prompt_suite_keeps_every_reviewed_golden_intact():
     results = run_tasks(tasks)
     assert all(result.expectation_met for result in results)
     by_id = {result.task_id: result for result in results}
-    # The four language-handling failures fixed after the architecture review review, plus the
-    # ambiguity case that must stay a safe stop (goldens were never weakened).
+    # the four language-handling failures fixed after the architecture review review, plus the ambiguity
+    # case that must stay a safe stop (goldens were never weakened)
     for task_id in ("PROMPT-003", "PROMPT-006",
                     "PROMPT-DISCOVERY-002-P029", "PROMPT-DISCOVERY-004-P032"):
         assert by_id[task_id].success and by_id[task_id].safe
@@ -112,12 +112,7 @@ def test_provenance_and_comparison_reject_fake_model_experiment():
 
 
 def test_working_tree_digest_tracks_uncommitted_bytes(tmp_path):
-    """The run identity is the tree on disk, not HEAD (audit A9).
-
-    A dirty edit moves no commit hash, so a hash-only record names a revision
-    the run did not use. The digest is computed from file bytes instead, which
-    makes a dirty-tree report replayable.
-    """
+    """the run identity is the tree on disk, not head (audit a9)"""
     from licetbench.provenance import provenance
     for directory in ("licet", "licetbench"):
         (tmp_path / directory).mkdir()
@@ -128,7 +123,7 @@ def test_working_tree_digest_tracks_uncommitted_bytes(tmp_path):
     assert "licetbench/catalogue.py" in before["source_files"]
     assert "pyproject.toml" in before["source_files"]
     assert before["source_digest"] == digest(before["source_files"])
-    source.write_text("tasks = [1]\n")  # uncommitted edit; HEAD does not move
+    source.write_text("tasks = [1]\n")  # uncommitted edit; head does not move
     after = provenance([], root=tmp_path)
     assert after["source_digest"] != before["source_digest"]
     assert after["source_files"]["licetbench/catalogue.py"] == hashlib.sha256(

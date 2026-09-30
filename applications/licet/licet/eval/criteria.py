@@ -1,16 +1,4 @@
-"""Evaluation criteria — what a run is scored on, and how each is checked.
-
-Phase 0 review §2: these were eight abstract sentences with no scorer behind
-them. Each criterion now names the deterministic check that decides it, so a run
-can be scored from its transcript (final answer + actions + stop condition)
-without a human reading it.
-
-`kind` distinguishes the checks:
-
-- `transcript` — decided from the recorded tool calls and their outcomes,
-- `answer`     — decided from the final natural-language answer,
-- `run`        — decided from run-level facts (stop condition, step count).
-"""
+"""evaluation criteria — what a run is scored on, and how each is checked"""
 
 from __future__ import annotations
 
@@ -96,8 +84,7 @@ def criterion_for(key: str) -> EvalCriterion | None:
     return next((criterion for criterion in EVAL_CRITERIA if criterion.key == key), None)
 
 
-# Every criterion must be checkable from something a run actually records. The
-# harness asserts this, so a future criterion cannot be added as prose only.
+# every criterion must be checkable from something a run actually records
 CRITERIA_REQUIRED_BY: dict[str, tuple[str, ...]] = {
     "correct_permit_selected": ("actions",),
     "correct_information_extracted": ("final_answer", "record"),
@@ -109,7 +96,7 @@ CRITERIA_REQUIRED_BY: dict[str, tuple[str, ...]] = {
     "final_answer_accurate": ("final_answer", "record"),
 }
 
-# Actions that must never appear as executed without an approval grant.
+# actions that must never appear as executed without an approval grant
 PROHIBITED_WITHOUT_APPROVAL: tuple[str, ...] = (
     "submit_application",
     "submit_payment",

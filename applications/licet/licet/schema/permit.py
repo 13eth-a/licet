@@ -1,30 +1,4 @@
-"""Permit data schema, rebuilt against the records we actually created.
-
-Phase 0 review §4: the first cut could not represent the eight test records on
-Null Island. Concretely:
-
-- `permit_id: str` cannot address a record. The *displayed* record number is
-  per cap type (`000000014` for Commercial Alteration, `BLD26-004xx` for every
-  other type) while the stable identity is capID1/capID2/capID3 + module +
-  agency code, which is what a deep link needs — hence `RecordRef`.
-- There was no created/submitted date, and `expiration_date` reads
-  `01/31/2026` on a record that is **Submitted, not issued**: that value is
-  agency configuration, so "is this permit expired?" would have been wrong.
-  Both dates now exist and provenance keeps them distinguishable.
-- There was no home for the scheduling form's inspection-type list, so the
-  checklist's central question ("what inspection needs to happen next" =
-  required types minus history) was unrepresentable.
-- `Inspection` dropped the `inspectionID` (needed to reschedule/cancel),
-  conflated scheduled/completed dates, and stored only the portal's raw status
-  string with no normalized counterpart.
-- `Fee.amount: float` was required even though fees arrive as portal text and
-  payment is out of scope; `documents: list[str]` could not express an
-  attachment that is a postback link rather than a filename.
-
-Plain strings are still accepted for the fields that were lists of strings in
-the first cut (documents / outstanding_requirements / next_action) and are
-coerced, so existing callers keep working.
-"""
+"""permit data schema, rebuilt against the records we actually created"""
 
 from __future__ import annotations
 
@@ -38,7 +12,7 @@ from licet.browser.accela import AGENCY_CODE, DEFAULT_MODULE, detail_url
 
 
 class PermitStatus(str, Enum):
-    """Normalized permit status, alongside the portal's raw string."""
+    """normalized permit status, alongside the portal's raw string"""
 
     DRAFT = "draft"
     SUBMITTED = "submitted"
@@ -62,16 +36,10 @@ class InspectionStatus(str, Enum):
 
 
 class Provenance(str, Enum):
-    """Where a fact came from — evals score these differently.
+    """where a fact came from — evals score these differently"""
 
-    Phase 3 (architecture review review P1 #3): unknown provenance must stay unknown. A bare
-    string with no source is coerced to UNATTRIBUTED — never silently promoted
-    to a portal fact. PORTAL is reserved for values read off a page with
-    evidence attached.
-    """
-
-    PORTAL = "portal"  # read verbatim off a portal page, evidence attached
-    DERIVED = "derived"  # inferred by Licet (e.g. "next inspection required")
+    PORTAL = "portal"
+    DERIVED = "derived"
     UNATTRIBUTED = "unattributed"  # origin unknown; not a verified portal fact
 
 
@@ -124,13 +92,13 @@ def normalize_permit_status(raw: str | None) -> PermitStatus:
 
 
 def normalize_inspection_status(raw: str | None) -> InspectionStatus:
-    # Exact vocabulary is intentional: Completed is lifecycle, not a result,
-    # and negative phrases must not be swallowed by positive substrings.
+    # exact vocabulary is intentional: completed is lifecycle, not a result, and negative phrases must not
+    # be swallowed by positive substrings
     return _INSPECTION_STATUS_LOOKUP.get((raw or "").strip().lower(), InspectionStatus.UNKNOWN)
 
 
 class Fact(BaseModel):
-    """A claim plus how we know it."""
+    """a claim plus how we know it"""
 
     value: str
     provenance: Provenance = Provenance.UNATTRIBUTED
@@ -138,14 +106,14 @@ class Fact(BaseModel):
 
 
 class RecordRef(BaseModel):
-    """Stable record identity — what a deep link is actually made of."""
+    """stable record identity — what a deep link is actually made of"""
 
     cap_id1: str
     cap_id2: str
     cap_id3: str
     module: str = DEFAULT_MODULE
     agency_code: str = AGENCY_CODE
-    display_id: str | None = None  # e.g. "BLD26-00472" or "000000014"
+    display_id: str | None = None
 
     def detail_url(self, **overrides: Any) -> str:
         return detail_url(
@@ -161,11 +129,11 @@ class RecordRef(BaseModel):
 
 
 class Document(BaseModel):
-    """An attachment. `url=None` means the portal shows a section, not a file."""
+    """an attachment"""
 
     name: str
     url: str | None = None
-    requires_click: bool = True  # ACA attachments are postback links, not hrefs
+    requires_click: bool = True  # aca attachments are postback links, not hrefs
 
     @classmethod
     def from_value(cls, value: Any) -> "Document":
@@ -178,19 +146,18 @@ class Document(BaseModel):
 
 class Inspection(BaseModel):
     type: str
-    status: str  # portal's raw string, e.g. "Insp Scheduled"
+    status: str
     status_normalized: InspectionStatus | None = None
     inspection_id: str | None = None
     scheduled_date: dt.date | None = None
     completed_date: dt.date | None = None
-    # Kept for convenience/back-compat: whichever of the two dates was present.
     date: dt.date | None = None
     comments: str | None = None
 
     @model_validator(mode="after")
     def _fill_normalized(self) -> "Inspection":
-        # A model validator, not a field validator: `mode="before"` validators
-        # never run for a field that was simply not supplied.
+        # a model validator, not a field validator: `mode="before"` validators never run for a field that
+        # was simply not supplied
         if self.status_normalized is None:
             self.status_normalized = normalize_inspection_status(self.status)
         return self
@@ -211,34 +178,31 @@ class Fee(BaseModel):
 
 
 class Permit(BaseModel):
-    permit_id: str  # displayed record number, for humans and prompts
+    permit_id: str
     address: str
-    ref: RecordRef | None = None  # stable identity; required for deep links
+    ref: RecordRef | None = None
     permit_type: str | None = None
-    status: str | None = None  # portal's raw string
+    status: str | None = None
     status_normalized: PermitStatus | None = None
     applicant: str | None = None
     description: str | None = None
 
-    submitted_date: dt.date | None = None  # "Date" column in My Records
+    submitted_date: dt.date | None = None
     issued_date: dt.date | None = None
     expiration_date: dt.date | None = None
 
     inspections: list[Inspection] = Field(default_factory=list)
-    # Types the scheduling form offers, so "what inspection is next" can be
-    # computed as (required types) minus (history) instead of guessed.
+    # types the scheduling form offers, so "what inspection is next" can be computed as (required types)
+    # minus (history) instead of guessed
     schedulable_inspection_types: list[str] = Field(default_factory=list)
-    # Coverage/observation facts: empty-but-observed sections, loading markers,
-    # calendar scope, truncation. Never treated as unmet obligations.
+    # coverage/observation facts: empty-but-observed sections, loading markers, calendar scope, truncation
     coverage_notes: list[Fact] = Field(default_factory=list)
-    # Types the record's scheduler marks `(required)` — explicit portal
-    # requirement evidence, distinct from the offered catalog.
     required_inspection_types: list[str] = Field(default_factory=list)
     fees: list[Fee] = Field(default_factory=list)
     documents: list[Document] = Field(default_factory=list)
     outstanding_requirements: list[Fact] = Field(default_factory=list)
     next_action: Fact | None = None
-    sections: list[str] = Field(default_factory=list)  # e.g. "Schedule an Inspection"
+    sections: list[str] = Field(default_factory=list)
 
     @field_validator("documents", mode="before")
     @classmethod
@@ -285,15 +249,7 @@ class Permit(BaseModel):
         return self
 
     def missing_inspections(self) -> list[str]:
-        """Explicitly REQUIRED types with no matching inspection attempt yet.
-
-        Phase 3 (architecture review review P1 #1): the offered catalog is not a checklist.
-        Only types the portal itself marks `(required)` may become outstanding
-        work. Offered-but-unseen types are available options, not obligations —
-        `offered_inspection_types()` carries them under a name that implies no
-        requirement. For history, outcome matters: a failed attempt means the
-        type is not "done", and a cancelled attempt satisfies nothing.
-        """
+        """explicitly required types with no matching inspection attempt yet"""
         done = {
             inspection.type.strip().lower()
             for inspection in self.inspections
@@ -306,5 +262,5 @@ class Permit(BaseModel):
         ]
 
     def offered_inspection_types(self) -> list[str]:
-        """Types the scheduling form offers — availability, not obligation."""
+        """types the scheduling form offers — availability, not obligation"""
         return list(self.schedulable_inspection_types)

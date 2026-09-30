@@ -1,30 +1,4 @@
-"""Run the Licet planner loop against the live Null Island sandbox.
-
-This is the entry point Phase 1 needed: a real goal goes in, a real browser
-session runs under the guard, and a `RunRecord` comes out that
-`licet/eval/harness.py` can score — offline, later, or immediately with
-`--score`.
-
-    .venv/bin/python scripts/ni_agent_run.py --list
-    .venv/bin/python scripts/ni_agent_run.py --prompt-id P02
-    .venv/bin/python scripts/ni_agent_run.py --prompt-id P01 --prompt-id P02 --score
-    .venv/bin/python scripts/ni_agent_run.py --all --max-steps 12
-    .venv/bin/python scripts/ni_agent_run.py --goal "Find permit BLD26-00469."
-
-Safety rails, because this is the first thing here that can act on a portal by
-itself:
-
-- It refuses to run unless the configured target is on the **test** host
-  (`aca-test.accela.com`). The model smoke test showed the live model will
-  happily offer a production Accela URL from memory; a script that follows the
-  configured sandbox is the backstop.
-- Consequential actions are held by the guard, not by this script. A held run
-  stops with `approval_required` and a system report; nothing is submitted,
-  paid, cancelled or accepted.
-- Every step is written to `logs/ni_agent/<run>.jsonl`, and the whole run to
-  `logs/ni_agent/<stamp>_runs.json` in the shape `ni_eval_fixtures.py --score`
-  accepts.
-"""
+"""run the licet planner loop against the live null island sandbox"""
 
 from __future__ import annotations
 
@@ -50,8 +24,7 @@ from licet.logging.logger import RunLogger  # noqa: E402
 from licet.safety.policy import Environment, environment_from_url  # noqa: E402
 
 LOG_DIR = Path("logs/ni_agent")
-# The only host a run may touch. `aca-prod.accela.com` is production and is
-# explicitly NOT allowed (see the scope block in licet/agent/prompts.py).
+# the only host a run may touch
 SANDBOX_HOSTS = ("aca-test.accela.com",)
 
 
@@ -60,7 +33,7 @@ def out(message: str = "") -> None:
 
 
 def sandbox_problem(url: str | None) -> str | None:
-    """Why this target must not be driven, or None when it is the sandbox."""
+    """why this target must not be driven, or none when it is the sandbox"""
     if not url:
         return "ACCELA_SANDBOX_URL is not set"
     try:
@@ -75,7 +48,7 @@ def sandbox_problem(url: str | None) -> str | None:
 
 
 def _environment_badge(url: str | None) -> str:
-    """Prominent badge for the demo: SANDBOX vs LIVE — READ ONLY vs UNKNOWN."""
+    """prominent badge for the demo: sandbox vs live — read only vs unknown"""
     env = environment_from_url(url)
     if env is Environment.SANDBOX:
         return "SANDBOX  — mutations allowed only here (reversible schedule)"
@@ -85,7 +58,7 @@ def _environment_badge(url: str | None) -> str:
 
 
 def _friendly_result(stop: str | None, has_permit: bool) -> tuple[str, str]:
-    """Human result title + one-line explanation for the final card."""
+    """human result title + one-line explanation for the final card"""
     mapping: dict[str | None, tuple[str, str]] = {
         "goal_completed": (
             "COMPLETION DECLARED",
@@ -128,7 +101,7 @@ def _friendly_result(stop: str | None, has_permit: bool) -> tuple[str, str]:
 
 
 def _mutation_evidence(run) -> str:
-    """Summarize trace evidence without turning a page read into outcome proof."""
+    """summarize trace evidence without turning a page read into outcome proof"""
     from licet.safety.risk_levels import changes_state
 
     entries = [e for e in (run.actions or [])
@@ -157,7 +130,6 @@ def _print_permit_card(run) -> None:
         out(f"  │ {permit.address}")
     if permit.ref is not None:
         out(f"  │ {permit.ref.as_key()}")
-    # Provenance: status vs derived facts
     if getattr(permit, "sections", None):
         out(f"  │ Sections: {', '.join(permit.sections)}")
     out("  └─────────────────────────────────────")
@@ -172,7 +144,6 @@ def _print_trace(run, verbose: bool = False) -> None:
     for idx, entry in enumerate(actions, 1):
         semantic = entry.get("semantic_action") or entry.get("name") or "—"
         target = entry.get("target") or entry.get("url") or entry.get("observation", {}).get("url", "") or ""
-        # Keep display short; full URL is in the JSONL log
         display = str(target).strip()
         if len(display) > 56:
             display = display[:53] + "..."
@@ -186,20 +157,16 @@ def _print_trace(run, verbose: bool = False) -> None:
             icon = "✓"
         else:
             icon = "✗"
-        # Prefer semantic label over raw tool name where available
         label = str(semantic).upper() if semantic else "—"
-        # In verbose mode also show provenance (intent vs commit_point etc)
         extra = ""
         if verbose:
             prov = (entry.get("resolution") or {}).get("provenance")
             if prov:
                 extra = f"  [{prov}]"
         out(f"    {idx:02}  {label:<24} {display:<56} {icon}{extra}")
-        # When an action was blocked/failed, show the reason directly under it
         if blocked or not success:
             reason = (entry.get("error") or {}).get("message") or (entry.get("authorization") or {}).get("reason", "")
             if reason:
-                # Truncate long portal text for terminal readability
                 short = str(reason).strip().replace("\n", " ")
                 if len(short) > 120:
                     short = short[:117] + "..."
@@ -208,14 +175,12 @@ def _print_trace(run, verbose: bool = False) -> None:
 
 def _print_policy_card(run) -> None:
     pending = getattr(run.state, "pending_approval", None) if run.state else None
-    # Also surface any blocked HOLD from the trace if pending was cleared
     held_entry = next(
         (a for a in (run.actions or []) if a.get("blocked") and (a.get("authorization") or {}).get("decision") == "require_approval"),
         None,
     )
     if pending is None and held_entry is None:
         return
-    # Prefer the live pending object; fall back to trace entry
     if pending is not None:
         action = pending.action
         reason = pending.reason
@@ -227,10 +192,6 @@ def _print_policy_card(run) -> None:
         details = {}
     out("  ┌─ Policy decision ──────────────────")
     out(f"  │ Action: {action}")
-    # Show risk in the policy engine's own vocabulary, not the dispatcher's three
-    # tiers: the semantic action is normalized through the same alias table the
-    # policy boundary uses, so a held `submit_payment` reads "Consequential"
-    # rather than a label from a different taxonomy.
     try:
         from licet.safety.policy import ACTION_RISKS, normalize_action  # lazy: terminal only
 
@@ -290,7 +251,7 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
 
 
 def selected_goals(options: dict[str, Any]) -> list[tuple[str, str]]:
-    """(case id, goal) pairs to run, in the order they will be run."""
+    """(case id, goal) pairs to run, in the order they will be run"""
     cases = {case.prompt_id: case for case in build_cases()}
     chosen: list[tuple[str, str]] = []
     if options["all"]:
@@ -388,7 +349,6 @@ async def main(argv: list[str]) -> int:
                 continue
 
             runs[case_id] = run.as_dict()
-            # Compact summary line
             out(
                 f"  [done] stop={run.stop_condition_value} steps={run.steps} "
                 f"actions={len(run.actions)} tokens={run.input_tokens}+{run.output_tokens} "
@@ -397,7 +357,6 @@ async def main(argv: list[str]) -> int:
             _print_permit_card(run)
             _print_trace(run, verbose=bool(options["verbose"]))
             _print_policy_card(run)
-            # Result card
             title, explanation = _friendly_result(run.stop_condition_value, run.permit is not None)
             out(f"  ┌─ Result: {title} ─────────────────")
             out(f"  │ {explanation}")

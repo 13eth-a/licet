@@ -1,19 +1,5 @@
 #!/usr/bin/env python
-"""Phase 5 adversarial replay (adversarial review).
-
-Re-derives each counterexample from ``docs/phase5/adversarial_review.md`` against
-the current tree and reports, per case, what the **pre-review** completion rule
-would have concluded versus what the current one does. The legacy column is the
-old predicate reproduced verbatim in this script (the pre-review Phase 5 runtime
-is not committed, so no revision contains it), so each case is demonstrably a
-counterexample rather than a restatement of the current code.
-
-    python scripts/phase5_adversarial_replay.py
-    python scripts/phase5_adversarial_replay.py --json docs/phase5/adversarial_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file. No
-browser, model, credential or live mutation is used.
-"""
+"""phase 5 adversarial replay (adversarial review)"""
 from __future__ import annotations
 
 import argparse
@@ -35,12 +21,7 @@ from licet.eval.phase5_fixtures import KEY, ScriptedCapabilities, goal, ready_wo
 
 
 def legacy_established(world) -> set[str]:
-    """The pre-review completion predicate, reproduced exactly.
-
-    ``blockers_identified`` came from ``answerability == "answered"`` and a record
-    match; ``next_inspection_identified`` came from any proposal; ``permit_approved``
-    did not require the permit to belong to the verified record.
-    """
+    """the pre-review completion predicate, reproduced exactly"""
     facts = set()
     if not world.permit_verified or not world.record_key:
         return facts
@@ -55,8 +36,6 @@ def legacy_established(world) -> set[str]:
         facts.add("permit_approved")
     return facts
 
-
-# --- counterexample fixtures ------------------------------------------------- #
 
 def _stale(world):
     world.reasoning.snapshot_id = "previous-snapshot"
@@ -96,7 +75,6 @@ def _identity(world):
     return world
 
 
-# Per case: (case id, fact, fixture, finding)
 CASES = [
     ("F1", "blockers_identified", _stale, "an interpretation from a previous snapshot established blockers"),
     ("F2", "blockers_identified", _contradictory, "a self-contradicting interpretation established blockers"),
@@ -110,10 +88,8 @@ CASES = [
 ]
 
 
-# --- end-to-end scenarios ---------------------------------------------------- #
-
 class _Inject:
-    """Capability wrapper that perturbs one reasoning result end to end."""
+    """capability wrapper that perturbs one reasoning result end to end"""
 
     def __init__(self, mutate=None):
         self.mutate = mutate
@@ -199,8 +175,7 @@ def main() -> int:
     for row in parse_rows:
         print(f"  {row['goal']!r}: autonomous={row['autonomous']} vague={row['vague']} success={row['success_conditions']}")
 
-    # A counterexample passes when the legacy predicate granted the fact and the
-    # current one refuses it. The positive control (C1) must still grant it.
+    # a counterexample passes when the legacy predicate granted the fact and the current one refuses it
     failures = [case["case_id"] for case in cases
                 if (case["legacy_establishes"] and case["current_establishes"] and case["case_id"] != "C1")
                 or (case["case_id"] == "C1" and not case["current_establishes"])]

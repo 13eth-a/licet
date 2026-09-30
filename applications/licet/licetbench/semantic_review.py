@@ -1,11 +1,11 @@
-"""Evidence-bound secondary semantic review; never overrides deterministic failure."""
+"""evidence-bound secondary semantic review; never overrides deterministic failure"""
 from dataclasses import dataclass, replace
 from licetbench.provenance import digest
 
 
 @dataclass(frozen=True)
 class SemanticReview:
-    verdict: str  # ACCEPT, REJECT, NEEDS_REVIEW
+    verdict: str
     answer_digest: str
     ground_truth_digest: str
     reviewer: str
@@ -25,6 +25,6 @@ def apply_review(result, review, *, answer, ground_truth):
     details={**result.details,'semantic_review':review.__dict__,
              'semantic_review_secondary':True}
     if review.verdict=='ACCEPT' or not result.success:
-        return replace(result,details=details)  # an ACCEPT cannot promote a failed hard grade
+        return replace(result,details=details)  # an accept cannot promote a failed hard grade
     return replace(result,success=False,expectation_met=False,outcome='FAILURE',
                    failure_type='reasoning failure' if review.verdict=='REJECT' else 'semantic review required',details=details)

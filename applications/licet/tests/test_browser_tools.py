@@ -28,11 +28,7 @@ def test_browser_result_has_the_provider_independent_envelope():
 
 
 def test_go_back_is_not_exposed():
-    """ACA is WebForms: history navigation resubmits postbacks.
-
-    That is how a duplicate record was created live (BLD26-00466 beside
-    BLD26-00467), so the model gets `navigate` instead.
-    """
+    """aca is webforms: history navigation resubmits postbacks"""
     assert "go_back" not in TOOL_NAMES
 
 

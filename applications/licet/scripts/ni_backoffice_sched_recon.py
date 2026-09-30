@@ -1,31 +1,4 @@
-"""READ-ONLY: does the back office offer inspection dates the citizen wizard lacks?
-
-The citizen scheduling wizard renders 0 active days for every offered type on the
-account's records (measured out to Dec 2028). Appointment capacity in ACA is
-agency / inspection-type / calendar configuration, so the decisive question for
-"can we seed a bookable slot?" is:
-
-    does the BACK OFFICE's own Schedule-inspections form offer selectable dates
-    for a type the citizen wizard shows empty?
-
-  * If yes -> the gap is a *visibility/display* flag, not missing capacity, and a
-    small config write can make the slot citizen-bookable.
-  * If no  -> capacity is genuinely unconfigured and needs the SPA calendar-admin
-    ("Calendaring & Inspections", Angular spacev360), which has no `.do` URLs.
-
-This probe answers it from the record-centric portlet path that is known to work
-(`CapTabSummary.do` -> `inspectionListCapSpecific.do`), NOT the SPA admin, because
-the AV host is Cloudflare-1015 rate-limited: keep the session short and batched,
-and never bang on the SPA.
-
-Read-only: navigation, grid reads and page dumps only. It reports every candidate
-scheduling control (text + href/onclick) instead of clicking them, and touches no
-form field. Nothing is scheduled.
-
-Run:
-    .venv/bin/python scripts/ni_backoffice_sched_recon.py
-    .venv/bin/python scripts/ni_backoffice_sched_recon.py --capid3 000QS --record BLD26-00483
-"""
+"""read-only: does the back office offer inspection dates the citizen wizard lacks?"""
 from __future__ import annotations
 
 import argparse
@@ -44,12 +17,9 @@ AV_URL = "https://nullisland-test-av.accela.com/"
 USER, PASSWORD = "developer", "accela"
 OUTDIR = Path("logs/ni_backoffice/inventory")
 
-# BLD26-00483 (owned, Residential Alteration) — capIDs from the capacity query's
-# verified record key NULLISLAND/Building/REC26/00000/000QS.
 DEFAULT_CAPID = {"ID1": "REC26", "ID2": "00000", "ID3": "000QS"}
 DEFAULT_RECORD = "BLD26-00483"
 
-# Labels that would indicate an inspection-scheduling or calendar-config entry.
 SCHEDULE_HINT = re.compile(r"inspect|schedul|calendar|availab|appointment|time\s*window", re.I)
 DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/20\d{2})\b")
 
@@ -93,7 +63,7 @@ async def dump_frames(page, tag: str, stamp: str) -> list[str]:
 
 
 async def collect_controls(page) -> list[dict]:
-    """Every interactive control across frames: tag, text, href/onclick, id, name."""
+    """every interactive control across frames: tag, text, href/onclick, id, name"""
     script = """() => [...document.querySelectorAll('a,button,input,select,[onclick],[role=button]')]
         .map(e => {
             const text = ((e.innerText || e.value || e.title || '') + '').trim().slice(0, 80);
@@ -168,23 +138,17 @@ def inspection_list_url(capid: dict, module: str) -> str:
           f"&capID1={capid['ID1']}&capID2={capid['ID2']}&capID3={capid['ID3']}")
     return f"{AV_URL}portlets/inspection/inspectionListCapSpecific.do?{qs}"
 
-# The "Schedule Inspections" menu item calls selectManageInspection("0", ...) ->
-# openScheduleInspectionsDialog(), which showModalDialog()s this URL (captured
-# from the record's inspection-list HTML). Addressed directly it is the back
-# office's own scheduling form — the surface that decides whether capacity
-# exists at all. Read-only here: the form is only opened and parsed.
+# the "schedule inspections" menu item calls selectmanageinspection("0", ...) ->
+# openscheduleinspectionsdialog(), which showmodaldialog()s this url (captured from the record's
+# inspection-list html)
 def schedule_dialog_url(module: str = "Building") -> str:
     return (f"{AV_URL}portlets/inspection/workloadingInspectionList.do"
             f"?value(mode)=doManage&doPending=true&RCAP=true&module={module}&spaceName=null")
 
-# The back office's inspection calendar (the "CHANGECALENDARDATE" control lives
-# on it). Addressable, unlike the SPA admin.
 def inspection_calendar_url(module: str = "Building") -> str:
     return (f"{AV_URL}portlets/inspection/calendarInspectionList.do"
             f"?calendarInspection=Y&mode=view&module={module}&spaceName=null")
 
-# Calendar views linked from the daily calendar page; the weekly one is labelled
-# "Schedule" on that page, which is why it is worth reading.
 def calendar_weekly_url(module: str = "Building") -> str:
     return f"{AV_URL}portlets/inspection/calendarInspectionWeekly.do?mode=weekly&module={module}"
 
@@ -194,13 +158,7 @@ def calendar_inspections_url(module: str = "Building") -> str:
 
 
 async def try_open_schedule_form(page, errors: list[str]) -> dict:
-    """Click Manage Inspection -> Schedule Inspections on the live list page.
-
-    The item evaluates window.showModalDialog(...), which modern Chrome removed;
-    a pageerror is the expected outcome. Recorded, never worked around: opening a
-    form is read-only, but forcing a dialog the portal cannot open is not a
-    behaviour to fake.
-    """
+    """click manage inspection -> schedule inspections on the live list page"""
     result: dict = {"menu_clicked": False, "item_clicked": False,
                     "frames_before": len(page.frames), "frames_after": None}
     try:
@@ -226,7 +184,7 @@ async def try_open_schedule_form(page, errors: list[str]) -> dict:
 
 
 async def collect_selects(page) -> list[dict]:
-    """Every <select> across frames with its options (read-only)."""
+    """every <select> across frames with its options (read-only)"""
     script = """() => [...document.querySelectorAll('select')].map(s => ({
         name: s.getAttribute('name') || '', id: s.id || '',
         options: [...s.options].map(o => ((o.text || '') + '').trim()).filter(Boolean).slice(0, 80),
@@ -243,7 +201,7 @@ async def collect_selects(page) -> list[dict]:
 
 
 def availability_hints(html_by_frame: dict[int, str]) -> dict:
-    """Day-cell / capacity markers the schedule form or calendar may carry."""
+    """day-cell / capacity markers the schedule form or calendar may carry"""
     joined = "\n".join(html_by_frame.values())
     return {
         "date_literals": sorted(set(DATE_RE.findall(joined)))[:20],
@@ -300,8 +258,6 @@ async def main() -> int:
             ("calendar_inspections", calendar_inspections_url(args.module)),
         )
 
-        # One live attempt at the record-level schedule entry point, on its own
-        # list page so the click has the context the modal expects.
         out("=== schedule menu attempt ===")
         await goto(page, inspection_list_url(capid, args.module), settle=6000)
         menu = await try_open_schedule_form(page, page_errors)

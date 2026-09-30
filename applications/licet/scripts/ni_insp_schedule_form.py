@@ -1,8 +1,4 @@
-"""Probe both scheduling surfaces (read-only): back-office Schedule form and
-citizen-portal inspection side door.
-
-No scheduling is submitted — only the forms are loaded and parsed.
-"""
+"""probe both scheduling surfaces (read-only): back-office schedule form and citizen-portal inspection side door"""
 from __future__ import annotations
 
 import asyncio
@@ -75,7 +71,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # ---------- A) back office: inspection detail → schedule form ----------
         await av_login(page)
         await asyncio.wait_for(
             page.goto(AV_URL + INSP_DETAIL, timeout=45000, wait_until="domcontentloaded"),
@@ -83,7 +78,6 @@ async def main() -> int:
         )
         await asyncio.wait_for(page.wait_for_timeout(4000), 10)
         await dump_frames(page, "inspDetail", stamp)
-        # find Schedule button across frames
         clicked = False
         for fr in page.frames:
             try:
@@ -119,7 +113,6 @@ async def main() -> int:
         else:
             out("av: no Schedule control found on detail page")
 
-        # ---------- B) citizen side ----------
         page2 = await asyncio.wait_for(browser.new_page(), 60)
         await asyncio.wait_for(
             page2.goto(f"{CITIZEN}/Login.aspx", timeout=45000, wait_until="domcontentloaded"),
@@ -158,7 +151,6 @@ async def main() -> int:
         await asyncio.wait_for(page2.wait_for_timeout(3000), 8)
         await dump_frames(page2, "citizen_insp", stamp)
         html = await asyncio.wait_for(page2.content(), 12)
-        # record rows with schedule actions?
         rows = re.findall(r"capID1=\d*[A-Za-z]*[^&\"']*", html)[:6]
         out(f"citizen inspection page: {len(html)}B; capID mentions: {rows}")
         has_sched = bool(re.search(r"Schedule", html, re.I))

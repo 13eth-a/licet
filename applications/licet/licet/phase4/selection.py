@@ -1,4 +1,4 @@
-"""Evidence-bound action selection. This module never authorizes or executes."""
+"""evidence-bound action selection"""
 from __future__ import annotations
 
 import math
@@ -23,11 +23,7 @@ class SelectionStatus(str, Enum):
 
 @dataclass(frozen=True)
 class InspectionOption:
-    """Observed portal option, with independently established prerequisites.
-
-    Unknown is not eligible. Evidence must support eligibility/prerequisites,
-    not merely the existence of a dropdown entry. Populate in the read adapter.
-    """
+    """observed portal option, with independently established prerequisites"""
     name: str
     eligible: bool | None = None
     prerequisites_satisfied: bool | None = None
@@ -38,11 +34,7 @@ class InspectionOption:
 
 @dataclass(frozen=True)
 class SelectionContext:
-    """One verified snapshot supplied by the coordinator, never by model prose.
-
-    The caller binds the display ID to its verified stable record key and
-    snapshot. This is a selection precondition, not an authorization token.
-    """
+    """one verified snapshot supplied by the coordinator, never by model prose"""
     permit_id: str
     record_key: str
     snapshot_id: str
@@ -66,9 +58,8 @@ class ActionSelection:
     requires_confirmation: bool = False
 
 
-# Deliberately narrow migration grammar for Phase 3's existing string field.
-# “Review inspection”, “do not cancel”, and “complete required inspection” are
-# not executable verbs. A future typed candidate can replace this adapter.
+# deliberately narrow migration grammar for phase 3's existing string field. “review inspection”, “do not
+# cancel”, and “complete required inspection” are not executable verbs
 _ACTION = re.compile(
     r"^(request (?:inspection|reinspection)|schedule inspection|"
     r"reschedule inspection|cancel inspection)\s*:\s*([^\n:]+)$", re.I
@@ -84,12 +75,7 @@ def select_inspection_action(
     context: SelectionContext | None = None,
     requested_action: InspectionAction | None = None,
 ) -> ActionSelection:
-    """Select one supported operation; preserve constraints and abstain on gaps.
-
-    Confidence never substitutes for identity, evidence, eligibility, history,
-    or prerequisites. The resulting action still requires policy and fresh
-    pre-action verification. No model-selected date, permission, or retry here.
-    """
+    """select one supported operation; preserve constraints and abstain on gaps"""
     if not math.isfinite(confidence_threshold) or not 0 <= confidence_threshold <= 1:
         raise ValueError("confidence threshold must be finite and between zero and one")
 
@@ -112,12 +98,7 @@ def select_inspection_action(
         for u in reasoning.uncertainties
     ):
         return stop(SelectionStatus.NEEDS_DATA, "inspection evidence is incomplete", "complete current inspection history")
-    # A broad readiness interpretation can be partial because non-inspection
-    # sections remain unread. That must not prevent identifying a single
-    # explicitly required type, but it cannot authorize execution (the planner's
-    # mutation gate still requires answered reasoning and no needed sections).
-    # The exception is finalized below only after requirement, catalog, and
-    # inspection-history evidence all bind to this record.
+    # a broad readiness interpretation can be partial because non-inspection sections remain unread
     if reasoning.answerability == "answered" and reasoning.needed_sections:
         return stop(SelectionStatus.NEEDS_DATA, "required inspection state is incomplete", "outstanding Phase 3 retrieval")
     if reasoning.answerability == "partial" and any(
@@ -128,8 +109,7 @@ def select_inspection_action(
     if requested_action and requested_action.permit_id != permit_id:
         return stop(SelectionStatus.CONFLICTING, "requested action addresses a different permit")
 
-    # Do not remove low-confidence or conditional competitors to manufacture a
-    # unique winner. Distinct targets remain ambiguous until evidence resolves it.
+    # do not remove low-confidence or conditional competitors to manufacture a unique winner
     candidates = []
     for candidate in reasoning.next_actions:
         match = _ACTION.fullmatch(candidate.action.strip())
@@ -140,10 +120,6 @@ def select_inspection_action(
                 "reschedule" if verb.lower().startswith("reschedule") else "schedule")
             candidates.append((candidate, kind, name.strip(), False))
         elif required_match:
-            # Phase 3 deliberately calls this a requirement candidate rather
-            # than an executable verb. It becomes schedulable only when the
-            # live context independently confirms the exact required marker,
-            # complete catalog, and record-bound evidence below.
             candidates.append((candidate, "schedule", required_match.group(1).strip(), True))
     if not candidates:
         return stop(SelectionStatus.UNSUPPORTED, "no explicit supported inspection operation was proposed")
@@ -215,7 +191,7 @@ def select_inspection_action(
         if len(targets) != 1 or not targets[0].is_scheduled:
             return stop(SelectionStatus.AMBIGUOUS, "existing scheduled inspection is not uniquely established", "current target appointment")
 
-    # Preserve all user constraints verbatim; the implementation’s date layer resolves them.
+    # preserve all user constraints verbatim; the implementation’s date layer resolves them
     action = replace(requested_action, action_type=kind, inspection_type=portal_name,
                      constraints=list(requested_action.constraints)) if requested_action else InspectionAction(kind, permit_id, portal_name)
     return ActionSelection(action, "one evidence-supported target; policy and pre-action verification still required",

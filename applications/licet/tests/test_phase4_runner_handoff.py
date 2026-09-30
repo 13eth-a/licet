@@ -1,4 +1,4 @@
-"""Selection -> request -> policy/executor regressions for the narrow adapter."""
+"""selection -> request -> policy/executor regressions for the narrow adapter"""
 from dataclasses import replace
 from datetime import date
 
@@ -66,9 +66,6 @@ def test_additional_confirmation_reaches_policy_before_any_browser_action():
 
 
 def test_confirmed_action_uses_window_and_preserves_audit_context():
-    # Real executor and policy, with a fake portal: availability includes dates
-    # outside both bounds and arrives in unsorted order. The portal echoes the
-    # record key the request is bound to, as the real adapter does.
     request = replace(action_from_selection(selection(requires_confirmation=True), confirmed=True), constraints=())
     portal = FakePortal(snap(record_key=request.record_key),
                         after=snap(record_key=request.record_key, status="Scheduled", scheduled_date="2026-09-24"))

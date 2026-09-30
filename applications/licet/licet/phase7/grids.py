@@ -1,4 +1,4 @@
-"""Conservative DOM evidence for known record grids, never layout tables."""
+"""conservative dom evidence for known record grids, never layout tables"""
 from html.parser import HTMLParser
 import re
 

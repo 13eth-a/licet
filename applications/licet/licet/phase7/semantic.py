@@ -1,9 +1,4 @@
-"""Structured semantic recovery decisions; never execution authorization.
-
-Inputs must come from verified observations and the immutable user goal, not
-instructions embedded in portal prose. Decisions nominate reads/replanning only.
-The caller retains policy, identity checks, mutation ledger, and run budgets.
-"""
+"""structured semantic recovery decisions; never execution authorization"""
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -50,12 +45,7 @@ class SemanticDecision:
 
 
 def decide_semantic_recovery(context: SemanticContext) -> SemanticDecision:
-    """Choose a bounded semantic path without granting permission to mutate.
-
-    Goal completion is caller-established from independent, current evidence.
-    Missing optional sections do not erase verified findings. An unchanged
-    post-submit read never establishes that an asynchronous mutation is absent.
-    """
+    """choose a bounded semantic path without granting permission to mutate"""
     c = context
     partial = 'PARTIAL_SUCCESS' if c.verified_findings and c.identity_verified else 'BLOCKED'
     def stop(reason):

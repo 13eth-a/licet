@@ -1,24 +1,5 @@
 #!/usr/bin/env python
-"""Phase 6 adversarial replay (adversarial review).
-
-Re-derives every counterexample from ``docs/phase6/adversarial_review.md`` against
-the current tree and reports, per case, what the **pre-review** behaviour allowed
-versus what the reviewed tree does now. The legacy column is the pre-review
-behaviour reproduced *in this script* (the pre-review tree is not committed), so
-each row is demonstrably a counterexample rather than a restatement of the
-current code:
-
-- "legacy execution" is `licet.phase4.policy.decide_action_policy` alone — which
-  is exactly what ran when an unclassifiable portal had no `PolicyEngine` at all;
-- "legacy identity" is the pre-review `verify_identity` reproduced verbatim, in
-  which an observation that was silent about the targeted inspection field passed.
-
-    python scripts/phase6_adversarial_replay.py
-    python scripts/phase6_adversarial_replay.py --json docs/phase6/adversarial_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file. No
-browser, model, credential or live mutation is used.
-"""
+"""phase 6 adversarial replay (adversarial review)"""
 from __future__ import annotations
 
 import argparse
@@ -56,25 +37,13 @@ RECORD_KEY = "NULLISLAND/Building/REC26/00000/00014"
 OTHER_KEY = "NULLISLAND/Building/REC26/00000/OTHER"
 
 
-# --- the pre-review behaviour, reproduced ----------------------------------- #
-
 def legacy_execution_allowed(action: InspectionAction, *, confirmed: bool = False) -> bool:
-    """The Phase 4 gate alone: what ran when the executor had no policy engine.
-
-    `InspectionActionExecutor.__init__` used to set ``policy_engine = None`` when
-    the portal could not be classified, and `execute` then consulted only
-    `decide_action_policy`. Reproducing that here is what makes the fail-open
-    claim testable rather than asserted.
-    """
+    """the phase 4 gate alone: what ran when the executor had no policy engine"""
     return decide_action_policy(action, confirmed=confirmed).allowed
 
 
 def legacy_identity_verified(action: ProposedAction, observed: RecordIdentity) -> bool:
-    """The pre-review `verify_identity`, reproduced verbatim.
-
-    Its inspection-type and existing-date comparisons were guarded on the
-    *observed* value being present, so a read that lost the field verified.
-    """
+    """the pre-review `verify_identity`, reproduced verbatim"""
     if not action.permit_id or not observed.permit_id or action.permit_id != observed.permit_id:
         return False
     if action.record_key and action.record_key != observed.record_key:
@@ -91,21 +60,14 @@ def legacy_identity_verified(action: ProposedAction, observed: RecordIdentity) -
 
 
 def legacy_confirmation_granted(action: InspectionAction) -> bool:
-    """The pre-review executor minted its own approval from the action.
-
-    Any caller that passed ``confirmed=True`` got a `ConfirmationRequest` built
-    out of the action in front of it, so the policy's CONFIRM gate could never
-    fail and could never bind to what a human actually approved.
-    """
+    """the pre-review executor minted its own approval from the action"""
     minted = ConfirmationRequest(action_type=action.action_type, permit_id=action.permit_id,
                                  target=action.inspection_type or "", consequence="legacy")
     return legacy_execution_allowed(action, confirmed=True) and minted is not None
 
 
-# --- doubles ---------------------------------------------------------------- #
-
 class Portal:
-    """InspectionPortal double with an explicit environment."""
+    """inspectionportal double with an explicit environment"""
 
     environment: Environment | None = Environment.SANDBOX
 
@@ -155,13 +117,11 @@ def approval(action, **overrides):
 
 
 def run_action(environment, action, **kwargs):
-    """Execute one action through the real executor and return (result, submits)."""
+    """execute one action through the real executor and return (result, submits)"""
     portal = kwargs.pop("portal", None) or Portal(snap())
     portal.environment = environment
     return InspectionActionExecutor(portal).execute(action, **kwargs), len(portal.submits)
 
-
-# --- counterexample cases ---------------------------------------------------- #
 
 def counterexamples():
     rows = []
@@ -170,14 +130,12 @@ def counterexamples():
         rows.append({"case_id": case_id, "route": route, "legacy": legacy, "current": current,
                      "finding": finding})
 
-    # A1 — an unclassifiable portal used to be mutable.
     result, submits = run_action(None, schedule(), eligible_types=[TYPE], available_dates=[DATE])
     add("A1", "executor: portal with no identity",
         "ALLOWED" if legacy_execution_allowed(schedule()) else "refused",
         f"{result.error_code.value if result.error_code else 'SUBMITTED'} (submits={submits})",
         "UNKNOWN was the one environment where the whole Phase 6 layer was absent")
 
-    # A2 — a positively live portal used to be mutable too.
     result, submits = run_action(Environment.LIVE_READ_ONLY, schedule(),
                                  eligible_types=[TYPE], available_dates=[DATE])
     add("A2", "executor: live portal",
@@ -185,7 +143,6 @@ def counterexamples():
         f"{result.error_code.value if result.error_code else 'SUBMITTED'} (submits={submits})",
         "live scheduling must be blocked by code, not by prompt text")
 
-    # B1/B2 — an observation that omits what the action targets used to verify.
     action_type = ProposedAction("CANCEL_INSPECTION", permit_id=PERMIT, inspection_type=TYPE,
                                  inspection_id="I-1")
     observed = identity(inspection_type=None)
@@ -201,7 +158,6 @@ def counterexamples():
         "VERIFIED" if verify_identity(dated, stale).verified else "refused",
         "the pre-mutation date check vanished when the portal did not print a date")
 
-    # C1 — a bare boolean was an approval.
     portal = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     portal.environment = Environment.SANDBOX
     result = InspectionActionExecutor(portal).execute(cancel(), eligible_types=[TYPE], confirmed=True)
@@ -210,7 +166,6 @@ def counterexamples():
         f"{result.error_code.value if result.error_code else 'SUBMITTED'} (submits={len(portal.submits)})",
         "an approval the executor mints for itself authorizes whatever it is pointed at")
 
-    # C2 — an approval for one permit used to authorize another.
     portal = Portal(snap(status="Scheduled", scheduled_date=DATE), after=snap(status="Cancelled"))
     portal.environment = Environment.SANDBOX
     swapped = InspectionAction("cancel", "P-2", TYPE, existing_inspection_id="I-1")
@@ -221,7 +176,7 @@ def counterexamples():
         f"{result.error_code.value if result.error_code else 'SUBMITTED'} (submits={len(portal.submits)})",
         "approval scope must name the permit it approves")
 
-    # D1 — a cancellation that never named its target.
+    # d1 — a cancellation that never named its target
     engine = PolicyEngine(environment=Environment.SANDBOX)
     decision = engine.decide(ProposedAction("CANCEL_INSPECTION", permit_id=PERMIT, target=TYPE,
                                             inspection_type=TYPE),
@@ -233,8 +188,6 @@ def counterexamples():
 
     return rows
 
-
-# --- end to end: real capabilities, real executor ---------------------------- #
 
 def capabilities_for(portal):
     def context(world):
@@ -276,7 +229,7 @@ def end_to_end():
                      "expected": "mutation allowed" if environment is Environment.SANDBOX
                                  else "no mutation"})
 
-    # A duplicate attempt through the same engine: one submit, ever.
+    # a duplicate attempt through the same engine: one submit, ever
     portal = Portal(snap(), after=snap(status="Scheduled", scheduled_date=DATE))
     engine = PolicyEngine(environment=Environment.SANDBOX)
     first = InspectionActionExecutor(portal, policy_engine=engine).execute(
@@ -287,7 +240,7 @@ def end_to_end():
                  "success": bool(first.success), "message": second.error_code.value if second.error_code else "none",
                  "expected": "one submit, second refused"})
 
-    # A timeout before the commit must never be reported as verified success.
+    # a timeout before the commit must never be reported as verified success
     portal = Portal(snap(), error=TimeoutError("lost response"), after=snap())
     portal.environment = Environment.SANDBOX
     result = InspectionActionExecutor(portal).execute(schedule(), eligible_types=[TYPE], available_dates=[DATE])
@@ -296,7 +249,6 @@ def end_to_end():
                  "message": result.error_code.value if result.error_code else "none",
                  "expected": "never verified success"})
 
-    # A wrong-record action: the portal asserts a different record key.
     portal = Portal(snap(record_key=OTHER_KEY))
     portal.environment = Environment.SANDBOX
     result = InspectionActionExecutor(portal).execute(schedule(record_key=RECORD_KEY),

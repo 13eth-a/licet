@@ -1,15 +1,4 @@
-"""Recon phase 3: find Null Island records WITH inspections (READ-ONLY).
-
-Lessons from recon2:
-- The Record grid already lists 58 Building records (clicks only — typing
-  into JSP frames submits pagination forms).
-- The SPA top nav has an "Inspections" portlet: inspection rows reference
-  their records, so it's the fastest way to find inspection-bearing records.
-
-Read-only: nav clicks, grid clicks, HTML dumps. No typing, no saves.
-
-Run:  .venv/bin/python scripts/ni_backoffice_recon3.py
-"""
+"""recon phase 3: find null island records with inspections (read-only)"""
 
 from __future__ import annotations
 
@@ -80,7 +69,7 @@ async def find_first_visible(scope, selectors: list[str]):
 
 
 async def click_in_any_frame(page, selectors: list[str]) -> bool:
-    """Try a click in the main document first, then every child frame."""
+    """try a click in the main document first, then every child frame"""
     try:
         loc = await find_first_visible(page, selectors)
         if loc is not None:
@@ -118,7 +107,6 @@ async def main() -> int:
     try:
         page = await browser.new_page()
 
-        # login
         await page.goto(AV_URL, timeout=60000)
         await page.wait_for_timeout(5000)
         pwd = await find_first_visible(page, ['input[type="password"]'])
@@ -135,7 +123,6 @@ async def main() -> int:
         out("Logged in.")
         await shoot(page, f"{stamp}_20_logged_in")
 
-        # 1. try the Inspections top-nav portlet
         clicked = await click_in_any_frame(
             page,
             [
@@ -148,7 +135,6 @@ async def main() -> int:
         await shoot(page, f"{stamp}_21_inspections_portlet")
         await dump_frames(page, "inspections portlet")
 
-        # 2. also dump the Record grid rows (default view after login)
         for fr in page.frames:
             if "capSearch.do" in fr.url and "pageNo=" not in fr.url:
                 try:

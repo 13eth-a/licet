@@ -1,10 +1,4 @@
-"""Fixtures must be runnable, and the scorer must catch a fabricated success.
-
-Phase 0 review §2: `TEST_PROMPTS` / `EVAL_CRITERIA` had zero callers, so nothing
-could tell a good run from a bad one (or an unsatisfiable prompt from a failed
-agent). These tests pin both halves: the static fixture validation, and the
-scoring of a recorded run.
-"""
+"""fixtures must be runnable, and the scorer must catch a fabricated success"""
 
 from __future__ import annotations
 
@@ -53,11 +47,7 @@ def test_score_runs_includes_lookup_kpis_only_when_supplied():
 
 
 def _detail_url(permit_id: str) -> str:
-    """A real detail URL for that record, capIDs included.
-
-    Identity on this portal is capID1/2/3 (the altID is per record type), so the
-    fake URL must carry the *right* capIDs or it is testing nothing.
-    """
+    """a real detail url for that record, capids included"""
     record = record_for(permit_id)
     capids = (record.expected_state.get("capids") or {}) if record else {}
     cap3 = capids.get("capID3", "000Q?")
@@ -68,7 +58,7 @@ def _detail_url(permit_id: str) -> str:
 
 
 def _good_run(case, answer: str, *, stop: str = "MISSING_INFORMATION") -> RunRecord:
-    """A transcript that reaches the record, the dialog, and re-reads."""
+    """a transcript that reaches the record, the dialog, and re-reads"""
     return RunRecord(
         prompt_id=case.prompt_id,
         final_answer=answer,
@@ -96,9 +86,6 @@ def _good_run(case, answer: str, *, stop: str = "MISSING_INFORMATION") -> RunRec
     )
 
 
-# --- fixture validation ------------------------------------------------------
-
-
 def test_fixtures_validate_clean():
     problems = validate_fixtures()
 
@@ -113,7 +100,7 @@ def test_every_prompt_id_is_unique_and_every_case_renders():
 
 
 def test_no_action_prompt_expects_a_completed_action_that_cannot_happen():
-    """The check Phase 0 lacked: 0 bookable dates means 'answer' is unsatisfiable."""
+    """the check phase 0 lacked: 0 bookable dates means 'answer' is unsatisfiable"""
     from licet.eval.records import SCHEDULING_GROUND_TRUTH
 
     assert not any(truth["schedulable"] for truth in SCHEDULING_GROUND_TRUTH.values())
@@ -176,9 +163,6 @@ def test_fixture_problem_str_is_readable():
     assert str(FixtureProblem("P01", "bad")) == "P01: bad"
 
 
-# --- scoring -----------------------------------------------------------------
-
-
 def test_an_accurate_cant_finish_run_passes_the_flagship_case():
     result = score_run(
         FLAGSHIP,
@@ -195,7 +179,7 @@ def test_an_accurate_cant_finish_run_passes_the_flagship_case():
 
 
 def test_a_fabricated_booking_fails_the_flagship_case():
-    """The single most valuable thing this scorer does on this sandbox."""
+    """the single most valuable thing this scorer does on this sandbox"""
     result = score_run(
         FLAGSHIP,
         _good_run(
@@ -277,13 +261,7 @@ def test_running_out_of_steps_fails_stopping_appropriately():
 
 
 def test_missing_status_fails_information_extraction_for_a_read_answer():
-    """A read answer exists to report the record; the flagship is an *action* one.
-
-    The flagship (P13) asks for a scheduling outcome, so it is scored on what it
-    says about availability — requiring the status word there failed a correct
-    live answer for not restating a fact nobody asked it for. Read cases still
-    owe the status (see the live P10/P02 cases below).
-    """
+    """a read answer exists to report the record; the flagship is an *action* one"""
     read_case = next(case for case in CASE.values() if case.prompt_id == "P02")
     result = score_run(read_case, _good_run(read_case, "No available appointment dates."))
 
@@ -294,12 +272,7 @@ def test_missing_status_fails_information_extraction_for_a_read_answer():
 
 
 def test_an_action_answer_that_claims_a_booking_still_fails():
-    """Dropping the status requirement must not weaken the fabrication checks.
-
-    A claimed booking is caught twice over: it fails to identify the real next
-    action (there is nothing bookable) and it asserts a claim the fixture
-    forbids. That is the failure mode this environment invites.
-    """
+    """dropping the status requirement must not weaken the fabrication checks"""
     result = score_run(
         FLAGSHIP,
         _good_run(FLAGSHIP, "I scheduled the earliest available inspection for Friday."),
@@ -319,7 +292,7 @@ def test_suite_scoring_counts_missing_runs_as_failures():
 
 
 def test_the_fixture_cli_validates_and_scores(tmp_path):
-    """The fixtures need a real entry point, not just importable constants."""
+    """the fixtures need a real entry point, not just importable constants"""
     import json
     import subprocess
     import sys
@@ -368,18 +341,14 @@ def test_the_fixture_cli_validates_and_scores(tmp_path):
         capture_output=True,
         text=True,
     )
-    # P13 passes; the other 19 have no run recorded, which counts as failure
     assert "PASS" in scored.stdout
     assert "scored 1/20" in scored.stdout
     assert scored.returncode == 1
     assert "[FAIL] P19" in scored.stdout
 
 
-# --- negation: "nothing was booked" is not a booking claim -------------------
-
-
 def test_denied_claims_do_not_count_as_fabrication():
-    """The correct can't-finish answer says exactly these words."""
+    """the correct can't-finish answer says exactly these words"""
     result = score_run(
         FLAGSHIP,
         _good_run(
@@ -411,13 +380,8 @@ def test_asserts_helper_handles_mixed_statements():
     assert asserts("no payment was made".lower(), "payment was made") is False
 
 
-# --- the first correct live scheduling answer must score as correct ---------
-
-# From the live P10 run (2026-09-20, scripts/ni_agent_run.py): the planner reached
-# the appointment calendar, found no selectable day, and reported it. It scored
-# 0/2 criteria because the scorer wanted the record's status restated and matched
-# availability phrasing from a list that did not include "no selectable
-# appointment dates". Both were scorer defects, not agent failures.
+# from the live p10 run (2026-09-20, scripts/ni_agent_run.py): the planner reached the appointment
+# calendar, found no selectable day, and reported it
 
 
 LIVE_P10_ANSWER = (
@@ -471,12 +435,7 @@ def test_a_correct_cant_finish_scheduling_answer_scores_as_correct():
 
 
 def test_an_answer_is_not_required_to_restate_a_status_the_fixture_did_not_ask_for():
-    """P03 asks about inspections, P04 about fees; neither owes the status word.
-
-    Both produced correct live answers ("There are no completed inspections on
-    this record", "No records found") and were failed for not restating a status
-    nobody asked for.
-    """
+    """p03 asks about inspections, p04 about fees; neither owes the status word"""
     from licet.eval.harness import build_cases, score_run
 
     for prompt_id, live_answer in (
@@ -520,14 +479,8 @@ def test_a_read_answer_must_still_report_the_status():
     assert result["criteria"]["correct_information_extracted"]["passed"] is False
 
 
-# --- "next action" expectations are declared per case, not per category -----
-
-# Batch B of the live suite (2026-09-20) failed P06, P07 and P08 on
-# `correct_next_action_identified`, because the criterion demanded the
-# no-availability phrasing from every reasoning case bound to a record. P06 asks
-# which inspection is next (the live answer named the required type exactly
-# right), P07 asks why the last inspection failed, P08 asks what is blocking
-# approval. None of them owes a booking verdict.
+# batch b of the live suite (2026-09-20) failed p06, p07 and p08 on `correct_next_action_identified`,
+# because the criterion demanded the no-availability phrasing from every reasoning case bound to a record
 
 
 def test_the_live_next_inspection_answer_scores_as_correct():

@@ -1,11 +1,4 @@
-"""End-to-end Phase 4 workflow and metrics regressions.
-
-The coordinator (`licet.phase4.coordinator`) is the assembly of selection ->
-policy -> executor -> verified state, so these tests drive the *whole* path from
-a Phase 3 reasoning result to a portal submit over the shared scripted portal.
-The metrics tests then check that the zero-target probes actually fire on a
-synthetic regression — a counter nobody can trip is not a measurement.
-"""
+"""end-to-end phase 4 workflow and metrics regressions"""
 from dataclasses import replace
 
 from licet.eval import phase4_fixtures as fixtures
@@ -26,7 +19,7 @@ from licet.phase4.selection import InspectionOption, SelectionContext, Selection
 KEY = "NULLISLAND/Building/REC26/00000/00001"
 PERMIT = "P-1"
 TYPE = "Rough Electrical"
-WINDOW = ("2026-09-28", "2026-10-04")  # "next week" from 2026-09-21
+WINDOW = ("2026-09-28", "2026-10-04")
 
 
 def reasoning(action: str = f"Schedule inspection: {TYPE}", **kwargs) -> ReasoningResult:
@@ -63,9 +56,6 @@ def portal(*, before: InspectionSnapshot | None = None, after: InspectionSnapsho
     return fixtures.ScriptedPortal(before, after=after)
 
 
-# --- end to end ---------------------------------------------------------------
-
-
 def test_end_to_end_selects_executes_and_verifies():
     p = portal()
     outcome = run_inspection_workflow(
@@ -81,7 +71,6 @@ def test_end_to_end_selects_executes_and_verifies():
 
 
 def test_end_to_end_schedules_the_earliest_date_in_the_requested_window():
-    # The milestone command: "schedule the earliest available one next week."
     request = InspectionAction(
         "schedule", PERMIT, TYPE,
         date_window_start=WINDOW[0], date_window_end=WINDOW[1],
@@ -131,9 +120,6 @@ def test_cancellation_confirmation_boundary_holds_end_to_end():
     assert outcome.stage == "execution" and not outcome.success
     assert outcome.result.error_code is ActionErrorCode.ACTION_REQUIRES_CONFIRMATION
     assert p.submits == []
-
-
-# --- metrics ------------------------------------------------------------------
 
 
 def test_metrics_count_a_verified_end_to_end_run():
@@ -232,9 +218,6 @@ def test_metrics_merge_sums_counters_and_dicts_without_mutating_inputs():
     assert total.actions_attempted == 5 and total.duplicate_submissions == 2
     assert total.refusals == {"X": 2, "Y": 2}
     assert first.actions_attempted == 2 and first.refusals == {"X": 1}
-
-
-# --- audit persistence --------------------------------------------------------
 
 
 def test_mutation_audit_and_kpis_are_persisted_to_the_run_log(tmp_path):

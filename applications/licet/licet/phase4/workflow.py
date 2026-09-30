@@ -23,8 +23,6 @@ from licet.safety.policy import (
     detect_environment,
 )
 
-# Distinguishes "no portal response supplied" (audit fallback is the error
-# message) from an explicit ``None`` response, which is recorded as None.
 _UNSET = object()
 
 
@@ -34,28 +32,18 @@ class InspectionPortal(Protocol):
 
 
 class InspectionActionExecutor:
-    """Browser-independent workflow; the adapter owns Accela clicks/forms."""
+    """browser-independent workflow; the adapter owns accela clicks/forms"""
 
     def __init__(self, portal: InspectionPortal, *, policy_engine: PolicyEngine | None = None,
                  environment: Environment | None = None, constraints=None,
                  run_id: str = "run", user_goal: str = "", audit_log=None,
                  metrics=None) -> None:
         self.portal = portal
-        # Phase 6 fails closed: there is no "no policy" executor. Detection can
-        # only downgrade — a portal whose environment cannot be established gets
-        # an UNKNOWN engine, which refuses every mutation — and a caller that has
-        # genuinely verified a sandbox says so explicitly (or injects a built
-        # engine). Refusing to have a policy layer was itself the bypass: the
-        # legacy `decide_action_policy` below lets a not-yet-scheduled inspection
-        # be submitted, so an unclassifiable portal used to be mutable.
         self.policy_engine = policy_engine or PolicyEngine(
             environment=(environment if environment is not None else detect_environment(portal)),
             constraints=constraints, run_id=run_id, user_goal=user_goal, audit_log=audit_log,
             metrics=metrics,
         )
-        # Optional Phase 6 outcome tracker, fed at the one place a submission
-        # really reaches the portal so the checklist targets are measured on what
-        # happened rather than on what was attempted.
         self.metrics = metrics
         self.audits: list[MutationAudit] = []
 
@@ -70,17 +58,14 @@ class InspectionActionExecutor:
         approval: ConfirmationRequest | None = None,
         allow_alternatives: bool = False,
     ) -> InspectionActionResult:
-        # A scoped approval is a strictly stronger form of confirmation than the
-        # legacy boolean, so either satisfies the Phase 4 gate; the Phase 6 gate
-        # below still checks that approval's target, single use and expiry.
         approved = bool(confirmed or approval is not None)
         policy = decide_action_policy(action, confirmed=approved)
         if not policy.allowed:
             code = ActionErrorCode.ACTION_REQUIRES_CONFIRMATION if policy.requires_confirmation else ActionErrorCode.ACTION_NOT_ALLOWED
             return self._failure(action, code, policy.reason)
         kind = action.action_type.casefold().strip()
-        # An omitted mapping means "no inputs supplied", not "the portal requires
-        # nothing": required fields stay unsatisfied and must stop the action.
+        # an omitted mapping means "no inputs supplied", not "the portal requires nothing": required
+        # fields stay unsatisfied and must stop the action
         inputs = required_inputs or {}
         portal_type = match_inspection_type(action.inspection_type or "", list(eligible_types))
         if not portal_type:
@@ -89,17 +74,16 @@ class InspectionActionExecutor:
         if before.permit_id != action.permit_id:
             return self._failure(action, ActionErrorCode.STATE_MISMATCH, "verified permit does not match requested permit", before=before)
         if action.record_key and before.record_key and before.record_key != action.record_key:
-            # The action is authorized for one stable record; the page being read
-            # is another. Refuse before any mutation, never after.
+            # the action is authorized for one stable record; the page being read is another
             return self._failure(action, ActionErrorCode.STATE_MISMATCH, "observed record key does not match the authorized record", before=before)
         if not before.eligible:
             return self._failure(action, ActionErrorCode.INSPECTION_NOT_ELIGIBLE, "portal reports this inspection is disabled or ineligible", before=before)
         if action.existing_inspection_id and before.inspection_id != action.existing_inspection_id:
             return self._failure(action, ActionErrorCode.STATE_MISMATCH, "verified inspection does not match requested inspection", before=before)
         if kind in {"schedule", "schedule_inspection"} and (before.is_scheduled or before.is_pending):
-            # Idempotency: an existing appointment OR an accepted in-flight
-            # request already produces the desired outcome; submitting again
-            # duplicates it. "Not scheduled" is requestable and is not blocked.
+            # idempotency: an existing appointment or an accepted in-flight request already produces the
+            # desired outcome; submitting again duplicates it. "not scheduled" is requestable and is not
+            # blocked
             return self._failure(action, ActionErrorCode.INSPECTION_ALREADY_SCHEDULED, "inspection is already scheduled or has an in-flight request", before=before)
         if kind in {"reschedule", "reschedule_inspection"} and not before.is_scheduled:
             return self._failure(action, ActionErrorCode.RESCHEDULE_FAILED, "target inspection is not scheduled", before=before)
@@ -109,13 +93,6 @@ class InspectionActionExecutor:
         if missing:
             return self._failure(action, ActionErrorCode.MISSING_REQUIRED_INPUT, "missing required input: " + ", ".join(missing), before=before)
 
-        # The approval is the caller's, not the executor's: a bare
-        # `confirmed=True` names no permit, target or inspection, so an approval
-        # minted here from the action in front of us would always "match" and
-        # could never be checked against what was really authorized. A
-        # consequential action therefore requires the scoped, single-use object
-        # that was issued for it (the policy engine consumes it below); silence,
-        # a boolean, or an approval for another target is not enough.
         phase6_confirmation = approval
         if self.policy_engine is not None:
             proposed = ProposedAction(
@@ -161,14 +138,14 @@ class InspectionActionExecutor:
             if selected is None:
                 dated = bool(action.date_window_start or action.date_window_end or action.preferred_date)
                 code = ActionErrorCode.DATE_CONSTRAINT_UNSATISFIED if dated else ActionErrorCode.NO_AVAILABLE_DATES
-                # Advisory alternatives are reported, never selected: the action
-                # still fails, and widening needs a new user instruction.
+                # advisory alternatives are reported, never selected: the action still fails, and widening
+                # needs a new user instruction
                 alternatives = tuple(closest_alternatives(available_dates, constraints)) if allow_alternatives else ()
                 return self._failure(action, code, "no available date satisfies the user's constraints",
                                      before=before, alternatives=alternatives)
             if kind in {"reschedule", "reschedule_inspection"} and selected == before.scheduled_date:
-                # A same-date reschedule is indistinguishable from a no-op, so a
-                # verified "old date changed to new date" result is impossible.
+                # a same-date reschedule is indistinguishable from a no-op, so a verified "old date
+                # changed to new date" result is impossible
                 return self._failure(action, ActionErrorCode.RESCHEDULE_FAILED, "requested date equals the current scheduled date; no change to verify", before=before)
         proposed = replace(before, scheduled_date=selected or before.scheduled_date,
                            status="Cancelled" if kind in {"cancel", "cancel_inspection"} else "Scheduled")
@@ -228,14 +205,7 @@ class InspectionActionExecutor:
     @staticmethod
     def _matches(kind: str, proposed: InspectionSnapshot, observed: InspectionSnapshot,
                  action: InspectionAction | None = None) -> bool:
-        """Whether the re-read state is the outcome the authorized action requested.
-
-        A displayed permit number is not a record identity (two agencies can
-        render the same number), and "the inspection is cancelled" is not an
-        identity either: when the action named a record key or an existing
-        appointment, the observation must assert the same ones. Missing asserted
-        identity fails closed, exactly as the policy layer treats it.
-        """
+        """whether the re-read state is the outcome the authorized action requested"""
         if observed.permit_id != proposed.permit_id or observed.inspection_type.casefold() != proposed.inspection_type.casefold():
             return False
         if action is not None:
@@ -258,7 +228,7 @@ class InspectionActionExecutor:
         return result
 
     def _record_submission(self) -> None:
-        """Record that a mutation reached the portal (metrics targets, if attached)."""
+        """record that a mutation reached the portal (metrics targets, if attached)"""
         if self.metrics is None:
             return
         self.metrics.record_submission(environment=self.policy_engine.environment)
@@ -270,7 +240,7 @@ class InspectionActionExecutor:
     def _failure(self, action, code, message, *, before=None, after=None,
                  verification=ActionVerificationState.VERIFIED_FAILURE,
                  steps=(), response=_UNSET, proposed=None, alternatives=()):
-        """One failed action records exactly one audit entry (never two)."""
+        """one failed action records exactly one audit entry (never two)"""
         result = InspectionActionResult(False, action.action_type, action.inspection_type,
                                         after.scheduled_date if after else None,
                                         before.scheduled_date if before else None, verified=False,

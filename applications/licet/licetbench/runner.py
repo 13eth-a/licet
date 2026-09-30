@@ -1,4 +1,4 @@
-"""LicetBench runner and deterministic metrics; no live portal is contacted."""
+"""licetbench runner and deterministic metrics; no live portal is contacted"""
 from __future__ import annotations
 
 from copy import deepcopy
@@ -26,7 +26,7 @@ FLAGSHIP_TASK_IDS = (
     "AUTONOMY-001", "AUTONOMY-005", "SAFETY-001", "SAFETY-006", "RECOVERY-006",
 )
 
-# Variant suite version — independent of licetbench-v1; see licetbench/variants.py.
+# variant suite version — independent of licetbench-v1; see licetbench/variants.py
 VARIANTS_VERSION = "licetbench-variants-v1"
 
 
@@ -92,8 +92,6 @@ def run_tasks(tasks: Iterable[BenchmarkTask], *, repeats: int = 1, seed: int = 0
     results: list[BenchmarkResult] = []
     run_id = uuid.uuid4().hex
     for task, repeat_index in jobs:
-        # Graders construct fresh portal/planner instances for every invocation;
-        # no mutation state is shared across tasks or repetitions.
         started = time.perf_counter()
         result = grade_task(deepcopy(task))
         elapsed = time.perf_counter() - started
@@ -119,15 +117,14 @@ def aggregate_metrics(results: Iterable[BenchmarkResult], *, task_count: int | N
     partial = sum(row.outcome == "PARTIAL_SUCCESS" for row in rows)
     safe_failures = sum(row.outcome == "SAFE_FAILURE" for row in rows)
     unsafe_failures = sum(row.outcome == "UNSAFE_FAILURE" or not row.safe for row in rows)
-    # A grader that crashed or a task whose golden answer disagrees with its
-    # fixture is a defect in the benchmark, not a Licet failure. It is counted
-    # separately so a broken suite cannot be read as an agent regression.
+    # a grader that crashed or a task whose golden answer disagrees with its fixture is a defect in the
+    # benchmark, not a licet failure
     grader_errors = sum(1 for row in rows if row.grader_error)
     integrity_violations = sum(
         1 for row in rows if row.grader_error or row.details.get("benchmark_integrity")
     )
-    # The taxonomy classifies *Licet* failures; a benchmark defect is counted
-    # separately so a broken grader cannot be read as an agent regression.
+    # the taxonomy classifies *licet* failures; a benchmark defect is counted separately so a broken
+    # grader cannot be read as an agent regression
     failures = Counter(
         row.failure_type for row in rows if row.failure_type and not row.grader_error
     )
@@ -202,8 +199,8 @@ def aggregate_metrics(results: Iterable[BenchmarkResult], *, task_count: int | N
         "average_model_calls": sum(row.model_calls for row in rows) / total if total else 0.0,
         "approximate_cost_per_run": (sum(row.estimated_cost for row in rows if row.estimated_cost is not None) /
                                       sum(row.estimated_cost is not None for row in rows)) if any(row.estimated_cost is not None for row in rows) else None,
-        # Not measured: no grader records a page visit, so reporting 0 would be
-        # an invented zero rather than a measured one.
+        # not measured: no grader records a page visit, so reporting 0 would be an invented zero rather
+        # than a measured one
         "unnecessary_page_visits": None,
         "grader_errors": grader_errors,
         "benchmark_integrity_violations": integrity_violations,
@@ -271,7 +268,7 @@ def build_report(tasks: Iterable[BenchmarkTask], results: Iterable[BenchmarkResu
         "model": model,
         "config": config,
         "commit": commit,
-        # A commit hash only identifies the code that ran if the tree was clean.
+        # a commit hash only identifies the code that ran if the tree was clean
         "commit_dirty": commit_dirty,
         "python": platform.python_version(),
         "task_count": len(task_rows),

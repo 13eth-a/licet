@@ -1,4 +1,4 @@
-"""Run-local semantic planner contracts. Model output cannot update these facts."""
+"""run-local semantic planner contracts"""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
@@ -125,8 +125,7 @@ class World:
     browser_state: dict[str, Any] = field(default_factory=dict)
 
     def fingerprint(self) -> str:
-        # Run metadata and timestamps never count as progress. Structured source
-        # evidence is tracked separately; changing a snapshot label is not progress.
+        # run metadata and timestamps never count as progress
         permit = self.permit.to_dict() if self.permit else None
         if permit:
             permit.pop("evidence", None)
@@ -200,8 +199,6 @@ class Run:
     current_step: str | None = None
     approval_token: str | None = None
     approval_denied: bool = False
-    # The scoped approval that was issued when this run paused, carried to the
-    # executor so a consequential action is authorized for exactly one target.
     pending_confirmation: ConfirmationRequest | None = None
     attempted_mutations: set[str] = field(default_factory=set)
     verified_mutations: set[str] = field(default_factory=set)
@@ -248,16 +245,7 @@ def operation_key(world: World) -> str:
 
 
 def reasoning_is_sound(world: World, goal: Goal | None = None) -> bool:
-    """True when an interpretation may be treated as settled *for this record*.
-
-    Completion must not be weaker than the gates the planner already applies
-    before selection and execution (`planner.mutation_denial`). An answer that
-    came from another snapshot, that still needs a section, that reports
-    contradictions, or whose uncertainty blocks the answer is not a settled
-    block-list, whichever reasoner produced it -- ``LicetCapabilities`` accepts
-    an injected ``reasoner``, so the planner cannot assume the shipped
-    deterministic interpreter's current output shape.
-    """
+    """true when an interpretation may be treated as settled *for this record*"""
     reasoning = world.reasoning
     if reasoning is None or not world.record_key or reasoning.record_key != world.record_key:
         return False
@@ -273,13 +261,7 @@ def reasoning_is_sound(world: World, goal: Goal | None = None) -> bool:
 
 
 def established(world: World, goal: Goal | None = None) -> set[str]:
-    """Goal predicates that the observed record state independently supports.
-
-    Every fact is bound to the verified record and the snapshot it was read
-    from, so a stale or foreign observation cannot satisfy a success condition.
-    Passing the goal additionally binds the interpretation to the question that
-    was actually asked.
-    """
+    """goal predicates that the observed record state independently supports"""
     facts = set()
     if not world.permit_verified or not world.record_key:
         return facts

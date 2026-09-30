@@ -1,22 +1,4 @@
-"""Live Phase 5 capability wiring (Solari + Accela + Phase 2/3/4).
-
-Online-only counterpart to `licet.eval.phase5_fixtures`: it owns one
-authenticated browser session and adapts the *real* Phase 2 lookup runner,
-Phase 3 read-only retrieval, and Phase 4 Accela portal into the
-`LicetCapabilities` interface the planner consumes.
-
-The planner's `selection_context` and `preflight` providers are explicit fresh
-reads of the portal, never model-generated permission. Following
-`docs/phase5.md`, they do not invent a read surface the portal does not expose:
-eligibility is whether the scheduling wizard offers the type, availability is
-the calendar's own active days, and scheduling **cost and signature are left
-unknown**. A no-spend goal therefore cannot be bypassed — an unknown cost stops
-the mutation instead of being read as zero.
-
-Nothing here decides permission, dates or verification; those stay in the
-planner, policy layer, executor and adapter. This module is the one place that
-touches credentials and the network.
-"""
+"""live phase 5 capability wiring (solari + accela + phase 2/3/4)"""
 from __future__ import annotations
 
 import os
@@ -43,32 +25,17 @@ from licet.phase4.selection import InspectionOption, SelectionContext  # noqa: E
 from licet.phase5.capabilities import LicetCapabilities, Preflight  # noqa: E402
 from licet.phase5.state import World, operation_key  # noqa: E402
 
-# Lifecycle words that make a row a settled past attempt rather than one that
-# could duplicate a new request. Selection treats "scheduled" as already
-# scheduled and anything else unknown as a possible duplicate, so only these
-# map to a terminal snapshot status.
+# lifecycle words that make a row a settled past attempt rather than one that could duplicate a new request
 _SETTLED_RESULTS = {"PASSED", "FAILED"}
 _SETTLED_LIFECYCLES = {"COMPLETED", "CLOSED", "CANCELLED", "CANCELED"}
 
-# Read-only forward-calendar search ceiling, shared with the citizen capacity
-# query so the two layers cannot disagree. ACA's month strip renders three
-# tables and its ``Next »`` control advances it by one month per click, so N
-# windows reach roughly month N+2. The earlier 12-window cap could only ever see
-# about a year past today, which is why a scan bounded to it reported "no
-# availability observed" while saying nothing about 2027 and beyond. Raising this
-# changes scan *breadth* only: the loop still never selects a day, a time, or the
-# confirm step, so the portal stays read-only.
+# read-only forward-calendar search ceiling, shared with the citizen capacity query so the two layers
+# cannot disagree
 MAX_CALENDAR_WINDOWS = 36
 
 
 def ref_from_record_key(record_key: str | None) -> dict[str, str] | None:
-    """capID1/2/3 + module + agency from a ``RecordRef.as_key`` string.
-
-    The key is the only identity Phase 2 hands the planner
-    (``agency/module/capID1/capID2/capID3``); the displayed permit number is
-    never used to address a record. A malformed key yields None, and the adapter
-    then falls back to the page's own ref rather than inventing one.
-    """
+    """capid1/2/3 + module + agency from a ``recordref.as_key`` string"""
     parts = (record_key or "").split("/")
     if len(parts) != 5 or not all(parts):
         return None
@@ -86,13 +53,7 @@ def _record_key_from_ref(ref: dict[str, str] | None) -> str | None:
 
 
 def snapshot_status(inspection: Any) -> str:
-    """A live inspection row as the Phase 4 snapshot status vocabulary.
-
-    `InspectionSnapshot` only recognises a handful of status words, and
-    selection reads an unrecognised word as a possible duplicate. Known
-    lifecycle words are therefore mapped; anything unrecognised is preserved
-    verbatim so the planner abstains instead of guessing it is settled.
-    """
+    """a live inspection row as the phase 4 snapshot status vocabulary"""
     lifecycle = str(getattr(inspection, "lifecycle_normalized", "") or "").upper()
     result = str(getattr(inspection, "result_normalized", "") or "").upper()
     raw = str(getattr(inspection, "status", "") or "").strip()
@@ -106,12 +67,7 @@ def snapshot_status(inspection: Any) -> str:
 
 
 def options_from_types(names: tuple[str, ...]) -> tuple[InspectionOption, ...]:
-    """Offered wizard types as eligible selection options with evidence ids.
-
-    Offering a type is the portal's own eligibility statement, so an offered
-    type is eligible with prerequisites satisfied for the *offer* — the actual
-    operation is still gated by the policy layer, preflight and the executor.
-    """
+    """offered wizard types as eligible selection options with evidence ids"""
     return tuple(
         InspectionOption(name, True, True, (f"portal-option:{name}",))
         for name in names if name
@@ -119,7 +75,7 @@ def options_from_types(names: tuple[str, ...]) -> tuple[InspectionOption, ...]:
 
 
 def evidence_for_types(names: tuple[str, ...], record_key: str) -> dict[str, Evidence]:
-    """Compatibility helper for contexts built from a known offered-type list."""
+    """compatibility helper for contexts built from a known offered-type list"""
     return {
         f"portal-option:{name}": Evidence(
             id=f"portal-option:{name}", section="inspections",
@@ -130,7 +86,7 @@ def evidence_for_types(names: tuple[str, ...], record_key: str) -> dict[str, Evi
 
 
 def options_from_catalog(types: tuple[dict[str, Any], ...], record_key: str) -> tuple[tuple[InspectionOption, ...], dict[str, Evidence]]:
-    """Preserve offer and explicit `(required)` markers as separate evidence."""
+    """preserve offer and explicit `(required)` markers as separate evidence"""
     options = []
     evidence: dict[str, Evidence] = {}
     for item in types:
@@ -160,11 +116,7 @@ def options_from_catalog(types: tuple[dict[str, Any], ...], record_key: str) -> 
 
 def history_from_permit(permit: PermitState | None, permit_id: str | None,
                         record_key: str | None) -> tuple[InspectionSnapshot, ...]:
-    """The record's observed inspection rows as Phase 4 snapshots.
-
-    Only facts already read by Phase 3 are used; no extra portal read happens
-    here, so the history can never disagree with the reasoning derived from it.
-    """
+    """the record's observed inspection rows as phase 4 snapshots"""
     if permit is None:
         return ()
     return tuple(
@@ -178,7 +130,7 @@ def history_from_permit(permit: PermitState | None, permit_id: str | None,
 
 
 def history_complete(permit: PermitState | None) -> bool:
-    """Whether the inspections section was read to completion (or is empty)."""
+    """whether the inspections section was read to completion (or is empty)"""
     if permit is None:
         return False
     coverage = permit.coverage.get("inspections")
@@ -186,16 +138,11 @@ def history_complete(permit: PermitState | None) -> bool:
 
 
 class LiveInspectionPortal(AccelaInspectionPortal):
-    """The Phase 4 adapter plus the two live reads Phase 5's providers need.
-
-    Reads only the wizard's offered types and the calendar's active days. It
-    never clicks the commit and never selects a date, so these are observations,
-    not the mutation path (that stays `submit_inspection_action_async`).
-    """
+    """the phase 4 adapter plus the two live reads phase 5's providers need"""
 
     async def inspection_catalog(self, permit_id: str, record_key: str, *,
                                  wizard=None) -> tuple[tuple[dict[str, Any], ...], bool]:
-        """Read every declared wizard type page without advancing to the calendar."""
+        """read every declared wizard type page without advancing to the calendar"""
         self.last_catalog = {
             "complete": False, "declared_count": None, "observed_count": 0,
             "pages_read": 0, "required_types": [], "offered_types": [],
@@ -211,10 +158,9 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         total = wizard.inspection_type_total
         self.last_catalog["declared_count"] = total
         if total is None or total < 0 or total > 200:
-            # Keep "the wizard never opened" separate from "it opened and
-            # declared nothing": the generic message sent the 2026-09-30
-            # investigation three layers off target, to the page the wizard was
-            # supposed to have replaced.
+            # keep "the wizard never opened" separate from "it opened and declared nothing": the generic
+            # message sent the 2026-09-30 investigation three layers off target, to the page the wizard
+            # was supposed to have replaced
             self.last_catalog["failure"] = (
                 "wizard_not_open"
                 if "available inspection types" not in (wizard.text or "").casefold()
@@ -263,8 +209,6 @@ class LiveInspectionPortal(AccelaInspectionPortal):
             "complete": complete,
             "failure": None if complete else "catalog_pages_incomplete",
         })
-        # Leave the wizard in its initial type-grid page so the subsequent
-        # availability provider can resolve and select a type consistently.
         for _ in range(max(0, pages - 1)):
             moved = await self._do(ToolCall("click", {
                 "target": "< Prev", "by": "text", "intent": "navigate",
@@ -345,7 +289,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
     async def _scan_calendar(self, page, wizard, inspection_type, *,
                              constraints: DateConstraints | None = None,
                              max_windows: int = 12) -> tuple[str, ...]:
-        """Observe forward windows, bounded and identity checked; never select a day."""
+        """observe forward windows, bounded and identity checked; never select a day"""
         from datetime import date
         constraints = constraints or DateConstraints()
         max_windows = max(1, min(max_windows, MAX_CALENDAR_WINDOWS))
@@ -368,7 +312,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
                 failure = "calendar_record_identity_mismatch" if not identity_verified else "calendar_not_observed"
                 stop = failure
                 break
-            # Never infer future month identities from table position after paging.
+            # never infer future month identities from table position after paging
             if any(not str(m.get("month") or "").strip() for m in page.calendar):
                 failure = stop = "calendar_month_identity_missing"
                 break
@@ -432,7 +376,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         return dates
 
     async def _select_date(self, selected_date, date_page):
-        """Re-find a future date after execution reopens the wizard at its first month."""
+        """re-find a future date after execution reopens the wizard at its first month"""
         from datetime import date
         if not selected_date:
             raise RuntimeError("executor selected no date")
@@ -443,7 +387,6 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         )
         if selected_date not in dates:
             raise RuntimeError("authorized date is no longer available within the verified calendar search")
-        # Read again for the base adapter's active-day and time-slot verification.
         current = await self._read()
         if (current.record_key != date_page.record_key
                 or current.record_header.get("permit_id") != date_page.record_header.get("permit_id")):
@@ -451,26 +394,12 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         await super()._select_date(selected_date, current)
 
     async def _open_wizard(self):
-        """Land on the record's inspection view, then open the wizard's type step.
-
-        Accela keeps the CapDetail URL while its scheduling dialog is open.
-        Availability follows catalog inspection in the same session, so the
-        type-grid observation—not the URL—is authoritative for whether the
-        opener should be clicked again.
-        """
+        """land on the record's inspection view, then open the wizard's type step"""
         obs = await self._read()
         if (obs.inspection_type_total is not None
                 and "available inspection types" in obs.text.casefold()):
             return obs
-        # Land on the record's *inspection* view, not just the record detail.
-        # The schedule opener lives inside the record-tabs menu, which ACA
-        # renders as a collapsed dropdown, so on the plain detail URL the opener
-        # is present in the DOM but lays out at 0x0 and the click is refused as
-        # `not_actionable`: the wizard never opens and the failure only surfaces
-        # three layers later as a missing declared count (measured live
-        # 2026-09-30). `IsToShowInspection=yes` is ACA's own flag for rendering
-        # the inspections panel, and the URL below is the same read-only view
-        # `accela.inspection_detail_url` gives the inspection-state reader.
+        # land on the record's *inspection* view, not just the record detail
         ref = self.record_ref if isinstance(self.record_ref, dict) else None
         target = None
         if ref and all(ref.get(key) for key in ("capID1", "capID2", "capID3")):
@@ -486,10 +415,9 @@ class LiveInspectionPortal(AccelaInspectionPortal):
         opener_present = any(label.casefold() in obs.text.casefold()
                              for label in accela.SCHEDULE_LINK_LABELS)
         if opener_present:
-            # Null Island's schedule affordance is a clickable div with an
-            # inline showInspectionPopupDialog handler; its nested label is a
-            # span and the similarly named anchor is a dead placeholder.
-            # Address the actual handler-bearing control, never the label.
+            # null island's schedule affordance is a clickable div with an inline
+            # showinspectionpopupdialog handler; its nested label is a span and the similarly named anchor
+            # is a dead placeholder
             await self._do(ToolCall("click", {
                 "target": accela.SCHEDULE_LINK_CONTROL_ID,
                 "by": "selector", "intent": "navigate",
@@ -501,7 +429,7 @@ class LiveInspectionPortal(AccelaInspectionPortal):
 
 @dataclass
 class LiveCapabilities:
-    """An open live session and the planner capabilities that ride it."""
+    """an open live session and the planner capabilities that ride it"""
 
     session: SolariSession
     client: Any
@@ -519,13 +447,7 @@ class LiveCapabilities:
 async def build_live_capabilities(*, username: str | None = None,
                                   password: str | None = None,
                                   logger: Any | None = None) -> LiveCapabilities:
-    """Open one authenticated session and wire Phase 2/3/4 into Phase 5.
-
-    Credentials come from the environment (`ACCELA_TEST_USERNAME`,
-    `ACCELA_TEST_PASSWORD`) unless supplied. An optional `logger` (a
-    `RunLogger`) records every dispatcher step, exactly as the product does. The
-    caller owns the return value and must `await .close()`.
-    """
+    """open one authenticated session and wire phase 2/3/4 into phase 5"""
     user = (username if username is not None else os.environ.get("ACCELA_TEST_USERNAME", "")).strip()
     secret = (password if password is not None else os.environ.get("ACCELA_TEST_PASSWORD", "")).strip()
     if not user or not secret:
@@ -545,7 +467,7 @@ async def build_live_capabilities(*, username: str | None = None,
     state = AgentState(goal="Phase 5 live")
 
     def _bind(world: World) -> None:
-        """Point the portal at the verified record before any provider read."""
+        """point the portal at the verified record before any provider read"""
         ref = ref_from_record_key(world.record_key)
         if ref:
             portal.record_ref = ref
@@ -574,8 +496,7 @@ async def build_live_capabilities(*, username: str | None = None,
         dates = await portal.available_dates(
             wanted, constraints=world.proposal.date_constraints if world.proposal else None
         ) if eligible else ()
-        # Preserve preflight evidence in the planner report. Cost and signature
-        # remain explicitly unknown unless the portal actually renders them.
+        # preserve preflight evidence in the planner report
         details = {
             "catalog": dict(getattr(portal, "last_catalog", {})),
             "availability": dict(getattr(portal, "last_availability", {})),

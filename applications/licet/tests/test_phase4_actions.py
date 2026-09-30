@@ -11,12 +11,7 @@ from licet.safety.policy import ConfirmationRequest, Environment
 
 
 def approval(selected: InspectionAction, **overrides) -> ConfirmationRequest:
-    """The scoped approval a caller must present for a consequential action.
-
-    Phase 6 refuses to turn a bare ``confirmed=True`` into permission: it names
-    no permit, target or inspection, so it cannot be checked against what was
-    actually approved. This is what the human-facing layers hand down instead.
-    """
+    """the scoped approval a caller must present for a consequential action"""
     values = {
         "action_type": selected.action_type, "permit_id": selected.permit_id,
         "target": selected.inspection_type or selected.existing_inspection_id or "",
@@ -27,8 +22,8 @@ def approval(selected: InspectionAction, **overrides) -> ConfirmationRequest:
 
 
 class FakePortal:
-    # This double stands in for the sandbox portal, and says so: an unidentified
-    # portal is UNKNOWN and Phase 6 refuses every mutation from it.
+    # this double stands in for the sandbox portal, and says so: an unidentified portal is unknown and
+    # phase 6 refuses every mutation from it
     environment = Environment.SANDBOX
 
     def __init__(self, state, *, error=None, after=None):
@@ -232,8 +227,7 @@ def test_cancel_verifies_cancelled_state():
 
 
 def test_cancel_with_only_a_boolean_is_not_authorized():
-    # The Phase 6 addition: `confirmed=True` is not an approval. It carries no
-    # target, so it could never be checked against the pending action.
+    # the phase 6 addition: `confirmed=true` is not an approval
     portal = FakePortal(snap(status="Scheduled", scheduled_date="2026-09-24"), after=snap(status="Cancelled"))
     result = InspectionActionExecutor(portal).execute(cancel(), eligible_types=["Rough Electrical"], confirmed=True)
     assert result.error_code is ActionErrorCode.ACTION_REQUIRES_CONFIRMATION
@@ -241,9 +235,9 @@ def test_cancel_with_only_a_boolean_is_not_authorized():
 
 
 def test_cancel_without_an_identified_target_is_refused():
-    # "Cancel the Rough Electrical inspection" with no appointment named: there
-    # is no way to bind the approval, the identity check or the verification to
-    # one row, so it must not be resolved against whichever row is on screen.
+    # "cancel the rough electrical inspection" with no appointment named: there is no way to bind the
+    # approval, the identity check or the verification to one row, so it must not be resolved against
+    # whichever row is on screen
     portal = FakePortal(snap(status="Scheduled", scheduled_date="2026-09-24"), after=snap(status="Cancelled"))
     action = cancel(None)
     result = InspectionActionExecutor(portal).execute(action, eligible_types=["Rough Electrical"], approval=approval(action))

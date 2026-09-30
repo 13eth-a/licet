@@ -1,8 +1,4 @@
-"""Recon NI back-office admin menu for Inspection/Calendar admin pages.
-
-Read-only: logs in, dumps the dashboard navigation/portlet menu HTML, and
-greps it for inspection/calendar references. No settings are changed.
-"""
+"""recon ni back-office admin menu for inspection/calendar admin pages"""
 from __future__ import annotations
 
 import asyncio
@@ -59,7 +55,6 @@ async def main() -> int:
             f.write(html)
         out(f"home html {len(html)} bytes")
 
-        # collect nav links (top-level and frame-hosted)
         links: dict[str, str] = {}
         for fr in page.frames:
             try:

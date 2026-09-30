@@ -1,14 +1,4 @@
-"""Does ANY offered inspection type have capacity anywhere in the calendar horizon?
-
-This bounded read-only survey never clicks a day, a time, or the commit. Progress
-is appended and fsynced after each browser operation so an interrupted process
-leaves a useful trace even when the final JSON report cannot be written.
-
-Run:
-    .venv/bin/python scripts/ni_calendar_horizon.py --record BLD26-00469
-    .venv/bin/python scripts/ni_calendar_horizon.py --record BLD26-00469 \
-        --types Rough,Service --next-clicks 10
-"""
+"""does any offered inspection type have capacity anywhere in the calendar horizon?"""
 from __future__ import annotations
 
 import asyncio
@@ -40,7 +30,7 @@ def stamp_now() -> str:
 
 
 def checkpoint(path: Path, event: str, **details) -> None:
-    """Append and flush one credential-free progress event immediately."""
+    """append and flush one credential-free progress event immediately"""
     record = {"timestamp": datetime.now(timezone.utc).isoformat(), "event": event, **details}
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as stream:

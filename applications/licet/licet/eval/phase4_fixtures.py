@@ -1,22 +1,4 @@
-"""Phase 4 scripted-action fixtures and the checklist's 25 action cases.
-
-the Phase 4 portion: the mechanical fixtures, utilities and
-repetitive cases the executor work leans on.
-
-Two things live here:
-
-- ``ScriptedPortal`` — an ``InspectionPortal`` double that records every read
-  and submit. Its most common assertion is the negative one: a refused action
-  must leave ``portal.submits`` empty, i.e. it never reached the mutation.
-- ``build_cases()`` — the Phase 4 checklist's test split as *data*, exactly 25
-  cases: 10 scheduling, 5 rescheduling, 5 cancellation, 5 failure/safety/
-  idempotency. Each case binds a fixture state to the ``InspectionActionResult``
-  the contract requires (success, error code, verification state, submit count),
-  and ``run_case`` executes it through the real executor and policy layer.
-
-Only the portal is scripted; the executor, policy and date layer under test are
-the production ones. No browser, model, or network call happens here.
-"""
+"""phase 4 scripted-action fixtures and the checklist's 25 action cases"""
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -26,7 +8,6 @@ from licet.phase4.actions import InspectionAction, InspectionActionResult, Inspe
 from licet.phase4.workflow import InspectionActionExecutor
 from licet.safety.policy import ConfirmationRequest, Environment
 
-# --- fixture identities -------------------------------------------------------
 
 PERMIT_ID = "BLD-2026-0147"
 RECORD_KEY = "NULLISLAND/Building/REC26/00000/9F147"
@@ -39,10 +20,7 @@ DEFAULT_DATES = ("2026-09-24",)
 
 
 class ScriptedPortal:
-    # A double states its own environment, exactly as the real adapter derives it
-    # from the session URL. Phase 6 has no "no policy" executor: an unidentified
-    # portal is UNKNOWN and refuses every mutation, so a fake that means to
-    # exercise the sandbox mutation contract has to say that it is one.
+    # a double states its own environment, exactly as the real adapter derives it from the session url
     environment = Environment.SANDBOX
     """An ``InspectionPortal`` double with a call log.
 
@@ -82,7 +60,7 @@ class ScriptedPortal:
 
 
 def snapshot(**overrides: object) -> InspectionSnapshot:
-    """A not-scheduled, eligible inspection on the default fixture permit."""
+    """a not-scheduled, eligible inspection on the default fixture permit"""
     values: dict[str, object] = {
         "permit_id": PERMIT_ID,
         "inspection_id": INSPECTION_ID,
@@ -95,7 +73,7 @@ def snapshot(**overrides: object) -> InspectionSnapshot:
 
 
 def action(kind: str = "schedule", **overrides: object) -> InspectionAction:
-    """A default action for the fixture permit and inspection type."""
+    """a default action for the fixture permit and inspection type"""
     values: dict[str, object] = {
         "action_type": kind,
         "permit_id": PERMIT_ID,
@@ -107,7 +85,7 @@ def action(kind: str = "schedule", **overrides: object) -> InspectionAction:
 
 @dataclass(frozen=True)
 class ActionCase:
-    """One checklist action case: fixture state in, expected result out."""
+    """one checklist action case: fixture state in, expected result out"""
 
     case_id: str
     group: str
@@ -131,12 +109,11 @@ class ActionCase:
 
 
 def run_case(case: ActionCase) -> tuple[InspectionActionResult, ScriptedPortal]:
-    """Execute one case through the real executor; return its result and portal."""
+    """execute one case through the real executor; return its result and portal"""
     portal = ScriptedPortal(case.before, after=case.after, error=case.error)
     executor = InspectionActionExecutor(portal)
-    # A confirmed case means a human approved *this* case, so the caller presents
-    # the scoped, single-use approval. Phase 6 does not accept the boolean on its
-    # own: it names no permit, target or inspection to check it against.
+    # a confirmed case means a human approved *this* case, so the caller presents the scoped, single-use
+    # approval
     result = executor.execute(
         case.action,
         eligible_types=case.eligible_types,
@@ -158,10 +135,9 @@ def _scheduled(today: str) -> InspectionSnapshot:
 
 
 def build_cases() -> list[ActionCase]:
-    """The Phase 4 checklist split: 10 scheduling, 5 rescheduling, 5 cancel, 5 safety."""
+    """the phase 4 checklist split: 10 scheduling, 5 rescheduling, 5 cancel, 5 safety"""
     cases: list[ActionCase] = []
 
-    # --- scheduling (10) -------------------------------------------------------
     cases += [
         ActionCase(
             "S01", "scheduling", "one eligible inspection schedules and verifies",
@@ -223,7 +199,6 @@ def build_cases() -> list[ActionCase]:
         ),
     ]
 
-    # --- rescheduling (5) ------------------------------------------------------
     reschedule = action("reschedule", existing_inspection_id=INSPECTION_ID)
     cases += [
         ActionCase(
@@ -249,16 +224,12 @@ def build_cases() -> list[ActionCase]:
         ),
         ActionCase(
             "R05", "rescheduling", "a different inspection id is protected from mutation",
-            # The action targets I-1; the record's scheduled row is I-2.
             reschedule, snapshot(inspection_id=EXISTING_INSPECTION_ID, status="Scheduled", scheduled_date="2026-09-20"),
             expect_success=False, expect_error="STATE_MISMATCH",
             expect_verification="VERIFIED_FAILURE", expect_submits=0,
         ),
     ]
 
-    # --- cancellation (5) ------------------------------------------------------
-    # A cancellation names the appointment it cancels: without the inspection id
-    # the action cannot be bound to the row the human approved.
     cancel = action("cancel", existing_inspection_id=INSPECTION_ID)
     cases += [
         ActionCase(
@@ -291,7 +262,6 @@ def build_cases() -> list[ActionCase]:
         ),
     ]
 
-    # --- failure / safety / idempotency (5) ------------------------------------
     cases += [
         ActionCase(
             "F01", "safety", "an in-flight request blocks a duplicate submission",
@@ -328,7 +298,7 @@ def build_cases() -> list[ActionCase]:
 
 
 def case_ids(cases: Iterable[ActionCase]) -> list[str]:
-    """Parametrisation ids for the case table."""
+    """parametrisation ids for the case table"""
     return [case.case_id for case in cases]
 
 

@@ -1,29 +1,4 @@
-"""The model boundary: one place that talks to an LLM.
-
-Phase 1's first prerequisite. Until now no code called the OpenAI API and the configured model IDs
-were unvalidated, so a bad model ID could fail mid-run. This module makes the model an injectable dependency with a
-small, provider-neutral surface, so the planner loop can be tested with a
-scripted model and swapping providers is a config change rather than a rewrite.
-
-Design notes that are deliberate:
-
-- **Tool calls, not text parsing.** The planner asks the model to call tools from
-  a fixed list (`licet/browser/tools.py`); the loop never parses prose to decide
-  an action. That is also what keeps the safety boundary enforceable: the model
-  can only request a tool that has been classified.
-- **Tool arguments arrive as a dict**, already JSON-decoded, with the raw string
-  kept for the log. A malformed argument blob is a recoverable model error, not
-  a crash.
-- **Every response carries usage**, because the eval report is supposed to say
-  what a run cost.
-- **Retries are bounded and classified**, and a call that never succeeds raises
-  rather than returning an empty plan — an empty plan looks like "the agent
-  decided to do nothing", which would be a silent wrong answer.
-- **The fallback model is actually reached.** `fallback_model` used to be stored
-  and never read, so an outage of the primary model took the run down even
-  though a fallback was configured. The primary gets its retry budget, then the
-  fallback gets its own, and the reply records that the swap happened.
-"""
+"""the model boundary: one place that talks to an llm"""
 
 from __future__ import annotations
 
@@ -36,25 +11,23 @@ from licet.config import Config, load_config
 
 
 class ModelError(RuntimeError):
-    """The model call failed in a way the caller must handle."""
+    """the model call failed in a way the caller must handle"""
 
 
 @dataclass(frozen=True)
 class ToolCall:
-    """One tool the model asked for."""
+    """one tool the model asked for"""
 
     name: str
     args: dict[str, Any] = field(default_factory=dict)
     call_id: str = ""
-    raw_args: str = ""  # exactly what the model sent, for the log
+    raw_args: str = ""
 
     @classmethod
     def from_raw(cls, name: str, raw: str, call_id: str = "") -> "ToolCall":
         try:
             args = json.loads(raw) if raw else {}
         except json.JSONDecodeError as exc:
-            # Keep it recoverable: the dispatcher will refuse an unclassified or
-            # malformed call, and the loop can tell the model what went wrong.
             raise ModelError(f"tool arguments for '{name}' were not valid JSON: {exc}") from exc
         if not isinstance(args, dict):
             raise ModelError(f"tool arguments for '{name}' must be a JSON object")
@@ -63,7 +36,7 @@ class ToolCall:
 
 @dataclass
 class ModelReply:
-    """What the model said: text and/or tool calls, plus what it cost."""
+    """what the model said: text and/or tool calls, plus what it cost"""
 
     text: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)
@@ -71,9 +44,7 @@ class ModelReply:
     input_tokens: int = 0
     output_tokens: int = 0
     stop_reason: str = ""
-    # Set when the primary model failed and the fallback served the reply. The
-    # run log must show the swap rather than quietly reporting the fallback's
-    # answer as if the configured primary had produced it.
+    # set when the primary model failed and the fallback served the reply
     used_fallback: bool = False
     fallback_from: str = ""
 
@@ -83,7 +54,7 @@ class ModelReply:
 
 
 class ModelClient(Protocol):
-    """The only surface the planner sees."""
+    """the only surface the planner sees"""
 
     async def reply(
         self,
@@ -94,16 +65,8 @@ class ModelClient(Protocol):
     ) -> ModelReply: ...
 
 
-# --- the real thing ---------------------------------------------------------
-
-
 def tool_schema(definition: Any) -> dict[str, Any]:
-    """`licet/browser/tools.py` definitions -> OpenAI function-tool schema.
-
-    Accepts either a `ToolDefinition`-like object with name/description/parameters
-    or an already-shaped dict, so the tool catalogue stays the single source of
-    truth and this stays a pure translation.
-    """
+    """`licet/browser/tools.py` definitions -> openai function-tool schema"""
     if isinstance(definition, dict) and definition.get("type") == "function":
         return definition
     if isinstance(definition, dict):
@@ -123,12 +86,7 @@ def tool_schema(definition: Any) -> dict[str, Any]:
 
 
 class OpenAIModel:
-    """OpenAI-backed client. Imports the SDK lazily so tests need no key.
-
-    Uses the Responses API (`client.responses.create`), which is where OpenAI
-    puts function calling for current models; the tool list is passed as
-    `tools` and each call comes back as a `function_call` item.
-    """
+    """openai-backed client"""
 
     def __init__(
         self,
@@ -153,7 +111,7 @@ class OpenAIModel:
     def _ensure_client(self) -> Any:
         if self._client is None:
             try:
-                from openai import AsyncOpenAI  # imported here so tests need no SDK
+                from openai import AsyncOpenAI
             except ImportError as exc:  # pragma: no cover - exercised only without the dep
                 raise ModelError(
                     "the openai package is required for the live model: "
@@ -200,9 +158,8 @@ class OpenAIModel:
                         f"'{model}': {exc}"
                     )
                     break
-                # Deliberately outside the try: a malformed argument blob is a
-                # recoverable model error the caller must see as such, not
-                # something to retry into a generic transport failure.
+                # deliberately outside the try: a malformed argument blob is a recoverable model error the
+                # caller must see as such, not something to retry into a generic transport failure
                 reply = self._parse(response)
                 reply.used_fallback = index > 0
                 if index > 0:
@@ -212,7 +169,7 @@ class OpenAIModel:
 
     @property
     def attempt_order(self) -> list[str]:
-        """Primary first, then the fallback when it is set and different."""
+        """primary first, then the fallback when it is set and different"""
         order = [self.model]
         if self.fallback_model and self.fallback_model != self.model:
             order.append(self.fallback_model)
@@ -247,15 +204,8 @@ class OpenAIModel:
         )
 
 
-# --- the test double --------------------------------------------------------
-
-
 class ScriptedModel:
-    """Replays canned replies — how the planner loop is tested without a key.
-
-    Raises if the loop asks for more replies than were scripted, so a loop that
-    spins cannot silently pass a test.
-    """
+    """replays canned replies — how the planner loop is tested without a key"""
 
     def __init__(self, replies: Sequence[ModelReply | dict[str, Any]]) -> None:
         self._replies = [
@@ -293,7 +243,7 @@ def _reply_from_dict(payload: dict[str, Any]) -> ModelReply:
 
 
 def build_model(config: Config | None = None) -> ModelClient:
-    """The configured client. Raises before the run starts if the key is missing."""
+    """the configured client"""
     config = config or load_config()
     if not config.openai_api_key:
         raise ModelError(

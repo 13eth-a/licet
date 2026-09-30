@@ -1,26 +1,4 @@
-"""Find an active appointment date reachable from the signed-in citizen account.
-
-The query starts from My Records (never from a random permit search), verifies
-its record-grid coverage, then checks only wizard-offered inspection types on
-those account-owned records. It stops at the first identity-bound active date.
-
-Hard limits: 5 My Records pages, 20 records, 200 offered-type checks, and 36
-calendar windows per type. Defaults are deliberately smaller. The wizard may
-select a type and advance to the calendar, and the scan then clicks the
-calendar's own ``Next »`` control forward month by month until it reaches the
-``--horizon`` month (default the end of 2028) or the window cap — so availability
-in 2027 and beyond is actually observed, not assumed away. This script never
-selects a day or time and never reaches the confirm/submit step. All browser
-operations go through ToolDispatcher; the portal remains read-only.
-
-Run only when a fresh authenticated read-only check is authorized:
-    .venv/bin/python scripts/ni_citizen_capacity_query.py
-    .venv/bin/python scripts/ni_citizen_capacity_query.py \
-        --max-records 12 --max-types 60 --horizon 2028-12
-
-A negative result means no active date was observed within the completed
-record/type/calendar scope, not that availability cannot later change.
-"""
+"""find an active appointment date reachable from the signed-in citizen account"""
 from __future__ import annotations
 
 import argparse
@@ -48,7 +26,7 @@ from licet.eval.phase5_live import MAX_CALENDAR_WINDOWS, LiveInspectionPortal  #
 from licet.phase4.accela_portal import PortalObservation  # noqa: E402
 from licet.phase4.dates import DateConstraints  # noqa: E402
 from licet.safety.policy import Environment, detect_environment  # noqa: E402
-try:  # Support both `python scripts/...py` and `python -m scripts....`.
+try:
     from ni_my_records import parse_grid  # type: ignore[import-not-found]  # noqa: E402
 except ModuleNotFoundError:  # noqa: E402
     from scripts.ni_my_records import parse_grid  # noqa: E402
@@ -59,15 +37,9 @@ MAX_RECORDS = 20
 MAX_TYPE_CHECKS = 200
 DEFAULT_RECORDS = 12
 DEFAULT_TYPES = 40
-# The scan pages the appointment calendar forward until it reaches the end of
-# this month, then stops with `requested_window_exhausted` — which is what lets a
-# negative result mean "no active day through 2028", not merely "we gave up
-# after three months". Live 2026-09-30 the query reported Sep-Nov 2026 only
-# because it was run with a one-window budget; the horizon is now the knob that
-# decides how far the calendar is clicked forward.
 DEFAULT_HORIZON = "2028-12"
-# Programmatic default when a caller names no horizon; the CLI derives a deeper
-# count from --horizon instead, so the shipped command reaches past 2027.
+# programmatic default when a caller names no horizon; the cli derives a deeper count from --horizon
+# instead, so the shipped command reaches past 2027
 DEFAULT_CALENDAR_WINDOWS = 12
 _HORIZON_RE = re.compile(r"^(?P<year>\d{4})-(?P<month>\d{1,2})$")
 
@@ -87,11 +59,7 @@ _RECORD_TYPE_DETAIL_LABELS = {
     "building/right of way/na/na": "Right of Way Use Permit",
     "building/sign/temporary/na": "Sign - Temporary",
     "building/commercial/demolition/na": "Commercial Demolition",
-    # 2026-09-30: record types created to widen the availability search. Labels
-    # are the citizen-facing ones from the live catalog
-    # (logs/ni_backoffice/inventory/20260929T223214Z_catalog.json), not ones
-    # inferred from the cap-type path. Without these the query fails closed
-    # with `owned_row_record_type_path_is_unmapped` on any of these records.
+    # 2026-09-30: record types created to widen the availability search
     "building/residential/alteration/na": "Residential Alteration",
     "building/residential/electrical/na": "Residential Electrical",
     "building/residential/new/na": "Residential New",
@@ -99,10 +67,6 @@ _RECORD_TYPE_DETAIL_LABELS = {
     "building/fence/na/na": "Fence Permit",
     "building/commercial/plumbing/na": "Commercial Plumbing",
     "building/commercial/re-roof/na": "Commercial Re-Roof",
-    # Live 2026-09-30: an unfinished Residential Demolition application
-    # (26TMP-000072) showed this label in My Records, and the tenant catalog
-    # (logs/ni_backoffice/inventory/20260929T223214Z_catalog.json) carries both
-    # demolition paths below the top-level Building module.
     "building/residential/demolition/na": "Residential Demolition",
     "building/multi-family/demolition/na": "Multi-Family Demolition",
 }
@@ -129,13 +93,8 @@ _RECORD_TYPE_LABEL_ALIASES = {
 _BUILTIN_RECORD_MODULE = "Building"
 _ZERO_RECORD_RANGE_RE = re.compile(r"showing\s+0\s*[-\u2013]\s*0\s+of\s+0", re.I)
 
-# An unfinished application sits in My Records under a temporary number, with a
-# resume action and no CapDetail link. Live 2026-09-30
-# (logs/ni_backoffice/schedule/mydiag_f0.html): 26TMP-000071/072 rendered as
-# Action="Resume Application" with an empty href list. Such a row has no detail
-# page, no offered-type catalog and no calendar, so there is nothing to query —
-# and it is not an evidence gap about the account's real records. That is a
-# different thing from a record we failed to parse, which stays fail-closed.
+# an unfinished application sits in my records under a temporary number, with a resume action and no
+# capdetail link
 _TEMPORARY_RECORD_NUMBER_RE = re.compile(r"^[A-Za-z0-9]*TMP-", re.I)
 _INCOMPLETE_APPLICATION_ACTIONS = frozenset({
     "resume application",
@@ -181,7 +140,7 @@ class QuerySummary:
 
 
 def parse_owned_page(text: str, html_frames: list[str]) -> OwnedPage:
-    """Parse one My Records page, requiring a coherent declared row range."""
+    """parse one my records page, requiring a coherent declared row range"""
     match = _SHOWING_RE.search(text or "")
     if not match:
         if _ZERO_RECORD_RANGE_RE.search(text or "") and accela.looks_like_zero_results(text):
@@ -198,8 +157,8 @@ def parse_owned_page(text: str, html_frames: list[str]) -> OwnedPage:
         if re.search(r"record\s+number", source or "", re.I):
             saw_grid = True
             rows.extend(parse_grid(source))
-    # Repeated frame snapshots can contain the same ACA grid; keep first row,
-    # preserving My Records display order.
+    # repeated frame snapshots can contain the same aca grid; keep first row, preserving my records
+    # display order
     unique: list[dict[str, Any]] = []
     seen: set[str] = set()
     for row in rows:
@@ -216,7 +175,7 @@ def parse_owned_page(text: str, html_frames: list[str]) -> OwnedPage:
 
 
 def record_reference(row: dict[str, Any]) -> dict[str, str] | None:
-    """Resolve only a same-tenant CapDetail link into an addressable record ref."""
+    """resolve only a same-tenant capdetail link into an addressable record ref"""
     row_type = str(row.get("Record Type") or "").strip()
     expected_label = record_type_display_label(row_type)
     if expected_label is None:
@@ -253,13 +212,7 @@ def record_reference(row: dict[str, Any]) -> dict[str, str] | None:
 
 
 def is_incomplete_application_row(row: dict[str, Any]) -> bool:
-    """True only for an unfinished application, never for an inspectable record.
-
-    Requires all three signals ACA renders together for a draft: an
-    incomplete-application action, a temporary record number, and no CapDetail
-    link to open. Anything less stays on the fail-closed path, so a real record
-    with a parsing problem can never be silently skipped.
-    """
+    """true only for an unfinished application, never for an inspectable record"""
     action = " ".join(str(row.get("Action") or "").casefold().split())
     if action not in _INCOMPLETE_APPLICATION_ACTIONS:
         return False
@@ -273,7 +226,7 @@ def _record_key(ref: dict[str, str]) -> str:
 
 
 def record_type_display_label(grid_type: str) -> str | None:
-    """Resolve a known My Records type path or display label to its detail label."""
+    """resolve a known my records type path or display label to its detail label"""
     parts = [part.strip() for part in grid_type.split("/")]
     if len(parts) == 4 and all(parts):
         key = "/".join(part.casefold() for part in parts)
@@ -284,7 +237,7 @@ def record_type_display_label(grid_type: str) -> str | None:
 
 
 def _record_type_matches(grid_type: str, detail_type: str) -> bool | None:
-    """Compare the mapped My Records hierarchy with its detail-page label."""
+    """compare the mapped my records hierarchy with its detail-page label"""
     expected = record_type_display_label(grid_type)
     if expected is None:
         return None
@@ -293,7 +246,7 @@ def _record_type_matches(grid_type: str, detail_type: str) -> bool | None:
 
 def _date_is_in_calendar_evidence(active_date: str, availability: dict[str, Any],
                                   *, today: Callable[[], date]) -> bool:
-    """Require the exact active date in the identity-bound calendar result."""
+    """require the exact active date in the identity-bound calendar result"""
     try:
         day = date.fromisoformat(active_date)
     except (TypeError, ValueError):
@@ -308,7 +261,7 @@ def _date_is_in_calendar_evidence(active_date: str, availability: dict[str, Any]
 
 
 def parse_horizon_month(text: str) -> date:
-    """The last day of the ``YYYY-MM`` month the calendar scan must reach."""
+    """the last day of the ``yyyy-mm`` month the calendar scan must reach"""
     match = _HORIZON_RE.match((text or "").strip())
     if not match:
         raise ValueError(f"unsupported horizon month: {text!r} (expected YYYY-MM)")
@@ -319,17 +272,12 @@ def parse_horizon_month(text: str) -> date:
 
 
 def windows_for_horizon(end: date, *, today: date) -> int:
-    """Calendar windows a scan needs to reach `end`'s month.
-
-    Each window renders three months and the calendar's `Next »` control advances
-    the strip by one month, so `end` is reached once the last rendered month
-    catches up; two extra windows cover the initial strip's remaining months.
-    """
+    """calendar windows a scan needs to reach `end`'s month"""
     return (end.year - today.year) * 12 + (end.month - today.month) + 2
 
 
 async def read_observation(dispatcher: ToolDispatcher, state: AgentState) -> PortalObservation:
-    """Read structured page evidence through the ordinary guarded dispatcher."""
+    """read structured page evidence through the ordinary guarded dispatcher"""
     outcome = await dispatcher.execute(ToolCall("read_page", {"include": ["text", "form", "errors"]}), state)
     if not outcome.get("success"):
         raise RuntimeError("portal page could not be read")
@@ -337,7 +285,7 @@ async def read_observation(dispatcher: ToolDispatcher, state: AgentState) -> Por
 
 
 async def read_owned_page(dispatcher: ToolDispatcher, state: AgentState) -> tuple[OwnedPage, str]:
-    """Read My Records through the dispatcher and collect each rendered frame."""
+    """read my records through the dispatcher and collect each rendered frame"""
     observation = await read_observation(dispatcher, state)
     text = observation.text
     client = dispatcher.client
@@ -381,7 +329,7 @@ async def _inspect_owned_record(
     horizon: date | None = None,
     type_offset: int = 0,
 ) -> dict[str, Any]:
-    """Verify the owned row, enumerate its offered types, then check calendars."""
+    """verify the owned row, enumerate its offered types, then check calendars"""
     permit_id = str(row.get("Record Number") or "").strip()
     record_type = str(row.get("Record Type") or "").strip()
     ref = record_reference(row)
@@ -390,9 +338,8 @@ async def _inspect_owned_record(
         "status": "unknown", "types_checked": 0, "calendar_windows": 0,
     }
     if is_incomplete_application_row(row):
-        # Not an error and not an evidence gap: an unfinished application has no
-        # detail page, no offered-type catalog and no calendar to read. Reporting
-        # it as a missing identity made a clean account look like a parser bug.
+        # not an error and not an evidence gap: an unfinished application has no detail page, no
+        # offered-type catalog and no calendar to read
         result.update(status="not_a_record", reason=(
             "incomplete draft application: no detail page, offered-type catalog "
             "or calendar exists to inspect"))
@@ -407,7 +354,6 @@ async def _inspect_owned_record(
         return result
     ref = record_reference(row)
     if ref is None:
-        # The type resolved, so what is missing is the CapDetail link itself.
         result["reason"] = "owned_row_missing_safe_detail_link"
         return result
     target = accela.detail_url(ref["capID1"], ref["capID2"], ref["capID3"],
@@ -450,10 +396,8 @@ async def _inspect_owned_record(
         result.update(status="no_offered_inspection_types", reason="verified complete catalog is empty")
         return result
 
-    # A full 13-type sweep at a multi-year horizon is far more calendar traffic
-    # than one browser session budget allows, so types can be checked in chunks
-    # by skipping the first `type_offset` offered types. The offset is only a
-    # slice of the verified catalog — it never widens what is inspected.
+    # a full 13-type sweep at a multi-year horizon is far more calendar traffic than one browser session
+    # budget allows, so types can be checked in chunks by skipping the first `type_offset` offered types
     selected = list(catalog[type_offset:type_offset + type_budget])
     if not selected:
         result.update(status="unknown", reason=(
@@ -468,9 +412,7 @@ async def _inspect_owned_record(
         if not inspection_type:
             result["reason"] = "catalog_contains_empty_type"
             return result
-        # Reset to the verified record detail before each independent type
-        # check. This prevents a second iteration from inheriting calendar or
-        # postback state from the preceding type's read.
+        # reset to the verified record detail before each independent type check
         await _dispatch(dispatcher, state, ToolCall("navigate", {"url": target}))
         await _assert_test_sandbox(dispatcher.client)
         portal = LiveInspectionPortal(dispatcher, record_ref=ref, today=today)
@@ -503,7 +445,6 @@ async def _inspect_owned_record(
             "failure": availability.get("failure"),
         }
         type_results.append(type_result)
-        # Long sweeps were indistinguishable from hangs; one line per type.
         print(f"    {inspection_type}: {type_result['availability_status']}"
               f" ({len(type_result['months'])} months, stop={type_result['search_stop']})",
               flush=True)
@@ -528,10 +469,8 @@ async def _inspect_owned_record(
             return result
     result["type_results"] = type_results
     if len(catalog) - type_offset > type_budget:
-        # The catalog is complete by here (an incomplete one returns earlier) —
-        # what ran out is the *check* budget. The old wording said "before
-        # catalog was complete", which reads as a catalog failure and is what
-        # made a complete 13-type catalog look broken on 2026-09-30.
+        # the catalog is complete by here (an incomplete one returns earlier) — what ran out is the
+        # *check* budget
         result.update(status="unknown", reason=(
             f"type-check budget exhausted after {len(type_results)} of "
             f"{len(catalog) - type_offset} offered inspection types"
@@ -556,7 +495,7 @@ async def run_capacity_query(
     horizon: date | None = None,
     type_offset: int = 0,
 ) -> QuerySummary:
-    """Bounded read-only query over records owned by the authenticated account."""
+    """bounded read-only query over records owned by the authenticated account"""
     if not (1 <= max_records <= MAX_RECORDS
             and 1 <= max_types <= MAX_TYPE_CHECKS
             and 0 <= type_offset <= MAX_TYPE_CHECKS
@@ -593,8 +532,8 @@ async def run_capacity_query(
         remaining_records = max_records - len(owned)
         owned.extend(page.records[:remaining_records])
         if len(owned) >= max_records and page.last < expected_total:
-            # Partial ownership coverage remains useful for a positive hit, but
-            # must be labelled incomplete if no active date is found.
+            # partial ownership coverage remains useful for a positive hit, but must be labelled
+            # incomplete if no active date is found
             break
         if page.last == expected_total:
             break
@@ -602,8 +541,8 @@ async def run_capacity_query(
             return QuerySummary(status="unknown", reason="My Records pages ended before declared total",
                                 records_seen=len(owned), records=owned)
         if page_count >= max_record_pages:
-            # Search the verified records already captured, but preserve the
-            # incomplete-ownership verdict if no positive result is found.
+            # search the verified records already captured, but preserve the incomplete-ownership verdict
+            # if no positive result is found
             break
         expected_next = page.last + 1
         await _dispatch(dispatcher, state, ToolCall("click", {
@@ -643,8 +582,7 @@ async def run_capacity_query(
                 type_offset=type_offset,
             )
         except Exception as exc:
-            # A per-record read failure must not hide a positive result on a
-            # later account-owned record. If none is found, retain UNKNOWN.
+            # a per-record read failure must not hide a positive result on a later account-owned record
             inspected = {
                 "permit_id": str(row.get("Record Number") or ""),
                 "record_type": str(row.get("Record Type") or ""),
@@ -654,8 +592,6 @@ async def run_capacity_query(
                 "calendar_windows": 0,
             }
         summary.records.append(inspected)
-        # Progress as we go: this query runs for many minutes and each record is
-        # a full wizard walk, so a silent run is indistinguishable from a hang.
         print(f"[{index + 1}/{len(owned)}] {inspected.get('permit_id')}: "
               f"{inspected.get('status')} — {str(inspected.get('reason') or '')[:150]}",
               flush=True)
@@ -680,15 +616,13 @@ async def run_capacity_query(
         summary.status = "unknown"
         summary.reason = "; ".join(unknown_reasons)
     if skipped_applications and skipped_applications == len(summary.records):
-        # Every owned row was an unfinished application, so nothing was actually
-        # inspected. Claiming "no active date observed" would assert a check that
-        # never happened.
+        # every owned row was an unfinished application, so nothing was actually inspected
         summary.status = "unknown"
         summary.reason = (
             f"no inspectable owned record: all {skipped_applications} owned row(s) are "
             "incomplete draft applications with no detail page, offered-type catalog or calendar")
     elif skipped_applications:
-        # Say so, so a clean "no active date" is not silently missing rows.
+        # say so, so a clean "no active date" is not silently missing rows
         summary.reason = (
             f"{summary.reason} | skipped {skipped_applications} incomplete draft "
             "application(s): no detail page, offered-type catalog or calendar exists")

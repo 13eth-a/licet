@@ -22,9 +22,8 @@ def test_confirmation_required_actions():
 
 
 def test_legal_attestation_is_prohibited_not_merely_consequential():
-    # The Phase 6 checklist lists "sign legal attestation for user" under
-    # prohibited, and the central engine already classifies LEGAL_ATTESTATION
-    # that way. The primitive catalogue must not contradict it: no approval path.
+    # the phase 6 checklist lists "sign legal attestation for user" under prohibited, and the central
+    # engine already classifies legal_attestation that way
     assert classify("accept_legal_attestation") is RiskLevel.PROHIBITED
     assert not requires_confirmation("accept_legal_attestation")
     assert changes_state("accept_legal_attestation")

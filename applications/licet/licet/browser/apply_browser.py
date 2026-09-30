@@ -1,21 +1,4 @@
-"""The browser an apply run drives: local, headed, and visible to the operator.
-
-`solari_browser` renders *remotely*: its `launch()` connects over the Playwright
-wire protocol to a container on the vendor's gateway, so the browser lives on
-someone else's machine. The SDK exposes no live-view or takeover endpoint —
-only a *replay* URL, and only once the session has been released, which is a
-recording rather than a window. A human therefore can neither watch nor act
-inside a Solari session.
-
-That matters for the ACC apply flow, whose disclaimer is a legal attestation:
-`accept_legal_attestation` is `PROHIBITED` and only the human may accept it, so
-the flow needs a browser the human can actually reach. This module launches
-that browser, and holds the small amount of driver-selection logic the three
-apply scripts share.
-
-Read-only Accela work (login, type catalog, availability queries) needs no
-human and stays on Solari; only the apply flow comes here.
-"""
+"""the browser an apply run drives: local, headed, and visible to the operator"""
 from __future__ import annotations
 
 import asyncio
@@ -25,23 +8,17 @@ import sys
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping
 
-# An installed Chrome is preferred over Playwright's bundled Chromium: it is the
-# browser the operator actually uses, so the window they are asked to click in
-# looks like the browser they know.
 DEFAULT_CHROME_EXECUTABLE = (
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 )
 CHROME_PATH_ENV = "LICET_CHROME_PATH"
 
-# Which driver the apply flow uses. Local by default, because the apply flow's
-# disclaimer needs a human at the screen. `solari` is kept for non-interactive
-# reproduction, which cannot include an attestation step.
+# which driver the apply flow uses
 APPLY_BROWSER_ENV = "LICET_APPLY_BROWSER"
 LOCAL = "local"
 SOLARI = "solari"
 
-# Emitted when the apply flow is pointed at a browser no human can reach. The
-# disclaimer step will stall and then time out; say so before it does.
+# emitted when the apply flow is pointed at a browser no human can reach
 REMOTE_HANDOFF_WARNING = (
     "LICET_APPLY_BROWSER=solari: this browser renders remotely and has no "
     "live view, so no human can accept the disclaimer in it. The attestation "
@@ -50,11 +27,7 @@ REMOTE_HANDOFF_WARNING = (
 
 
 def apply_browser_choice(environ: Mapping[str, str] | None = None) -> str:
-    """Which driver the apply flow should use.
-
-    Anything unrecognised resolves to the local browser, because the local one
-    is the only driver that can host the human attestation step.
-    """
+    """which driver the apply flow should use"""
     source = os.environ if environ is None else environ
     raw = source.get(APPLY_BROWSER_ENV, "")
     return SOLARI if raw.strip().casefold() == SOLARI else LOCAL
@@ -66,12 +39,7 @@ def chrome_launch_options(
     environ: Mapping[str, str] | None = None,
     is_file: Callable[[str], bool] | None = None,
 ) -> dict[str, Any]:
-    """Keyword arguments for `chromium.launch()`.
-
-    Prefers an explicit Chrome on disk (`LICET_CHROME_PATH`, else the platform
-    default); when there is none, asks Playwright for an installed Chrome by
-    channel, which leaves the bundled Chromium as the final fallback.
-    """
+    """keyword arguments for `chromium.launch()`"""
     source = os.environ if environ is None else environ
     exists = (lambda path: Path(path).is_file()) if is_file is None else is_file
 
@@ -91,12 +59,7 @@ async def launch_chromium(
     environ: Mapping[str, str] | None = None,
     is_file: Callable[[str], bool] | None = None,
 ) -> Any:
-    """Launch a headed browser, degrading to the bundled Chromium if need be.
-
-    `channel="chrome"` fails outright when no Chrome is installed, so that one
-    case retries with the driver's own browser. An `executable_path` failure is
-    a real error and is raised.
-    """
+    """launch a headed browser, degrading to the bundled chromium if need be"""
     options = chrome_launch_options(
         headless=headless, environ=environ, is_file=is_file,
     )
@@ -110,11 +73,7 @@ async def launch_chromium(
 
 
 class LocalChromeSession:
-    """A local browser, headed by default so the operator can see it.
-
-    Owns both the Playwright driver and the browser it starts, so `close()`
-    releases the driver even when the launch itself failed.
-    """
+    """a local browser, headed by default so the operator can see it"""
 
     def __init__(
         self,
@@ -141,7 +100,7 @@ class LocalChromeSession:
         return await async_playwright().start()
 
     async def start(self) -> Any:
-        """Start the driver and browser. Returns the browser."""
+        """start the driver and browser"""
         self._driver = await self._start_driver()
         try:
             self.browser = await launch_chromium(
@@ -149,13 +108,13 @@ class LocalChromeSession:
                 environ=self._environ, is_file=self._is_file,
             )
         except Exception:
-            # Do not leak the driver when the browser never came up.
+            # do not leak the driver when the browser never came up
             await self.close()
             raise
         return self.browser
 
     async def close(self) -> None:
-        """Release the browser and the driver. Safe to call more than once."""
+        """release the browser and the driver"""
         browser, self.browser = self.browser, None
         if browser is not None:
             try:
@@ -170,12 +129,6 @@ class LocalChromeSession:
                 pass
 
 
-# The driven browser is a *separate* Chrome instance from the one the operator
-# is browsing in (the driver gives it a throwaway profile), so its window opens
-# at the same position, underneath their windows, and nothing surfaces it
-# unless we do. Observed live 2026-09-30: the window was on screen the whole
-# time at {left 22, top 55, 1282x800}, reported by macOS as a healthy
-# "Accela Citizen Access" window, while the operator saw nothing at all.
 _NOTIFY_SCRIPT = (
     'display notification "The Licet browser window is open." '
     'with title "Licet"'
@@ -195,16 +148,11 @@ def _raise_script(pid: int) -> str:
 
 
 def automation_chrome_pid(ps_output: str) -> int | None:
-    """Pick the driver's Chrome out of `ps -eo pid=,command=` output.
-
-    Both processes are named "Google Chrome", so the throwaway
-    `--user-data-dir` the driver passes is what tells ours apart from the one
-    the operator is already browsing in.
-    """
+    """pick the driver's chrome out of `ps -eo pid=,command=` output"""
     for line in ps_output.splitlines():
         if "Google Chrome" not in line or "user-data-dir" not in line:
             continue
-        if "--type=" in line:  # renderer / GPU / utility children
+        if "--type=" in line:
             continue
         head = line.split(None, 1)[0]
         if head.isdigit():
@@ -214,13 +162,7 @@ def automation_chrome_pid(ps_output: str) -> int | None:
 
 def surface_window(*, run: Callable[..., Any] | None = None,
                    platform: str | None = None) -> bool:
-    """Best-effort: raise the driven Chrome and post a notification.
-
-    A run must never fail because a window could not be raised, so every
-    failure here is swallowed and reported as False. macOS only; a no-op
-    elsewhere. This is for whoever *can* see the screen — it is not a request
-    for anyone to act.
-    """
+    """best-effort: raise the driven chrome and post a notification"""
     plat = sys.platform if platform is None else platform
     if not plat.startswith("darwin"):
         return False
@@ -260,12 +202,7 @@ async def open_apply_browser(
     launch_timeout_s: float = 120.0,
     warn: Callable[[str], Any] | None = None,
 ) -> tuple[Any, Callable[[], Awaitable[None]]]:
-    """Open the browser an apply run drives, and return `(browser, close)`.
-
-    Headed by default: an apply run reaches a legal attestation that only a
-    human may accept, so the browser has to be one they can see. `close()` is
-    always awaitable and always releases the browser and its driver.
-    """
+    """open the browser an apply run drives, and return `(browser, close)`"""
     if apply_browser_choice(environ) == SOLARI:
         if warn is not None:
             warn(REMOTE_HANDOFF_WARNING)

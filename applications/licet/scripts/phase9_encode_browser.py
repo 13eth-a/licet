@@ -1,4 +1,4 @@
-"""Encode actual screen frames at recorded timing; optional idle-wait shortening."""
+"""encode actual screen frames at recorded timing; optional idle-wait shortening"""
 import argparse
 import json
 import subprocess
@@ -24,7 +24,7 @@ def encode(root, *, shorten_idle=False, screen_directory='screen'):
         elapsed=max(0.001,end-frame['seconds'])
         used=min(elapsed,2.0) if shorten_idle and frame['seconds']<replay_start else elapsed
         if shorten_idle and i == len(frames)-1:
-            used=max(used,5.0)  # Hold the actual final captured frame for readability.
+            used=max(used,5.0)
         duration+=used
         if used<elapsed:cuts.append({'start':frame['seconds'],'removed_seconds':elapsed-used})
         lines.extend(["file '"+str(screen/frame['file'])+"'",'option framerate 1000',f'duration {used:.6f}'])

@@ -1,13 +1,4 @@
-"""Adversarial review regressions (adversarial review, Phase 3).
-
-Each test is a counterexample reproduced against the inherited Phase 3 rules.
-The theme is the one the phase cannot get wrong: never state a requirement,
-gate, or outcome the portal did not state — and never silently drop one the
-portal did.
-
-Golden-case equivalents live in ``licet/eval/phase3_fixtures.py`` (``A01``-
-``A11``); these are the precise unit-level locks on the same predicates.
-"""
+"""adversarial review regressions (adversarial review, phase 3)"""
 from __future__ import annotations
 
 from licet.eval.phase3 import Phase3Case, score_cases
@@ -33,9 +24,6 @@ def page(section, **values):
 
 def blockers(state, question="What is blocking approval?"):
     return {blocker.type: blocker for blocker in understand(state, question).blockers}
-
-
-# --- A1/A3: condition activity is an agency label, not a substring -----------
 
 
 def test_resolved_condition_labels_are_inactive():
@@ -73,9 +61,6 @@ def test_unmapped_condition_label_becomes_uncertainty_not_blocker():
     result = understand(state, "What is blocking approval?")
     assert not result.blockers
     assert any("not a recognized agency label" in u.description for u in result.uncertainties)
-
-
-# --- A2/A3: a payment gate is a portal statement, with a stated stage --------
 
 
 def _fee_plus_condition(description, status="Active"):
@@ -119,9 +104,6 @@ def test_negated_fee_row_gate_text_is_not_a_gate():
     assert blockers(state)["unpaid_fee"].classification == "potential_impediment"
 
 
-# --- A4: only a *later* pass resolves a failure ------------------------------
-
-
 def test_attempt_order_requires_both_iso_dates():
     passed = Inspection("Rough", result="Passed", scope="Unit A", completed_date="2026-09-20")
     failed = Inspection("Rough", result="Failed", scope="Unit A", completed_date="2026-09-18")
@@ -162,9 +144,6 @@ def test_later_pass_still_resolves_same_scope_failure():
     assert not any(b.type == "failed_inspection" for b in result.blockers)
 
 
-# --- A5/A6: negation in comment and history wording --------------------------
-
-
 def test_comment_correction_matcher_respects_negation():
     assert comment_requests_correction("Corrections Required")
     assert comment_requests_correction("Correction Required")
@@ -201,9 +180,6 @@ def test_not_expired_history_does_not_flip_answerability():
     assert result.answerability == "answered"
 
 
-# --- A7/A8/A10: money wording -------------------------------------------------
-
-
 def test_unknown_payment_state_is_not_reported_as_unpaid():
     state = extract_partial_state(
         page("fees", rows=[{"name": "Permit balance", "amount": "$74.50", "due": True}])
@@ -232,9 +208,6 @@ def test_zero_balance_is_not_an_outstanding_amount():
     assert not understand(state, "Are there unpaid fees?").blockers
 
 
-# --- A9: competing same-record observations ----------------------------------
-
-
 def test_disagreeing_fee_reads_are_recorded_as_a_conflict():
     merged = merge_partial_states(
         extract_partial_state(page("fees", rows=[{"name": "Permit balance", "amount": "$74.50",
@@ -256,9 +229,6 @@ def test_agreeing_reads_produce_no_conflict():
     assert merged.contradictions == []
 
 
-# --- A11: a required document is missing only when the portal says so --------
-
-
 def test_pending_required_document_is_an_uncertainty_not_a_blocker():
     state = extract_partial_state(
         page("documents", rows=[{"name": "Grading plan", "status": "Pending", "required": True}])
@@ -274,9 +244,6 @@ def test_explicitly_missing_required_document_is_still_a_blocker():
         page("documents", rows=[{"name": "Grading plan", "status": "Missing", "required": True}])
     )
     assert blockers(state)["missing_required_document"]
-
-
-# --- A12/A14: scoring and rendering cannot hide an unsupported gate ----------
 
 
 def test_evaluator_scores_gate_classification_separately_from_type():
@@ -303,18 +270,12 @@ def test_renderer_marks_disputed_facts_as_disputed():
     assert "some are disputed" in render_answer(result)
 
 
-# --- H01-H07: portal state extraction regressions (portal integration, Phase 5) -------------
-# Scope per the Phase 5 assignment: planner failures caused by confusing Accela
-# state, not by planner reasoning. These run real page payloads through the ACA
-# adapter and assert what the planner's gates actually receive.
-
-
 def inspections_page(text):
     return accela_extract.inspections_observation(page("inspections", text=text))
 
 
 def test_portal_mmdd_dates_normalize_to_iso_for_attempt_ordering():
-    """H02: ACA renders MM/DD/YYYY; ordering logic consumes ISO dates only."""
+    """h02: aca renders mm/dd/yyyy; ordering logic consumes iso dates only"""
     state = extract_partial_state(inspections_page(
         "Inspection | Status | Result | Completed Date\n"
         "Rough Electrical | Completed | Failed | 09/18/2026\n"
@@ -324,7 +285,7 @@ def test_portal_mmdd_dates_normalize_to_iso_for_attempt_ordering():
 
 
 def test_later_pass_with_known_dates_establishes_order_when_scope_rendered():
-    """H07: real dates + rendered scope must resolve, not block the planner."""
+    """h07: real dates + rendered scope must resolve, not block the planner"""
     state = extract_partial_state(inspections_page(
         "Inspection | Status | Result | Completed Date | Scope\n"
         "Rough Electrical | Completed | Failed | 09/18/2026 | Unit A\n"
@@ -336,7 +297,7 @@ def test_later_pass_with_known_dates_establishes_order_when_scope_rendered():
 
 
 def test_unrendered_scope_names_the_missing_premise_not_fake_order():
-    """H07: with dates known and scope absent, the uncertainty names scope."""
+    """h07: with dates known and scope absent, the uncertainty names scope"""
     state = extract_partial_state(inspections_page(
         "Inspection | Status | Result | Completed Date\n"
         "Rough Electrical | Completed | Failed | 09/18/2026\n"
@@ -350,7 +311,7 @@ def test_unrendered_scope_names_the_missing_premise_not_fake_order():
 
 
 def test_text_path_inspection_row_keeps_its_date():
-    """H02b: the citizen detail's text rendering previously dropped the date."""
+    """h02b: the citizen detail's text rendering previously dropped the date"""
     observation = accela_extract.inspections_observation(page(
         "inspections", text="Rough Electrical | Insp Scheduled | 05-20-2026"
     ))
@@ -361,7 +322,7 @@ def test_text_path_inspection_row_keeps_its_date():
 
 
 def test_failure_in_status_column_is_not_lost():
-    """H06: some agencies render the outcome in the status column."""
+    """h06: some agencies render the outcome in the status column"""
     state = extract_partial_state(inspections_page(
         "Inspection | Status | Completed Date\nRough Electrical | Failed | 09/18/2026"
     ))
@@ -373,7 +334,7 @@ def test_failure_in_status_column_is_not_lost():
 
 
 def test_legend_line_does_not_fabricate_an_inspection_row():
-    """H01: 'Scheduled | Completed | Failed' is a legend, not an attempt."""
+    """h01: 'scheduled | completed | failed' is a legend, not an attempt"""
     observation = accela_extract.inspections_observation(page(
         "inspections",
         text="Rough Electrical | Insp Scheduled | 05-20-2026\nScheduled | Completed | Failed",
@@ -382,7 +343,7 @@ def test_legend_line_does_not_fabricate_an_inspection_row():
 
 
 def test_declared_empty_beside_rows_degrades_to_partial():
-    """H05: a self-disputing page must not claim complete coverage."""
+    """h05: a self-disputing page must not claim complete coverage"""
     observation = accela_extract.inspections_observation(page(
         "inspections",
         text="Inspections\nYou have not added any inspections.\nRough Electrical | Completed | Failed",
@@ -392,7 +353,7 @@ def test_declared_empty_beside_rows_degrades_to_partial():
 
 
 def test_fee_status_wording_in_collection_reads_unpaid():
-    """H03: agency wording must not silently void the payment status."""
+    """h03: agency wording must not silently void the payment status"""
     observation = accela_extract.fees_observation(page(
         "fees", text="Fee | Amount | Balance | Status\nPlan Check Fee | $200.00 | $200.00 | In Collection"
     ))
@@ -401,7 +362,7 @@ def test_fee_status_wording_in_collection_reads_unpaid():
 
 
 def test_due_date_header_does_not_defeat_the_fees_table():
-    """H04: a 'Due Date' column is a date, not a payment status."""
+    """h04: a 'due date' column is a date, not a payment status"""
     observation = accela_extract.fees_observation(page(
         "fees", text="Fee | Amount | Due Date\nPlan Check Fee | $74.50 | 09/30/2026"
     ))
@@ -413,13 +374,7 @@ def test_due_date_header_does_not_defeat_the_fees_table():
 
 
 def test_blocks_answer_uncertainty_is_producible_by_the_deterministic_stack():
-    """the adversarial review’s Phase 5 handoff: the class must not be model-only.
-
-    An unavailable section, unknown ordering, and a completed attempt with no
-    recorded result each produce ``blocks_answer=True`` from the shipped rule
-    engine — the Phase 5 gate (``reasoning_is_sound``) is reachable from real
-    portal data, not only from injected reasoning results.
-    """
+    """the adversarial review’s phase 5 handoff: the class must not be model-only"""
     from licet.phase3.state import Coverage, CoverageStatus
 
     state = extract_partial_state(page("overview", fields={"record_number": "P", "status": "Issued"}))

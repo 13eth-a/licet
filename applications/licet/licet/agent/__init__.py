@@ -1,1 +1,1 @@
-"""Package init for licet.agent."""
+"""package init for licet.agent"""

@@ -1,24 +1,4 @@
-"""Phase 4 coordinator: the end-to-end entry point.
-
-Verified Phase 3 state -> action selection -> policy -> executor -> independently
-verified portal state. One function, one honest outcome. This is the seam the
-Phase 4 milestone command needs:
-
-    "Figure out what inspection is next and schedule the earliest available one
-     next week."
-
-The pieces existed but nothing assembled them outside tests: selection
-(`licet.phase4.selection`) chose an action, `Phase4ActionRunner` executed one,
-and the Accela adapter drove the browser. `run_inspection_workflow` is the
-assembly, and it names the stage that stopped it — ``selection``,
-``validation`` or ``execution`` — so a refusal that never touched a browser is
-never mistaken for a portal outcome.
-
-The coordinator starts from a *verified* observation: Phase 2/3 own finding and
-verifying the permit, and the caller supplies the `SelectionContext` built from
-one observation snapshot (including the offered inspection options). It never
-searches for a record, never invents an action, and never retries a mutation.
-"""
+"""phase 4 coordinator: the end-to-end entry point"""
 from __future__ import annotations
 
 import datetime as _dt
@@ -34,7 +14,7 @@ from licet.phase4.selection import ActionSelection, SelectionContext, select_ins
 
 
 class InspectionPortal(Protocol):
-    """Structural stand-in for the adapter, so the coordinator stays offline-testable."""
+    """structural stand-in for the adapter, so the coordinator stays offline-testable"""
 
     def read_inspection_state(self, permit_id: str, inspection_type: str | None = None, inspection_id: str | None = None): ...
     def submit_inspection_action(self, action: InspectionAction, *, portal_type: str, selected_date: str | None = None): ...
@@ -42,9 +22,9 @@ class InspectionPortal(Protocol):
 
 @dataclass(frozen=True)
 class WorkflowOutcome:
-    """The single result of one end-to-end attempt, whatever stage stopped it."""
+    """the single result of one end-to-end attempt, whatever stage stopped it"""
 
-    stage: str  # "selection" | "validation" | "execution"
+    stage: str
     status: str
     message: str
     selection: ActionSelection | None = None
@@ -64,7 +44,7 @@ class WorkflowOutcome:
 
     @property
     def success(self) -> bool:
-        """True only for an executed, independently verified success."""
+        """true only for an executed, independently verified success"""
         return bool(self.result is not None and self.result.success and self.result.verified)
 
     def as_dict(self) -> dict[str, Any]:
@@ -106,15 +86,7 @@ def run_inspection_workflow(
     logger: Any | None = None,
     expected_action: InspectionAction | None = None,
 ) -> WorkflowOutcome:
-    """Select, authorize and execute one inspection action; report honestly.
-
-    ``available_dates`` is the portal's own availability read (the caller
-    obtained it from the same verified observation as ``context``);
-    ``eligible_types`` are taken from ``context.options``, which is why a
-    selection context with no offered options cannot reach the executor.
-    ``expected_action`` is for eval callers that know the correct target — it
-    feeds selection accuracy and never changes what is executed.
-    """
+    """select, authorize and execute one inspection action; report honestly"""
     selection = select_inspection_action(
         reasoning, permit_id=permit_id, context=context, requested_action=requested_action
     )
@@ -134,7 +106,7 @@ def run_inspection_workflow(
     try:
         shown = preview(request, reference)
     except ValueError as exc:
-        # Date language that cannot be made concrete stops before any browser step.
+        # date language that cannot be made concrete stops before any browser step
         return WorkflowOutcome(
             "validation", "INVALID_REQUEST", str(exc), selection=selection, request=request
         )
@@ -147,7 +119,7 @@ def run_inspection_workflow(
         result = runner.run(
             request, reference=reference, eligible_types=eligible_types, available_dates=available_dates
         )
-    except ValueError as exc:  # conflicting/unsatisfiable constraints surface inside run()
+    except ValueError as exc:
         return WorkflowOutcome(
             "validation", "INVALID_REQUEST", str(exc),
             selection=selection, request=request, preview=shown,

@@ -96,18 +96,12 @@ def test_select_task_and_category_are_validated():
 
 def test_holdout_is_separate_from_core_listing_and_runs_independently():
     holdout = build_holdout_tasks()
-    # Five v1 holdout tasks plus the Safety positive control added by the
-    # Phase 8 audit (HOLDOUT-006); the locked 50-task core catalogue is unchanged.
     assert len(holdout) == 6
     assert not ({task.id for task in holdout} & {task.id for task in build_tasks()})
     assert all(task.suite == "holdout" for task in holdout)
     assert {task.id for task in select_tasks(suite="holdout")} == {task.id for task in holdout}
     results = run_tasks(holdout)
-    # Only the *structural* and safety guarantees are pinned in CI. The per-task
-    # verdicts are deliberately not asserted here: a holdout that fails the
-    # default suite and is then tuned is no longer a holdout. Evaluate its
-    # verdicts on purpose with `python -m licetbench run --suite holdout`
-    # (see docs/phase8.md, "Holdout status").
+    # only the *structural* and safety guarantees are pinned in ci
     assert all(not result.grader_error for result in results)
     assert all(not result.details.get("benchmark_integrity") for result in results)
     assert all(result.safe for result in results)

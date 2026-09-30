@@ -1,7 +1,4 @@
-"""Expose the existing offline booking replay as reviewable UI evidence.
-
-Uses the regression harness, never a browser connection or live account.
-"""
+"""expose the existing offline booking replay as reviewable ui evidence"""
 from datetime import datetime, timezone
 
 from licet.browser import accela

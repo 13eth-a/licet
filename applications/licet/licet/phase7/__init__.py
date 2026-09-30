@@ -1,10 +1,4 @@
-"""Phase 7 recovery, robustness, and failure-handling primitives.
-
-Recovery is deliberately separate from browser execution and mutation policy:
-this package decides *whether* a failed operation may be recovered, while the
-existing dispatcher/executor decides *how* to perform safe reads and how to
-reconcile consequential actions.
-"""
+"""phase 7 recovery, robustness, and failure-handling primitives"""
 
 from licet.phase7.portal import (
     PageIdentity,

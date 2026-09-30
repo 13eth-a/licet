@@ -1,13 +1,4 @@
-"""Recon the NI citizen-portal account-registration flow (read-only).
-
-docs/accela_ui_map.md says Login.aspx ships zero password fields in raw HTML
-(CivicId SSO rendered client-side, likely iframe/popup). This pass only maps
-the terrain: opens Login.aspx, dumps links/buttons, clicks "Register" if
-found, and dumps whatever form appears (any frame). No fields are filled,
-nothing is submitted.
-
-Run:  .venv/bin/python scripts/ni_register_recon.py
-"""
+"""recon the ni citizen-portal account-registration flow (read-only)"""
 from __future__ import annotations
 
 import asyncio
@@ -79,7 +70,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # 1. portal home → find the login link
         await asyncio.wait_for(
             page.goto(f"{CITIZEN}/Default.aspx", timeout=45000,
                       wait_until="domcontentloaded"),
@@ -99,7 +89,6 @@ async def main() -> int:
             login_link = f"{CITIZEN}/Login.aspx"
             out(f"no explicit link found; defaulting to {login_link}")
 
-        # 2. open Login.aspx, dump everything
         await asyncio.wait_for(
             page.goto(login_link, timeout=45000, wait_until="domcontentloaded"),
             55,
@@ -111,7 +100,6 @@ async def main() -> int:
         out(f"frames: {len(page.frames)}")
         await dump_frames(page, stamp)
 
-        # any visible register-ish control?
         for sel in ["text=Register", "text=Create", "a:has-text('Register')"]:
             try:
                 cnt = await asyncio.wait_for(page.locator(sel).count(), 5)
@@ -120,7 +108,6 @@ async def main() -> int:
             except Exception:
                 pass
 
-        # 3. click "Register for an Account" if present (popup/new-tab safe)
         try:
             async with asyncio.timeout(25):
                 async with page.expect_event("popup", timeout=15000) as pop:

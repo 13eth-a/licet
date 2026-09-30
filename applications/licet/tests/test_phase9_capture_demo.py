@@ -1,4 +1,4 @@
-"""The recording observer must never change or abort a product tool result."""
+"""the recording observer must never change or abort a product tool result"""
 import asyncio
 from types import SimpleNamespace
 

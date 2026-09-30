@@ -1,4 +1,4 @@
-"""Paired report comparison with explicit measurement and comparability checks."""
+"""paired report comparison with explicit measurement and comparability checks"""
 from licetbench.provenance import digest
 
 

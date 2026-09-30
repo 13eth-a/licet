@@ -1,13 +1,4 @@
-"""Sweep NI portal CapHome ddlGSPermitType per module: full type catalog.
-
-The search page's permit-type dropdown enumerates the module's CONFIGURED
-record types (including types with zero records) — the authoritative answer
-to "can we apply for X". Saves label+value per module, matches Licet's 7
-target categories, checkpoints JSON after each module.
-
-Run:  .venv/bin/python scripts/ni_type_catalog.py
-Read-only: search page GETs only.
-"""
+"""sweep ni portal caphome ddlgspermittype per module: full type catalog"""
 from __future__ import annotations
 
 import asyncio

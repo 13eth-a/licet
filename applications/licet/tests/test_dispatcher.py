@@ -1,4 +1,4 @@
-"""The dispatcher is where the safety boundary becomes enforceable."""
+"""the dispatcher is where the safety boundary becomes enforceable"""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ CAPEDIT_CONTACT_URL = (
 
 
 class RecordingClient:
-    """A SolariClient stand-in that records what actually reached the browser."""
+    """a solariclient stand-in that records what actually reached the browser"""
 
     def __init__(
         self,
@@ -68,10 +68,6 @@ class RecordingClient:
 
 
 def _state(**kwargs) -> AgentState:
-    # The dispatcher's guard authorizes a state-changing action against the page
-    # actually being driven, so a fixture that means to exercise the sandbox says
-    # so — exactly as the real adapter does, whose scratch state now records the
-    # URL the dispatcher read. An unobserved page is not sandbox.
     kwargs.setdefault("current_url", SEARCH_URL)
     kwargs.setdefault("goal", "Apply for a temporary sign permit")
     return AgentState(**kwargs)
@@ -83,9 +79,6 @@ CONTINUE_CLICK = {
 }
 
 
-# --- the commit point: the live duplicate-record hazard --------------------
-
-
 def test_commit_point_click_is_treated_as_an_application_submission():
     client = RecordingClient()
     state = _state(flow_name="apply_application", flow_step="review", flow_page=5)
@@ -94,7 +87,7 @@ def test_commit_point_click_is_treated_as_an_application_submission():
     assert outcome["blocked"] is True
     assert outcome["semantic_action"] == "submit_application"
     assert outcome["resolution"]["provenance"] == "commit_point"
-    assert client.calls == []  # nothing reached the browser
+    assert client.calls == []
     assert state.pending_approval is not None
     assert state.pending_approval.action == "submit_application"
     assert check_stop_condition(state) is StopCondition.APPROVAL_REQUIRED
@@ -138,9 +131,6 @@ def test_approval_for_one_action_does_not_authorize_another():
     assert client.calls == []
 
 
-# --- resolution: intent > commit point > labels > text ---------------------
-
-
 def test_dangerous_target_text_is_held_even_outside_a_flow():
     client = RecordingClient()
     state = _state()
@@ -178,7 +168,7 @@ def test_payments_section_is_not_mistaken_for_a_payment_action():
 
 
 def test_benign_intent_cannot_submit_on_a_commit_step():
-    """The hole this closes: a harmless label must not bypass the commit point."""
+    """the hole this closes: a harmless label must not bypass the commit point"""
     client = RecordingClient()
     state = _state(flow_name="apply_application", flow_step="review")
     outcome = asyncio.run(
@@ -216,13 +206,13 @@ def test_commit_acknowledging_intent_is_honoured_then_held():
     )
     assert outcome["semantic_action"] == "submit_application"
     assert outcome["resolution"]["provenance"] == "intent"
-    assert outcome["blocked"] is True  # still held for approval
+    assert outcome["blocked"] is True
 
 
 def test_an_intent_cannot_downgrade_what_a_control_says_it_does():
-    # The model supplies both the target and the intent, so the target's own text
-    # has to outrank a milder label: otherwise a commit could be relabelled as a
-    # read and sail past the guard as an automatic action.
+    # the model supplies both the target and the intent, so the target's own text has to outrank a milder
+    # label: otherwise a commit could be relabelled as a read and sail past the guard as an automatic
+    # action
     resolution = resolve_action(
         ToolCall("click", {"target": "Cancel", "by": "text", "intent": "read_record"}), _state()
     )
@@ -272,13 +262,13 @@ def test_unclassified_click_is_blocked_not_guessed():
 
 
 def test_a_live_page_refuses_an_approved_scheduling_click_without_touching_the_browser():
-    # A human said yes; the environment still says no. The click never happens.
+    # a human said yes; the environment still says no
     client = RecordingClient(url="https://aca-prod.accela.com/NULLISLAND/Cap/CapDetail.aspx")
     state = _state(current_url=client.page.url)
     scheduled = {"name": "click", "args": {"target": "Schedule Inspection", "by": "text",
                                               "intent": "schedule_inspection"}}
-    # Held first, then explicitly approved by a human: a live record stays
-    # read-only, because the grant never outranks the environment.
+    # held first, then explicitly approved by a human: a live record stays read-only, because the grant
+    # never outranks the environment
     asyncio.run(ToolDispatcher(client).execute(scheduled, state))
     state.request_approval("schedule_inspection", "user said yes")
     state.grant_approval()
@@ -297,18 +287,17 @@ def test_navigation_between_approval_and_click_invalidates_the_grant():
     asyncio.run(ToolDispatcher(client).execute(cancel, state))
     assert grant_approval(state, "cancel_inspection") is True
 
-    # The user approved a cancellation of the record that was on screen. Another
-    # record's page does not inherit that approval.
+    # the user approved a cancellation of the record that was on screen
     state.observe_page(CAPEDIT_CONTACT_URL, page="record_details", signature="moved")
     outcome = asyncio.run(ToolDispatcher(client).execute(cancel, state))
 
     assert outcome["blocked"] is True
     assert client.calls == []
-    assert state.pending_approval is not None  # re-asked about the new page
+    assert state.pending_approval is not None
 
 
 def test_the_goals_constraint_blocks_a_payment_click_in_a_sandbox():
-    """The user's "don't spend money" outranks a sandbox approval."""
+    """the user's \"don't spend money\" outranks a sandbox approval"""
     client = RecordingClient()
     state = _state(goal="Schedule the next inspection, but don't spend any money")
     outcome = asyncio.run(
@@ -330,9 +319,6 @@ def test_unknown_tool_is_rejected_without_calling_the_browser():
     )
     assert outcome["blocked"] is True
     assert client.calls == []
-
-
-# --- state maintenance ----------------------------------------------------
 
 
 def test_pre_calendar_continue_is_navigation_but_confirm_continue_remains_blocked():
@@ -502,13 +488,6 @@ def test_read_page_rejects_unknown_includes_at_the_dispatcher():
     assert outcome["error"]["kind"] == "unknown"
 
 
-# --- logging is wired into the only path that can act ----------------------
-
-# Phase 0 checklist said "set up logging immediately"; RunLogger existed with no
-# callers outside its own test. Now every step the agent can actually take is
-# recorded, including the ones the guard blocks (those matter most in an audit).
-
-
 def test_dispatcher_writes_every_step_to_the_run_logger(tmp_path):
     from licet.logging.logger import RunLogger
 
@@ -518,7 +497,6 @@ def test_dispatcher_writes_every_step_to_the_run_logger(tmp_path):
     dispatcher = ToolDispatcher(client, logger=logger)
 
     asyncio.run(dispatcher.execute({"name": "read_page", "args": {}}, state))
-    # no intent and no flow: unresolvable, so it is blocked rather than guessed
     asyncio.run(dispatcher.execute({"name": "click", "args": {"target": "Something"}}, state))
     dispatcher.log_outcome(state, final_outcome="no bookable dates", stop_condition="APPROVAL_REQUIRED")
 
@@ -535,7 +513,7 @@ def test_dispatcher_writes_every_step_to_the_run_logger(tmp_path):
 
 
 def test_dispatcher_without_a_logger_is_unchanged(tmp_path):
-    """Logging is opt-in: no logger, no files, same behaviour."""
+    """logging is opt-in: no logger, no files, same behaviour"""
     client = RecordingClient()
     outcome = asyncio.run(
         ToolDispatcher(client).execute({"name": "read_page", "args": {}}, _state())

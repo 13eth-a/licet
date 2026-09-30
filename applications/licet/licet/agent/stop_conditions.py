@@ -1,24 +1,4 @@
-"""Stop conditions for the agent loop.
-
-The planner checks these after every step. Any match means the loop halts and
-hands control back to the user with an explanation (`describe_stop`) — Licet
-never keeps acting past one of these without a clear reason to believe it no
-longer applies.
-
-Fixed after the Phase 0 review (`docs/phase0_review.md` §3):
-
-- `MISSING_INFORMATION`, `NO_VALID_ACTION`, `PORTAL_UNAVAILABLE` and
-  `AMBIGUOUS_RECORD` were declared but had no producer in `AgentState`, so
-  they could never fire. Each now reads a field set by a matching
-  `AgentState.record_*` method.
-- `REPEATED_ACTION_FAILED` deduped failures by action string alone and never
-  reset them, so one flaky postback click could halt a long wizard run. It is
-  now keyed by (page, action, args) with successes clearing the count, and a
-  same-URL stall is treated as the same user-visible failure (no progress).
-- Thresholds are parameters with defaults, not import-time constants, so a run
-  can configure them (`max_steps` no longer has to come from `LICET_MAX_STEPS`
-  at import).
-"""
+"""stop conditions for the agent loop"""
 
 from __future__ import annotations
 
@@ -27,9 +7,9 @@ from enum import Enum
 from licet.agent.state import AgentState
 from licet.config import MAX_STEPS
 
-# A given (page, action, args) may fail this many times before we stop.
+# a given (page, action, args) may fail this many times before we stop
 MAX_REPEATED_FAILURES = 2
-# Consecutive steps that observed the same URL before we call it a stall.
+# consecutive steps that observed the same url before we call it a stall
 MAX_STALLED_STEPS = 3
 
 
@@ -52,12 +32,7 @@ def check_stop_condition(
     max_repeated_failures: int = MAX_REPEATED_FAILURES,
     max_stalled_steps: int = MAX_STALLED_STEPS,
 ) -> StopCondition | None:
-    """Return the first stop condition that applies, or None to keep going.
-
-    Order is deliberate: a finished goal outranks everything; an action
-    awaiting approval outranks an information gap; portal health outranks
-    retry bookkeeping.
-    """
+    """return the first stop condition that applies, or none to keep going"""
     if goal_completed:
         return StopCondition.GOAL_COMPLETED
 
@@ -80,8 +55,6 @@ def check_stop_condition(
     if state.step_count >= step_limit:
         return StopCondition.MAX_STEPS_EXCEEDED
 
-    # `> max_repeated_failures` keeps the constant meaning "failed twice, the
-    # third attempt stops".
     for failure in state.failed_actions:
         if failure.attempt_count > max_repeated_failures:
             return StopCondition.REPEATED_ACTION_FAILED
@@ -98,7 +71,7 @@ def describe_stop(
     *,
     max_repeated_failures: int = MAX_REPEATED_FAILURES,
 ) -> str:
-    """Explain a stop in one line, for the final report and the run log."""
+    """explain a stop in one line, for the final report and the run log"""
     if condition is StopCondition.GOAL_COMPLETED:
         return f"Goal completed: {state.goal}"
 

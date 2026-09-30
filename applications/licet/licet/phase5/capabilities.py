@@ -1,8 +1,4 @@
-"""Adapters to Phase 2 discovery, Phase 3 retrieval/reasoning, Phase 4 execution.
-
-Portal-specific eligibility/cost/availability observations are explicit injected
-read providers: absent evidence stops execution rather than inventing defaults.
-"""
+"""adapters to phase 2 discovery, phase 3 retrieval/reasoning, phase 4 execution"""
 from __future__ import annotations
 
 import asyncio
@@ -51,12 +47,8 @@ class LicetCapabilities:
         self.selection_context, self.preflight = selection_context, preflight
         self.portal, self.reasoner = portal, reasoner
         detected = environment if environment is not None else detect_environment(portal)
-        # Explicit Phase 6 configuration is authoritative, and the safety layer
-        # is never optional: an injected engine wins, otherwise the portal's own
-        # detected environment is used. A portal with no identity at all yields
-        # an UNKNOWN engine, which refuses every mutation — dropping the engine
-        # for unclassifiable portals made "unknown" the one environment where
-        # the whole Phase 6 boundary was switched off.
+        # explicit phase 6 configuration is authoritative, and the safety layer is never optional: an
+        # injected engine wins, otherwise the portal's own detected environment is used
         self.policy_engine = policy_engine or PolicyEngine(
             environment=detected, constraints=constraints, run_id=run_id,
             user_goal=user_goal or getattr(agent_state, "goal", "Phase 5"),
@@ -78,12 +70,7 @@ class LicetCapabilities:
             self.mutation_journal.verified(world.record_key, operation_key(world))
 
     async def recover_read(self, strategy, action, goal, world):
-        """Execute only known read/navigation routes, then independently read.
-
-        Modal recovery abandons the obstructed page for the verified record;
-        it never presses an unknown Close/OK/Continue control. If a native
-        modal prevents navigation the bounded controller stops safely.
-        """
+        """execute only known read/navigation routes, then independently read"""
         from licet.browser.dispatcher import ToolCall
         from licet.phase7.portal import PortalState, route_recovery
         allowed = {"WAIT_FOR_SETTLE", "RECOVER_FROM_HOME", "RETURN_TO_RECORD",
@@ -107,8 +94,7 @@ class LicetCapabilities:
             result = await dispatcher.execute(ToolCall("navigate", {"url": url}), self.agent_state)
         if not result.get("success"):
             return Observation(world, False, "known-state recovery navigation/wait failed")
-        # Do not reuse the failed page position. Ordinary retrieval establishes
-        # identity from fresh content at the bound record URL.
+        # do not reuse the failed page position
         self.retrieval._current_url = None
         world.browser_state = {}
         return await self.perform(action, goal, world)
@@ -127,7 +113,7 @@ class LicetCapabilities:
             world.record_key = result.permit.ref.as_key()
             world.permit_verified = True
             world.snapshot_id = digest(result.permit.model_dump(mode="json"))
-            # Bind the existing read-only retriever to the verified Phase 2 ref.
+            # bind the existing read-only retriever to the verified phase 2 ref
             ref = result.permit.ref
             self.retrieval.record_ref = {"capID1": ref.cap_id1, "capID2": ref.cap_id2,
                 "capID3": ref.cap_id3, "module": ref.module, "agency_code": ref.agency_code}
@@ -135,9 +121,8 @@ class LicetCapabilities:
             return Observation(world, message="Phase 2 independently verified the permit")
         if action in READS:
             state = world.permit or PermitState(record_number=world.permit_id, record_key=world.record_key)
-            # The retrieval runner records the *settled* page identity here
-            # (Phase 7): the planner's loop key and the recovery routes read
-            # where the page actually settled, not the pre-navigation URL.
+            # the retrieval runner records the *settled* page identity here (phase 7): the planner's loop
+            # key and the recovery routes read where the page actually settled, not the pre-navigation url
             self.retrieval.browser_state = world.browser_state
             outcome = await self.retrieval.retrieve_missing_sections(state, [{"section": READS[action]}])
             if state.record_key != world.record_key or state.rejected_observations:
@@ -153,8 +138,7 @@ class LicetCapabilities:
             world.reasoning = await _call(self.reasoner, world.permit, goal.objective, snapshot_id=world.snapshot_id)
             if world.reasoning.record_key != world.record_key:
                 return Observation(world, False, "reasoning addressed another record")
-            # An unpaid amount alone is not a gate. Only explicit confirmed gates
-            # relevant to inspection/current unknown scope stop this workflow.
+            # an unpaid amount alone is not a gate
             world.dependencies = tuple(ExternalDependency(b.type, b.description, tuple(b.evidence_ids))
                 for b in world.reasoning.blockers if b.classification == "confirmed_gate"
                 and (not b.affects_stage or "inspect" in b.affects_stage.lower()))
@@ -171,12 +155,8 @@ class LicetCapabilities:
                 required_options = [option for option in context.options
                                     if option.required is True and option.requirement_evidence_ids]
                 if required_options:
-                    # The live wizard's explicit marker and complete catalog
-                    # supply requirement evidence not carried by Phase 3's
-                    # summary-page retrieval. Replace only requirement-shaped
-                    # candidates with these portal-backed candidates; all other
-                    # plausible actions remain competitors and can cause an
-                    # ambiguity stop. Never infer from offered types.
+                    # the live wizard's explicit marker and complete catalog supply requirement evidence
+                    # not carried by phase 3's summary-page retrieval
                     reasoning.next_actions = [
                         candidate for candidate in reasoning.next_actions
                         if not candidate.action.strip().casefold().startswith("complete required inspection:")
@@ -194,8 +174,7 @@ class LicetCapabilities:
                 request = InspectionAction(goal.operation, world.permit_id, goal.inspection_type,
                     goal.preferred_date, goal.date_window_start, goal.date_window_end,
                     goal.existing_inspection_id, list(goal.constraints))
-                # Explicit user choice establishes target intent, not eligibility.
-                # Portal evidence and all selection gates still apply below.
+                # explicit user choice establishes target intent, not eligibility
                 from licet.phase4.matching import match_inspection_type
                 name = match_inspection_type(goal.inspection_type, [o.name for o in context.options])
                 option = next((o for o in context.options if o.name == name), None)
@@ -212,7 +191,7 @@ class LicetCapabilities:
                     evidence_ids=world.selection.evidence_ids, requires_confirmation=world.selection.requires_confirmation)
             elif world.selection.status == SelectionStatus.ALREADY_SCHEDULED and goal.inspection_type:
                 world.proposal = replace(request, record_key=world.record_key, snapshot_id=world.snapshot_id)
-                # Independent verification, never declaring success from cached rows.
+                # independent verification, never declaring success from cached rows
                 return await self.perform(Action.VERIFY_STATE, goal, world)
             return Observation(world, message=world.selection.reason)
         if action == Action.CHECK_INSPECTION_AVAILABILITY:
@@ -229,8 +208,6 @@ class LicetCapabilities:
             self._inputs = dict(check.required_inputs)
             return Observation(world, message="observed eligibility, availability and action prerequisites")
         if action in MUTATIONS:
-            # The existing Phase 4 executor remains the sole mutation workflow.
-            # The async portal bridge keeps browser objects on their owning loop.
             loop = asyncio.get_running_loop()
             portal = self.portal
             journal = self.mutation_journal

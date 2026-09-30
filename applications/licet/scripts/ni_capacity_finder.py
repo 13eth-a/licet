@@ -1,34 +1,4 @@
-"""Read-only: which agency / inspection type can actually be scheduled?
-
-The Null Island Building agency's calendar is measured empty from Sep 2026
-through Aug 2027 (`docs/phase4/checklist_audit.md`), and every record Licet owns
-is `module=Building`. Appointment capacity in ACA is configured per
-agency / inspection-type / calendar, so "is a live booking reachable at all?"
-reduces to one question no run has answered yet:
-
-    which agency + inspection-type combinations have ever produced a real
-    appointment (and which are currently Scheduled)?
-
-This probe answers it from the back office, read-only. It never opens a
-citizen-portal session and never clicks a write control.
-
-Method:
-  1. Log into the back office (`nullisland-test-av.accela.com`).
-  2. Discover the SPA's top-nav portlets and dump their names.
-  3. Open the Inspections portlet and paginate as far as the budget allows.
-  4. Read every inspection row; aggregate by module/agency, inspection type,
-     and status. A module with `Scheduled` rows is the strongest signal; a
-     module with only `Completed`/`Failed` rows still proves its calendar once
-     produced slots.
-  5. Open any Scheduling/Calendar-config portlet found, and dump it.
-
-Everything is checkpointed (append + fsync) so an interrupted process still
-leaves a trace, and the final JSON report is written in `finally`.
-
-Run:
-    .venv/bin/python scripts/ni_capacity_finder.py
-    .venv/bin/python scripts/ni_capacity_finder.py --pages 6 --budget 420
-"""
+"""read-only: which agency / inspection type can actually be scheduled?"""
 
 from __future__ import annotations
 
@@ -49,8 +19,7 @@ AV_URL = "https://nullisland-test-av.accela.com/"
 USER, PASSWORD = "developer", "accela"
 OUTDIR = Path("logs/ni_backoffice/capacity")
 
-# Element kinds that can be a write control on this portal. Only ever clicked
-# when their own text is a *navigation* label (never a write word below).
+# element kinds that can be a write control on this portal
 WRITE_TAGS = {"button", "input", "select"}
 WRITE_WORDS = (
     "issue", "accept", "save", "submit", "continue", "approve", "reject",
@@ -58,8 +27,7 @@ WRITE_WORDS = (
     "cancel", "reschedule", "pay",
 )
 
-# Portlets worth opening, in priority order. Navigation-click only; a portlet
-# whose name is absent is simply skipped.
+# portlets worth opening, in priority order
 PORTLETS = (
     "Inspections",
     "Scheduling",
@@ -97,7 +65,7 @@ def stamp_now() -> str:
 
 
 class Progress:
-    """Append-and-fsync checkpoint log; survives a hard interruption."""
+    """append-and-fsync checkpoint log; survives a hard interruption"""
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -128,11 +96,7 @@ def _is_write_label(text: str) -> bool:
 
 
 async def nav_click(page, label: str, progress: Progress) -> bool:
-    """Click a *navigation* element whose text matches `label`, in any frame.
-
-    Safety is by element type: BUTTON/INPUT/SELECT are refused outright, so a
-    write control that happens to read like a portlet name is never pressed.
-    """
+    """click a *navigation* element whose text matches `label`, in any frame"""
     for scope in (page, *page.frames):
         try:
             candidates = scope.get_by_text(label, exact=False)
@@ -177,8 +141,8 @@ async def dump_visible_labels(page) -> list[str]:
     return labels
 
 
-# A grid frame is identified by header signatures so the dashboard's Task grid
-# is never read as if it were the portlet's data.
+# a grid frame is identified by header signatures so the dashboard's task grid is never read as if it were
+# the portlet's data
 GRID_SIGNATURES: dict[str, tuple[str, ...]] = {
     "Inspections": ("Inspection Type", "Scheduled Date"),
     "Tasks": ("Task Item", "Due Date"),
@@ -211,11 +175,7 @@ async def frame_rows(frame) -> list[list[str]]:
 
 
 async def frame_next(frame) -> bool:
-    """Click the ACA grid's Next pager inside one frame, unless disabled.
-
-    The control is `<a title="Next"><img .../></a>`; a disabled pager renders
-    the *grayed-out* Next image, which must not be clicked.
-    """
+    """click the aca grid's next pager inside one frame, unless disabled"""
     try:
         anchor = frame.locator('a[title="Next"]').first
         if await anchor.count() == 0 or not await anchor.is_visible():
@@ -233,7 +193,7 @@ async def frame_next(frame) -> bool:
 
 
 async def click_next_page(page, progress: Progress) -> bool:
-    """Best-effort pagination: 'Load More' / 'Next' navigation only."""
+    """best-effort pagination: 'load more' / 'next' navigation only"""
     for label in ("Load More", "Next", "Next »", "More"):
         for scope in (page, *page.frames):
             try:
@@ -262,7 +222,7 @@ async def click_next_page(page, progress: Progress) -> bool:
 
 
 def classify_row(cells: list[str]) -> dict:
-    """Best-effort extraction; the raw cells are always retained."""
+    """best-effort extraction; the raw cells are always retained"""
     joined = " | ".join(cells)
     record = None
     match = _RECORD_RE.search(joined)
@@ -425,7 +385,6 @@ async def main() -> int:
             out(f"  by_type={summary['by_type']}")
             if summary["scheduled_rows"]:
                 out(f"  *** {len(summary['scheduled_rows'])} SCHEDULED row(s) — capacity is real ***")
-            # Return to the dashboard so the next portlet starts from a known view.
             await page.goto(AV_URL, timeout=60000)
             await page.wait_for_timeout(6000)
 

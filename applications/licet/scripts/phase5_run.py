@@ -1,8 +1,4 @@
-"""Run a goal with an explicit capability factory and bounded semantic planner.
-
-Factories own portal/session setup and provide the trusted Phase 2–4 read and
-execution adapters. Use the scripted factory for an entirely offline demo.
-"""
+"""run a goal with an explicit capability factory and bounded semantic planner"""
 import argparse
 import asyncio
 from dataclasses import replace
@@ -37,7 +33,7 @@ async def main(args):
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
-    # A CLI run cannot assume approval. Resume is an explicit in-process API.
+    # a cli run cannot assume approval
     return 0 if run.status == Status.SUCCESS else 2 if run.status == Status.PARTIAL_SUCCESS else 1
 
 

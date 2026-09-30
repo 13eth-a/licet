@@ -1,10 +1,4 @@
-"""Phase 4 acceptance-runner regression: the planning halves, offline.
-
-The live walk is exercised by `scripts/ni_phase4_acceptance.py` itself against a
-sandbox; what is testable without a browser is the part that decides *what* would
-be executed, plus the calendar-to-ISO-dates helper that feeds availability into
-the executor's date selector.
-"""
+"""phase 4 acceptance-runner regression: the planning halves, offline"""
 from __future__ import annotations
 
 import asyncio
@@ -52,7 +46,7 @@ def test_build_request_treats_none_as_no_date_instruction():
 
 
 class _FakeInnerPortal:
-    """Records which event loop each async call actually ran on."""
+    """records which event loop each async call actually ran on"""
 
     def __init__(self) -> None:
         self.loops: list[asyncio.AbstractEventLoop] = []
@@ -67,12 +61,7 @@ class _FakeInnerPortal:
 
 
 def test_loop_bridge_runs_executor_calls_on_the_live_loop():
-    """The executor is sync; the Solari client belongs to one loop.
-
-    A live run raised ``RuntimeError: sync methods cannot be called from a running
-    event loop`` and then hung when the sync stack was handed a second loop, so the
-    bridge must marshal every portal call back onto the loop that owns the client.
-    """
+    """the executor is sync; the solari client belongs to one loop"""
     module = _runner_module()
 
     async def scenario():
@@ -81,7 +70,6 @@ def test_loop_bridge_runs_executor_calls_on_the_live_loop():
         bridge = module.LoopBridgePortal(inner, main)
 
         def worker():
-            # What the executor does: plain sync calls, from a thread with no loop.
             snapshot = bridge.read_inspection_state("BLD26-00469", "Rough")
             confirmation = bridge.submit_inspection_action(
                 object(), portal_type="Rough", selected_date="2026-09-24"
@@ -107,9 +95,6 @@ def test_runner_preview_and_action_selection_agree():
     assert shown["permit_id"] == "BLD26-00469"
 
 
-# --- calendar -> ISO dates ----------------------------------------------------
-
-
 def test_calendar_months_become_sorted_iso_dates():
     months = [(2026, 9, (22, 25)), (2026, 10, (2,))]
     assert available_dates_from_calendar(months, reference=date(2026, 9, 21)) == [
@@ -118,12 +103,10 @@ def test_calendar_months_become_sorted_iso_dates():
 
 
 def test_unresolved_month_captions_are_skipped_not_invented():
-    # `(0, 0, ...)` is resolve_calendar_months' "caption named no known month".
     assert available_dates_from_calendar([(0, 0, (5,))], reference=date(2026, 9, 21)) == []
 
 
 def test_no_active_days_yields_no_dates():
-    # The Null Island shape: three months, every cell inactive.
     assert available_dates_from_calendar(
         [(2026, 9, ()), (2026, 10, ()), (2026, 11, ())], reference=date(2026, 9, 21)
     ) == []

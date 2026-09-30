@@ -1,8 +1,4 @@
-"""Find the real apply-flow URL on NI's citizen portal (read-only).
-
-Scrape Default.aspx for all links, filter apply-ish ones, then probe a few
-candidate URLs and report which one renders the record-type chooser.
-"""
+"""find the real apply-flow url on ni's citizen portal (read-only)"""
 from __future__ import annotations
 
 import asyncio

@@ -1,9 +1,4 @@
-"""Stable, serializable data contracts for Phase 3.
-
-The models keep raw portal wording beside normalized values.  A missing value is
-never represented by a fabricated default, and a complete empty section is
-represented by coverage rather than by a blocker.
-"""
+"""stable, serializable data contracts for phase 3"""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, is_dataclass
@@ -159,8 +154,7 @@ class Blocker:
     classification: str = "observed_problem"
     affects_stage: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
-    # Deterministic, explainable priority (lower = more important). It orders
-    # presentation only; it is never evidence that a blocker is "first required".
+    # deterministic, explainable priority (lower = more important)
     rank: int = 40
 
     @property
@@ -186,9 +180,8 @@ class Uncertainty:
     impact: str
     needed_section: str | None = None
     evidence_ids: list[str] = field(default_factory=list)
-    # True when this uncertainty prevents answering the question (missing
-    # premises, unresolved ordering, unavailable data), not merely qualifies
-    # the answer's classification. Drives the partial-answer decision.
+    # true when this uncertainty prevents answering the question (missing premises, unresolved ordering,
+    # unavailable data), not merely qualifies the answer's classification
     blocks_answer: bool = False
 
 
@@ -229,9 +222,7 @@ class PermitState:
     coverage: dict[str, Coverage] = field(default_factory=dict)
     facts: list[Fact] = field(default_factory=list)
     contradictions: list[str] = field(default_factory=list)
-    # Observations refused at merge time (foreign record keys). These are data
-    # hygiene events, not record-state conflicts: they must be visible but must
-    # never flip `answerability` to "conflicting".
+    # observations refused at merge time (foreign record keys)
     rejected_observations: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:

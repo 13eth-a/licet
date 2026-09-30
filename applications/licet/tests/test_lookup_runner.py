@@ -1,10 +1,4 @@
-"""LookupRunner tests: the browser execution bridge, driven by fakes.
-
-No live session. The fake client in ``conftest`` implements exactly the
-``SolariClient`` surface the runner's dispatcher calls touch, with scripted
-``read_page`` payloads, so every branch (mode resolution, field binding,
-pagination proof, zero-result retry, identity verification) is deterministic.
-"""
+"""lookuprunner tests: the browser execution bridge, driven by fakes"""
 
 from __future__ import annotations
 
@@ -39,12 +33,8 @@ from tests.conftest import (
 )
 
 
-
 def row_html(number: str, record_type: str, address: str, parcel: str | None = None) -> str:
-    """One result-grid row whose columns match the shared ``ROW_HTML`` template
-    (Date, Record Number, Record Type, Project Name, Address, Status, Applicant,
-    Parcel). The empty Project Name cell is required so the parser does not shift
-    Address into the wrong column."""
+    """one result-grid row whose columns match the shared ``row_html`` template (date, record number, record type, project name, address, status, applicant, parcel)"""
     parcel_cell = f"<td>{parcel}</td>" if parcel else "<td></td>"
     return (
         f"<tr><td>09/20/2026</td><td><a href='/detail/{number}'>{number}</a></td>"
@@ -66,7 +56,6 @@ def detail_read(number: str = "000000014") -> dict:
     return detail_page(number=number, address="77 Licet Eval Way")
 
 
-
 def row(number: str, record_type: str, address: str, **kwargs):
     return SearchResult(
         record_number=number,
@@ -80,11 +69,7 @@ def detail_read(number: str = "000000014") -> dict:
     return detail_page(number=number, address="77 Licet Eval Way")
 
 
-# --- the happy path ---------------------------------------------------------
-
-
 def test_record_number_lookup_finds_opens_and_verifies():
-    # Read sequence: form inventory -> post-submit results -> record detail.
     client = FakeClient(
         [
             search_form(fields=[gs_field("txtGSPermitNumber")]),
@@ -99,15 +84,12 @@ def test_record_number_lookup_finds_opens_and_verifies():
     assert runner.identity_verified is True
     assert runner.opened is not None and runner.opened.permit_type == "Commercial Alteration"
     assert state.current_permit == "000000014"
-    # The dispatcher saw every mutation; read_page carried the form inventory.
     assert any(name == "type" for name, _ in client.calls)
-    # Targets are recorded as the client's describe() strings.
     assert ("click", {"target": "text=Search"}) in client.calls
     assert ("click", {"target": "text=000000014"}) in client.calls
 
 
 def test_address_lookup_resolves_mode_label_and_uses_apo_fields():
-    # Read sequence: mode options -> post-postback APO form -> results -> detail.
     client = FakeClient(
         [
             search_form(
@@ -134,13 +116,11 @@ def test_address_lookup_resolves_mode_label_and_uses_apo_fields():
     targets = [call["target"] for call in typed]
     assert any("txtAPO_Search_by_Address_StreetNumber_ChildControl0" in target for target in targets)
     assert any("txtAPO_Search_by_Address_StreetName" in target for target in targets)
-    # The mode dropdown was selected exactly once for one attempt.
     assert len(selects) == 1
 
 
 def test_exact_address_resolves_uniquely_despite_multiple_same_street_rows():
-    """The Phase-2 flagship shape: several rows on the street, one matches the
-    requested address + type; ranking must separate them above threshold."""
+    """the phase-2 flagship shape: several rows on the street, one matches the requested address + type; ranking must separate them above threshold"""
     client = FakeClient(
         [
             search_form(
@@ -190,9 +170,6 @@ def test_ambiguous_rows_return_ambiguity_and_open_nothing():
     )
 
 
-# --- pagination -------------------------------------------------------------
-
-
 def test_pagination_scans_until_footer_stops_changing_and_dedups_by_union():
     page_one_html = results_page(
         row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way"),
@@ -225,7 +202,6 @@ def test_pagination_scans_until_footer_stops_changing_and_dedups_by_union():
         ],
         html=page_one_html,
     )
-    # The DOM advances when Next is clicked, as the real postback would.
     original_click = client.click
 
     async def click(target):
@@ -269,13 +245,10 @@ def test_stuck_pagination_click_stops_without_duplicate_rows():
         html=page_html,
     )
     runner, result, _state = run(PermitLookupRequest(street_number="77", street_name="licet eval way"), client)
-    # The scan stops after one bounded click; no duplicate row inflates ranking.
+    # the scan stops after one bounded click; no duplicate row inflates ranking
     assert [match.record_number for match in result.matches].count("BLD26-00001") == 1
     next_clicks = [args for name, args in client.calls if name == "click" and "Next" in args.get("target", "")]
     assert len(next_clicks) == 1
-
-
-# --- zero results, retries, and honest failure -------------------------------
 
 
 def test_zero_results_are_widened_once_then_reported_not_found():
@@ -292,11 +265,9 @@ def test_zero_results_are_widened_once_then_reported_not_found():
             ),
         ]
     )
-    # reads: form, zero-result page 1, zero-result page (widened retry)
     runner, result, _state = run(PermitLookupRequest(record_number="BLD-9999"), client)
     assert result.status is LookupStatus.NOT_FOUND
     assert result.error_code is LookupErrorCode.RECORD_NOT_FOUND
-    # Attempt 1 + widened retry: exactly two search submissions.
     searches = [args for name, args in client.calls if name == "click" and args.get("target") == "text=Search"]
     assert len(searches) == 2
     widened = any(
@@ -319,7 +290,6 @@ def test_parse_failure_is_never_reported_as_zero_results():
     )
     client.reads[1]["text"] = "An unexpected error occurred while processing your request."
     client.reads[2]["text"] = "An unexpected error occurred while processing your request."
-    # reads: form, failed page 1, failed page (retry)
     runner, result, _state = run(PermitLookupRequest(record_number="BLD-9999"), client)
     assert result.error_code is LookupErrorCode.SEARCH_RESULTS_PARSE_FAILED
     assert "no records" not in (result.message or "").lower()
@@ -327,15 +297,14 @@ def test_parse_failure_is_never_reported_as_zero_results():
 
 def test_form_failure_is_distinct_from_not_found():
     client = FakeClient(
-        [search_form(fields=[], include_date=False)]  # nothing rendered at all
+        [search_form(fields=[], include_date=False)]
     )
     runner, result, _state = run(PermitLookupRequest(record_number="BLD-1"), client)
     assert result.error_code is LookupErrorCode.SEARCH_FORM_FAILED
 
 
 def test_missing_search_mode_falls_back_without_guessing():
-    """The agency exposes no parcel mode: the runner reports form failure rather
-    than typing into a form that was never switched."""
+    """the agency exposes no parcel mode: the runner reports form failure rather than typing into a form that was never switched"""
     client = FakeClient(
         [search_form(fields=[], options=["Permit Number", "Search by Address"])]
     )
@@ -349,7 +318,6 @@ def test_wrong_record_opened_is_mismatch_not_success():
         [
             search_form(fields=[gs_field("txtGSPermitNumber")]),
             search_results(row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way")),
-            # The record page that renders is a DIFFERENT record.
             detail_page(
                 number="ELE26-00002",
                 record_type="Commercial Electrical",
@@ -393,7 +361,7 @@ def test_missing_record_page_leaves_opened_unset():
         [
             search_form(fields=[gs_field("txtGSPermitNumber")]),
             search_results(row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way")),
-            # Click succeeded, but the URL never left the results page.
+            # click succeeded, but the url never left the results page
             search_results(row_html("BLD26-00001", "Residential Addition", "77 Licet Eval Way")),
         ]
     )
@@ -401,9 +369,6 @@ def test_missing_record_page_leaves_opened_unset():
     assert runner.opened is None
     assert result.status is LookupStatus.FAILED
     assert result.error_code is LookupErrorCode.IDENTITY_UNVERIFIED
-
-
-# --- retrieval metrics -------------------------------------------------------
 
 
 def test_metrics_count_retries_and_browser_actions_truthfully():
@@ -423,7 +388,6 @@ def test_metrics_count_retries_and_browser_actions_truthfully():
     result = asyncio.run(runner.run("test goal", PermitLookupRequest(record_number="BLD-9999"), state))
     assert result.error_code is LookupErrorCode.RECORD_NOT_FOUND
     assert shared.attempts == 1
-    # Plan attempt 1 + the runner's zero-result date-widening retry.
     assert shared.retries == 1
     assert shared.browser_actions == runner.actions_taken
     assert shared.browser_actions > 0
@@ -445,13 +409,8 @@ def test_metrics_record_a_wrong_record_as_a_mismatch():
     result = asyncio.run(runner.run("test goal", PermitLookupRequest(record_number="BLD26-00001"), state))
     assert runner.identity_verified is False
     assert shared.wrong_records == 1
-    # The lookup itself matched; opening the record is what failed. That is the
-    # denominator the wrong-record rate is defined against.
     assert shared.successful == 0
     assert shared.wrong_record_rate == 1.0
-
-
-# --- repeated runs and stale state -------------------------------------------
 
 
 def test_same_query_ten_times_returns_the_same_record_each_run():
@@ -475,7 +434,6 @@ def test_same_query_ten_times_returns_the_same_record_each_run():
         assert result.selected is not None
         selected.append(result.selected.record_number)
         assert runner.identity_verified is True
-        # Every run re-navigates; no run trusts a previous grid.
         navigations_after = sum(1 for name, _ in client.calls if name == "navigate")
         assert navigations_after == navigations_before + 1
     assert selected == ["000000014"] * 10
@@ -488,9 +446,7 @@ def test_same_query_ten_times_returns_the_same_record_each_run():
 
 
 def test_second_run_does_not_reuse_the_first_runs_search_results():
-    """The portal re-renders search results inside one URL, so a cached grid
-    would let run 2 report run 1's record. Run 2 returns only a near miss: a
-    fresh read must refuse it rather than replay the earlier FOUND."""
+    """the portal re-renders search results inside one url, so a cached grid would let run 2 report run 1's record"""
     shared = LookupMetrics()
     client = FakeClient([])
     state = AgentState(goal="stale")

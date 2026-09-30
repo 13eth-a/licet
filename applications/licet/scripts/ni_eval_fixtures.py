@@ -1,23 +1,4 @@
-"""Run the eval fixtures without a browser.
-
-The fixtures existed for the whole of Phase 0 with no caller, which is how they
-drifted into being unrunnable (unsupported placeholders, expectations the
-environment cannot satisfy). This is the entry point:
-
-    .venv/bin/python scripts/ni_eval_fixtures.py --validate   # is the suite runnable?
-    .venv/bin/python scripts/ni_eval_fixtures.py --list       # prompt -> expectation
-    .venv/bin/python scripts/ni_eval_fixtures.py --explain P13
-    .venv/bin/python scripts/ni_eval_fixtures.py --score runs.json
-    .venv/bin/python scripts/ni_eval_fixtures.py --merge all.json a.json b.json
-
-`--score` takes `{prompt_id: {final_answer, actions, stop_condition, steps, model}}`
-recorded by an agent run and prints a per-criterion verdict. Exit code is 0 only
-when validation passes and every scored case passes.
-
-`--merge` exists because the suite is run in batches (each case is a real browser
-session, and one bad case should not cost the others): merge the batch files into
-one and score that.
-"""
+"""run the eval fixtures without a browser"""
 
 from __future__ import annotations
 

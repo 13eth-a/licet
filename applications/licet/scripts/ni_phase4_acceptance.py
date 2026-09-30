@@ -1,29 +1,4 @@
-"""Phase 4 live acceptance run - the exit-gate harness.
-
-Walks the real stack for one permit and reports what Phase 4 actually does:
-
-    read the record's inspections -> read the wizard's offered types
-        -> read the calendar's availability -> select + policy + execute
-        -> independently re-read and verify
-
-SAFE BY DEFAULT. A bare run is a *plan*: it reads, builds the action, prints the
-preview, and stops. Nothing is submitted unless `--execute` is passed, and even
-then the mutation goes through the same policy -> executor -> adapter path the
-product uses. This script adds no shortcut around that path, and never retries a
-submission (the executor reconciles by re-reading state).
-
-On the current Null Island sandbox every calendar day is inactive (measured
-live, `scripts/ni_availability_sweep.py`), so an honest plan run stops at
-`DATE_CONSTRAINT_UNSATISFIED` / `NO_AVAILABLE_DATES`. That is a *pass* for the
-harness: it proves the availability gate fires against the live portal. A
-booking can only be accepted where availability exists.
-
-Run:
-    .venv/bin/python scripts/ni_phase4_acceptance.py --record BLD26-00469 \
-        --type Rough --date "earliest available"                 # plan only
-    .venv/bin/python scripts/ni_phase4_acceptance.py --record BLD26-00469 \
-        --type Rough --date "earliest available" --execute        # real submission
-"""
+"""phase 4 live acceptance run - the exit-gate harness"""
 from __future__ import annotations
 
 import argparse
@@ -52,13 +27,7 @@ OUTDIR = Path("logs/ni_backoffice/phase4")
 
 
 class LoopBridgePortal:
-    """Adapt the adapter's async primitives to the executor's sync protocol.
-
-    The Phase 4 executor is sync by design and the adapter's sync methods wrap
-    ``asyncio.run``, but the live Solari client is bound to this script's running
-    loop. So the executor runs on a worker thread and its portal calls are
-    marshalled back onto the live loop — the same loop that owns the client.
-    """
+    """adapt the adapter's async primitives to the executor's sync protocol"""
 
     def __init__(self, inner: AccelaInspectionPortal, loop: asyncio.AbstractEventLoop) -> None:
         self._inner = inner
@@ -103,14 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def build_request(args: argparse.Namespace) -> ActionRequest:
-    """The request this run would execute. Pure: no browser, no mutation.
-
-    `--confirm` is the human at the terminal naming one record, one type and one
-    existing inspection, so it produces the scoped, single-use approval for
-    exactly that selection. Phase 6 refuses a consequential action that arrives
-    with only a boolean: a boolean names no target and could not be checked
-    against what the operator approved.
-    """
+    """the request this run would execute"""
     date_instruction = None
     if args.date and args.date.strip().lower() not in {"", "none"}:
         date_instruction = args.date
@@ -129,7 +91,7 @@ def build_request(args: argparse.Namespace) -> ActionRequest:
             target=args.type or args.existing_inspection_id or "",
             consequence=f"{args.action} {args.type or args.existing_inspection_id or 'the record'}",
             inspection_id=args.existing_inspection_id,
-            record_key=None,  # this CLI names the display record id, not a record key
+            record_key=None,  # this cli names the display record id, not a record key
             date_window_start=args.window_start,
             date_window_end=args.window_end,
         ) if args.confirm else None),
@@ -145,11 +107,7 @@ async def _act(dispatcher: ToolDispatcher, state: AgentState, call: dict, note: 
 
 
 async def read_portal_facts(dispatcher: ToolDispatcher, state: AgentState, record: str, expected: str) -> dict:
-    """Read-only: the wizard's offered types for one record.
-
-    Nothing is clicked past the wizard's type grid; `read_availability` performs
-    the one extra step needed to see the calendar.
-    """
+    """read-only: the wizard's offered types for one record"""
     facts: dict = {"types": [], "available_dates": [], "flow": None}
     await _act(dispatcher, state, {"name": "navigate", "args": {"url": accela.INSPECTION_ENTRY_URL}}, "entry")
     await _act(dispatcher, state, {"name": "wait", "args": {"until_absent": "Loading..."}}, "entry settle")
@@ -250,9 +208,6 @@ async def main(argv: list[str] | None = None) -> int:
             asyncio.get_running_loop(),
         )
         runner = Phase4ActionRunner(portal, metrics=metrics, logger=logger)
-        # The Phase 4 stack is sync by design: the adapter's sync methods wrap
-        # ``asyncio.run`` and refuse to run inside a live loop. Hand the executor to a
-        # worker thread so it reaches the portal exactly as the product does.
         result = await asyncio.to_thread(
             runner.run,
             request,

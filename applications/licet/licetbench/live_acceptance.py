@@ -1,9 +1,4 @@
-"""Offline benchmark task for the captured Phase 9 live plan-only acceptance.
-
-This suite grades a frozen evidence artifact; it never opens a browser, reads a
-portal, or submits an action. It is deliberately separate from the locked v1
-core catalogue and from synthetic sandbox mutation fixtures.
-"""
+"""offline benchmark task for the captured phase 9 live plan-only acceptance"""
 from __future__ import annotations
 
 import json

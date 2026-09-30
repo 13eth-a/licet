@@ -1,20 +1,4 @@
-"""LicetBench variant generation regressions.
-
-Pins the bulk generation contract from Phase 8's Solar lane:
-
-* every candidate task's published golden answer is the oracle it grades
-  (``_oracle_mismatch`` would otherwise report it as a benchmark defect);
-* every candidate task grades as its expected ``benchmark_outcome`` — the
-  variant suite is not aspirational data, it is verified data;
-* the suite is deterministic, isolated and expands the checklist's history
-  / lookup / date / safety / recovery coverage without touching the frozen
-  core 50;
-* the data-only variant kinds (lookup / date / vague / hostile / portal
-  injection) are recorded as hand-auditable sets, not as auto-passing tasks,
-  so they cannot be mistaken for coverage the gradable suite provides.
-
-Nothing here contacts a browser, a model, a credential or a live portal.
-"""
+"""licetbench variant generation regressions"""
 
 from __future__ import annotations
 
@@ -64,7 +48,7 @@ def test_core_catalogue_is_still_the_locked_50():
     tasks = build_core_tasks()
     assert len(tasks) == 50
     assert len({task.id for task in tasks}) == 50
-    # Variant IDs must never collide with the core namespace.
+    # variant ids must never collide with the core namespace
     variant_ids = {task.id for task in build_all_variant_tasks()}
     assert variant_ids.isdisjoint({task.id for task in tasks})
 
@@ -86,8 +70,8 @@ def test_every_candidate_task_is_safe_and_verified_where_expected():
     for task in variants:
         result = grade_task(task)
         assert result.safe, task.id
-        # A candidate task that declares SUCCESS or PARTIAL_SUCCESS must have
-        # a verified final state — the same invariant the core suite enforces.
+        # a candidate task that declares success or partial_success must have a verified final state — the
+        # same invariant the core suite enforces
         if result.outcome in {Outcome.SUCCESS.value, Outcome.PARTIAL_SUCCESS.value}:
             assert result.final_state_verified, task.id
 
@@ -95,7 +79,7 @@ def test_every_candidate_task_is_safe_and_verified_where_expected():
 def test_variant_suite_isolation_and_determinism():
     first = run_tasks(select_tasks(suite="variants"), seed=0)
     second = run_tasks(select_tasks(suite="variants"), seed=99, shuffle=True)
-    # Same per-task outcome regardless of order/seed; no cross-task contamination.
+    # same per-task outcome regardless of order/seed; no cross-task contamination
     by_id_first = {r.task_id: r for r in first}
     by_id_second = {r.task_id: r for r in second}
     assert set(by_id_first) == set(by_id_second)
@@ -106,9 +90,8 @@ def test_variant_suite_isolation_and_determinism():
 
 def test_second_catalogue_does_not_share_mutable_state():
     first = {task.id: task for task in build_all_variant_tasks()}
-    # Variant goldens are immutable like the core ones: the in-place mutation
-    # this test used to perform is now refused outright, so the next catalogue
-    # cannot inherit it whatever the caller does.
+    # variant goldens are immutable like the core ones: the in-place mutation this test used to perform is
+    # now refused outright, so the next catalogue cannot inherit it whatever the caller does
     if first:
         sample_id = next(iter(first))
         with pytest.raises(TypeError, match="immutable"):
@@ -122,7 +105,6 @@ def test_prompt_variants_preserve_the_oracle():
     variants = build_variant_prompt_tasks()
     assert len(variants) == sum(len(v) - 1 for v in all_prompt_variants().values())
     for task in variants:
-        # Prompt-variant ID is "<base>-P<counter>"; recover base.
         base_id = task.id.rsplit("-P", 1)[0]
         base = core_by_id[base_id]
         assert task.expected_outcome == base.expected_outcome, task.id
@@ -135,8 +117,6 @@ def test_prompt_variants_preserve_the_oracle():
 
 
 def test_prompt_variant_results_are_not_measured_as_diversity():
-    # Until implementation wires the task prompt into the graded path, every prompt
-    # variant grades identically to its base (the prompt is inert — audit A8).
     core_by_id = {task.id: task for task in build_core_tasks()}
     for variant in build_variant_prompt_tasks():
         base_id = variant.id.rsplit("-P", 1)[0]
@@ -157,9 +137,6 @@ def test_hostile_prompt_does_not_change_any_graded_outcome():
 
 
 def test_expanded_understanding_covers_checklist_history_variants():
-    # The history-variant map is the checklist traceability: every required
-    # group has at least one golden case, and the expanded suite can produce
-    # a task for each of those cases.
     assert set(HISTORY_VARIANT_MAP) >= {
         "failed-then-passed history",
         "missing/unknown data",
@@ -167,7 +144,6 @@ def test_expanded_understanding_covers_checklist_history_variants():
         "multi-blocker ranking",
         "requirement-strength correctness",
     }
-    # Every mapped Phase3Case actually exists.
     from licet.eval.phase3_fixtures import build_cases as phase3_cases
 
     known = {case.case_id for case in phase3_cases()}
@@ -175,7 +151,6 @@ def test_expanded_understanding_covers_checklist_history_variants():
         for cid in case_ids:
             assert cid in known, f"{group}: {cid} not in phase3_cases()"
 
-    # Expanded understanding suite is non-empty and all grade correctly.
     expanded = build_understanding_variant_tasks()
     assert len(expanded) >= 30
     for task in expanded:
@@ -183,7 +158,7 @@ def test_expanded_understanding_covers_checklist_history_variants():
         assert r.expectation_met, task.id
         assert not r.grader_error, task.id
 
-    # Not every expanded case is in the core 10; the expansion is additive.
+    # not every expanded case is in the core 10; the expansion is additive
     core_ids = {t.initial_state["fixture_id"] for t in build_core_tasks() if t.source == "understanding"}
     extra_ids = {t.initial_state["fixture_id"] for t in expanded}
     assert extra_ids.isdisjoint(core_ids)
@@ -191,7 +166,6 @@ def test_expanded_understanding_covers_checklist_history_variants():
 
 def test_action_variant_suite_covers_remaining_cases():
     assert len(build_action_variant_tasks()) >= 10
-    # Every action variant grades correctly (including cancellation / reschedule).
     for task in build_action_variant_tasks():
         r = grade_task(task)
         assert r.expectation_met, task.id
@@ -219,9 +193,7 @@ def test_safety_and_recovery_variant_suites_are_comprehensive():
 
 
 def test_data_only_variant_sets_are_recorded_not_auto_passing():
-    # Lookup / date / vague / hostile / portal-injection sets are hand-auditable
-    # data, not BenchmarkTasks. They are counted here so silent truncation is
-    # visible, and so a future change that drops a kind is a deliberate diff.
+    # lookup / date / vague / hostile / portal-injection sets are hand-auditable data, not benchmarktasks
     assert len(LOOKUP_TEXT_VARIANTS) == 12
     assert len(DATE_TEXT_VARIANTS) == 10
     assert len(CALENDAR_VARIANTS) == 5

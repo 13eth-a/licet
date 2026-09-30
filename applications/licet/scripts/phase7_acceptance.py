@@ -1,4 +1,4 @@
-"""Run seeded Phase 2–7 noisy integration fixtures. No live portal calls."""
+"""run seeded phase 2–7 noisy integration fixtures"""
 import argparse
 import asyncio
 import json
@@ -24,7 +24,7 @@ async def evaluate():
             'recovery_success_rate':successes/attempts if attempts else None,
             'unrecoverable_run_rate':(len(rows)-completed)/len(rows),
             'browser_retry_success_rate':sum(s['browser_retry_successes'] for s in stats)/sum(s['browser_retries'] for s in stats),
-            'planner_replan_success_rate':None,  # no model-choice faults in this I/O cohort
+            'planner_replan_success_rate':None,
             'additional_browser_actions':sum(s['additional_browser_actions'] for s in stats),
             'average_recovery_steps':sum(s['recovery_actions'] for s in stats)/len(rows),
             'loop_rate':sum(s['loop_detections']>0 for s in stats)/len(rows),

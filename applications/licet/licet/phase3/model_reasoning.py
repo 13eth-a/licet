@@ -1,22 +1,4 @@
-"""Shared, dependency-light entry points for scripted Phase 3 evals and replay.
-
-Phase 3 reasoning is otherwise reachable from the planner and the dispatcher, both
-of which pull in the live run stack. Offline regression (golden cases, adversarial
-replay, CI without a Solari key) needs a tiny facade that returns a validated
-deterministic result without building a full agent run.
-
-Deterministic path: ``understand_one`` runs the existing deterministic coordinator
-directly and is unchanged by model wiring.
-
-Model path: ``reason_with_model`` is the isolated model-level interpretation stage.
-It is gated so that:
-- it can be disabled entirely for offline/deterministic runs;
-- when enabled, it runs the structured interpretation prompt from
-  ``licet/agent/phase3_reasoning_prompt.md`` with **zero action tools**;
-- it validates the model's structured output through the same publication gates
-  the deterministic layer enforces before rendering, and never returns a result
-  whose ``execution_allowed`` is true.
-"""
+"""shared, dependency-light entry points for scripted phase 3 evals and replay"""
 from __future__ import annotations
 
 import logging
@@ -43,21 +25,6 @@ from licet.phase3.state import (
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Scripted model adapter for Phase 3 closure testing.
-#
-# The live model invocation is a planner-level integration decision (Phase 4
-# boundary). For Phase 3 closure, however, the model-level *path* must be
-# exercised deterministically so the prompt, payload, coercion, validation
-# gates, and publication discipline are all real and tested — not a stub that
-# only the deterministic baseline covers.
-#
-# LICET_PHASE3_MODEL_ADAPTER, when set, names a Python callable path
-# (module:?function) that returns a structured dict for one question. When it
-# is not set, the coordinator uses a deterministic scripted adapter that
-# reproduces the current deterministic layer's conclusions in model-shape. That
-# keeps the pipeline exercised without requiring a live model provider.
-# ---------------------------------------------------------------------------
 
 _ADAPTER_ENV = "LICET_PHASE3_MODEL_ADAPTER"
 
@@ -88,13 +55,7 @@ def _model_adapter() -> Any:
 
 
 def _scripted_model_adapter(prompt: str, payload: dict[str, Any], snapshot_id: str) -> dict[str, Any]:
-    """Deterministic scripted adapter that emits the current layer's conclusions.
-
-    This is not the production model path. It exists so the model coordinator,
-    payload assembly, coercion, and publication gates are exercised in the same
-    shape a real model would use, and so the golden set can be re-run with
-    LICET_PHASE3_MODEL_ENABLED=1 without a live provider.
-    """
+    """deterministic scripted adapter that emits the current layer's conclusions"""
     from licet.phase3.reasoning import understand
 
     state = _payload_to_state(payload)
@@ -169,10 +130,7 @@ def understand_one(
     snapshot_id: str = "snapshot",
     use_model: bool = False,
 ) -> ReasoningResult:
-    """Best-effort Phase 3 understanding for one question.
-
-    Deterministic unless the caller explicitly opts into the model stage.
-    """
+    """best-effort phase 3 understanding for one question"""
     if use_model:
         return reason_with_model(state, question, snapshot_id=snapshot_id)
     return understand(state, question, snapshot_id=snapshot_id)
@@ -184,20 +142,7 @@ def reason_with_model(
     *,
     snapshot_id: str = "snapshot",
 ) -> ReasoningResult:
-    """Model-level Phase 3 interpretation, isolated and read-only.
-
-    This is the coordinator for the architecture review’s structured interpretation prompt. It is
-    intentionally not the planner: the planner is about *acting*; this stage is
-    about *explaining*. It receives a compact structured permit snapshot, never a
-    raw page, and it returns a structured ``ReasoningResult`` that the renderer
-    formats.
-
-    The model call is gated behind env var ``LICET_PHASE3_MODEL_ENABLED`` because
-    the model-level stage is the one piece of Phase 3 not yet verified against a
-    live portal. Deterministic ``understand()`` remains the default and the
-    regression baseline. When the model call is disabled, ``reason_with_model``
-    falls back to the deterministic coordinator and logs the fact.
-    """
+    """model-level phase 3 interpretation, isolated and read-only"""
     if not _model_enabled():
         logger.info(
             "phase3 model reasoning disabled (LICET_PHASE3_MODEL_ENABLED); "
@@ -211,7 +156,7 @@ def reason_with_model(
     adapter = _model_adapter()
     structured = adapter(prompt, payload, snapshot_id)
     result = _validate_model_output(structured, state, question, snapshot_id)
-    # Publication gate: the model is interpretation, not execution.
+    # publication gate: the model is interpretation, not execution
     if result.execution_allowed:
         result.execution_allowed = False
         logger.warning(
@@ -242,15 +187,7 @@ def _reasoning_prompt() -> str:
 
 
 def _build_model_payload(state: PermitState, question: str, snapshot_id: str) -> dict[str, Any]:
-    """Compact structured snapshot for the model. Never raw page text.
-
-    The snapshot carries the section entities, not just the overview scalars:
-    without them the reconstructed state had no inspections/fees/documents/
-    conditions/history, so the model stage could not reproduce a single blocker
-    and the golden model-path check scored 10/50. Conflicts and rejected
-    observations travel with the snapshot for the same reason — they are part
-    of the evidence the model must not silently resolve.
-    """
+    """compact structured snapshot for the model"""
     return {
         "snapshot_id": snapshot_id,
         "record_key": state.record_key,
@@ -268,7 +205,7 @@ def _build_model_payload(state: PermitState, question: str, snapshot_id: str) ->
 
 
 def _compact_sections(state: PermitState) -> dict[str, Any]:
-    """The structured section rows the reasoning stage operates on."""
+    """the structured section rows the reasoning stage operates on"""
     from dataclasses import asdict
 
     return {
@@ -297,10 +234,7 @@ def _compact_permit(state: PermitState) -> dict[str, Any]:
 
 
 def _compact_fact(fact: Claim) -> dict[str, Any]:
-    # Facts here are the state's extracted facts list. The model_reasoning
-    # coordinator does not invent new portal facts, so it only needs values,
-    # evidence ids, and provenance-like classification already carried on the
-    # dataclass.
+    # facts here are the state's extracted facts list
     return {
         "field": fact.field,
         "value": fact.value,
@@ -318,8 +252,6 @@ def _compact_coverage(coverage: Any) -> dict[str, Any]:
         "complete_through": coverage.complete_through,
         "note": coverage.note,
     }
-
-
 
 
 def _payload_to_state(payload: dict[str, Any]) -> PermitState:
@@ -348,9 +280,8 @@ def _payload_to_state(payload: dict[str, Any]) -> PermitState:
             )
         except ValueError:
             confidence = ConfidenceBand.MEDIUM
-        # Replica facts need the same shape the deterministic layer's fact list
-        # expects, so the scripted model path can round-trip through
-        # derive_deterministic_findings / understand unchanged.
+        # replica facts need the same shape the deterministic layer's fact list expects, so the scripted
+        # model path can round-trip through derive_deterministic_findings / understand unchanged
         state.facts.append(
             Fact(
                 field=str(fact.get("field") or ""),
@@ -362,9 +293,9 @@ def _payload_to_state(payload: dict[str, Any]) -> PermitState:
                 raw_value=fact.get("raw_value"),
             )
         )
-    # Rebuild the section entities, coverage, and record-state conflicts the
-    # snapshot carried, so the scripted/model path reasons over the same record
-    # the deterministic layer saw rather than an empty shell.
+    # rebuild the section entities, coverage, and record-state conflicts the snapshot carried, so the
+    # scripted/model path reasons over the same record the deterministic layer saw rather than an empty
+    # shell
     from dataclasses import fields as _dataclass_fields
 
     def _entities(rows: Any, cls: Any) -> list[Any]:
@@ -404,12 +335,7 @@ def _validate_model_output(
     question: str,
     snapshot_id: str,
 ) -> ReasoningResult:
-    """Publication-gate validation before the model result is used.
-
-    The model may qualify, connect, or reject deterministic conclusions, but it
-    cannot invent portal facts or enable execution. This is the code-side
-    publication gate the contract assigns to implementation.
-    """
+    """publication-gate validation before the model result is used"""
     if not isinstance(structured, dict):
         raise Phase3Error(
             Phase3ErrorCode.STATE_EXTRACTION_FAILED,
@@ -419,7 +345,7 @@ def _validate_model_output(
 
     result = _coerce_result(structured, snapshot_id, question=question)
 
-    # Record identity must match the snapshot we gave it.
+    # record identity must match the snapshot we gave it
     if result.record_key and state.record_key and result.record_key != state.record_key:
         result.uncertainties.append(
             Uncertainty(
@@ -432,9 +358,7 @@ def _validate_model_output(
             )
         )
 
-    # The model must not introduce new portal FACT claims that the snapshot did
-    # not supply evidence for. INFERENCE and UNCERTAIN are fine; FACT claims must
-    # be traceable to a state fact whose field/value/raw_value match.
+    # the model must not introduce new portal fact claims that the snapshot did not supply evidence for
     _apply_fact_discipline(result, state)
     _apply_contested_premise_gate(result, state)
 
@@ -442,11 +366,7 @@ def _validate_model_output(
 
 
 def _coerce_result(structured: dict[str, Any], snapshot_id: str, *, question: str = "") -> ReasoningResult:
-    """Best-effort coercion of a model dict into ReasoningResult.
-
-    Missing fields are tolerated where the deterministic baseline already handles
-    them; malformed fields become uncertainties rather than crashes.
-    """
+    """best-effort coercion of a model dict into reasoningresult"""
     answerability = str(structured.get("answerability", "answered"))
     result = ReasoningResult(
         record_key=str(structured.get("record_key")) or None,
@@ -548,29 +468,12 @@ def _coerce_uncertainty(unc: dict[str, Any]) -> Uncertainty:
 
 
 def _apply_contested_premise_gate(result: ReasoningResult, state: PermitState) -> None:
-    """Publication gate: contested premises must not quietly survive as facts.
-
-    the implementation’s remaining handoff item. When two same-record observations disagree
-    (A9: a fee read as unpaid is later read as paid), the value the model
-    might assert is built on a premise the snapshot itself disputes. The
-    contract says to retain both facts until their relation is supported; the
-    publication gate says the model may not assert a conclusion that depends
-    on a contested premise without flagging it.
-
-    For now this enforces the same discipline as the deterministic layer:
-    contested scalar facts are already surfaced in state.contradictions, and
-    any model FACT that restates a contested value is reclassified to
-    INFERENCE with an explicit uncertainty so it cannot read as a settled
-    portal fact.
-    """
+    """publication gate: contested premises must not quietly survive as facts"""
     if not state.contradictions:
         return
     contested_values: set[str] = set()
     for contradiction in state.contradictions:
         lowered = contradiction.lower()
-        # Contradiction records here are scalar disagreement strings such as
-        # "conflicting fee paid: False vs True". Extract the competing values
-        # so we can detect a model restating one of them as a FACT.
         for token in ("false", "true", "paid", "unpaid", "issued", "expired"):
             if token in lowered:
                 contested_values.add(token)
@@ -609,14 +512,7 @@ def _apply_contested_premise_gate(result: ReasoningResult, state: PermitState) -
 
 
 def _apply_fact_discipline(result: ReasoningResult, state: PermitState) -> None:
-    """Ensure FACT claims the model emitted are traceable to the snapshot.
-
-    The model is allowed to emit INFERENCE and UNCERTAIN claims freely (within
-    the evidence/premise discipline). FACT claims are different: a FACT must map
-    to a real extracted fact in the snapshot. A FACT with no matching snapshot
-    fact is reclassified as INFERENCE with a stated assumption, because the
-    contract forbids inventing a portal fact the source did not state.
-    """
+    """ensure fact claims the model emitted are traceable to the snapshot"""
     new_claims: list[Claim] = []
     for claim in result.claims:
         if claim.kind is not FactKind.FACT:
@@ -625,8 +521,6 @@ def _apply_fact_discipline(result: ReasoningResult, state: PermitState) -> None:
         if _fact_matches_snapshot(claim, state):
             new_claims.append(claim)
             continue
-        # Reclassify an unsupported FACT into an INFERENCE whose premise is the
-        # best available evidence and whose assumption is stated.
         new_claims.append(
             Claim(
                 claim.id,
@@ -659,7 +553,7 @@ def _fact_matches_snapshot(claim: Claim, state: PermitState) -> bool:
             return True
         if claim.statement.strip().lower().startswith(fact.value) and fact.evidence_ids:
             return True
-    # A FACT without evidence ids cannot be a portal fact.
+    # a fact without evidence ids cannot be a portal fact
     return bool(claim.evidence_ids)
 
 

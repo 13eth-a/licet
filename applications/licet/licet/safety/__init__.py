@@ -1,4 +1,4 @@
-"""Deterministic Phase 6 safety contracts."""
+"""deterministic phase 6 safety contracts"""
 from licet.safety.policy import (
     ACTION_RISKS, CONSTRAINT_CONFLICT, ActionRisk, ConfirmationRequest, Environment,
     IdentityCheck, MutationDecision, MutationLedger, MutationRecord, MutationState,

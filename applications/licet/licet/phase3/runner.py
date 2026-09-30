@@ -1,25 +1,4 @@
-"""Read-only targeted retrieval for Phase 3.
-
-Executes ``ReasoningResult.needed_sections`` — the *declarative* read requests
-the reasoning layer emits (reasoning contract: "Read requests are declarative
-(``section``, ``entity_id``, ``reason``, ``needed_fact``, ``stop_when``), not
-selectors, clicks, or URLs invented by the reasoning stage").
-
-Safety shape:
-
-- The only tool calls this runner may emit are ``read_page`` and, when the
-  record detail is not the current page, a ``navigate`` to the record's own
-  deep link plus a *benign* section-label click (``"Inspections"`` etc.), which
-  the dispatcher resolves through ``BENIGN_TARGETS`` — the same guard, run log
-  and verification every other path goes through. No scheduling, payment,
-  resubmission or attestation call can be built by this module, and none is
-  accepted from anywhere else: tool calls are constructed here, never passed in.
-- One bounded attempt per missing section per retrieval pass (a shared budget
-  across all sections). An unavailable or still-loading observation is not
-  retried indefinitely — the answer degrades to ``partial`` instead.
-- URL position is tracked from each dispatcher outcome (the planner is not
-  involved, so nothing else maintains it).
-"""
+"""read-only targeted retrieval for phase 3"""
 from __future__ import annotations
 
 import asyncio
@@ -32,9 +11,7 @@ from licet.phase3 import accela_extract
 from licet.phase3.extract import extract_partial_state, merge_partial_states
 from licet.phase3.state import PermitState, Section
 
-# Clicking these labels is how a record-detail section postback is opened. The
-# dispatcher resolves each to `read_record` (benign target), so the guard still
-# sees every one of them.
+# clicking these labels is how a record-detail section postback is opened
 _SECTION_CLICK_LABELS: dict[str, str] = {
     "inspections": "Inspections",
     "fees": "Payments",
@@ -44,19 +21,9 @@ _SECTION_CLICK_LABELS: dict[str, str] = {
     "overview": "",
 }
 
-# Sections served by the record detail page itself (no click needed).
 _DEFAULT_PAGE_SECTIONS = {"overview"}
 
-# Label variants to try, in order, when a section opens by postback. Null
-# Island's record detail does NOT render a visible "Inspections" link — the
-# click-through evidence (`scripts/ni_section_clickthrough.py` observations,
-# 2026-09-20) lists Record Info | Payments | Attachments plus "Schedule an
-# Inspection", and the 2026-09-25 live run showed the "Inspections" anchor is
-# present in the DOM but never visible (a dead-but-rendered wrapper: the
-# client reports `not_actionable`, naming the hidden selectors). The right
-# answer is not "the section is unavailable" but "try the label the portal
-# actually renders". Every variant stays within the dispatcher's benign
-# section-label resolution, so the guard still sees and logs each attempt.
+# label variants to try, in order, when a section opens by postback
 _SECTION_LABEL_VARIANTS: dict[str, tuple[str, ...]] = {
     "inspections": ("Inspections", "Inspection History"),
     "fees": ("Payments", "Fees"),
@@ -68,7 +35,7 @@ _SECTION_LABEL_VARIANTS: dict[str, tuple[str, ...]] = {
 
 @dataclass
 class RetrievalOutcome:
-    """What one targeted-retrieval pass did, for the run log and tests."""
+    """what one targeted-retrieval pass did, for the run log and tests"""
 
     sections_requested: list[str] = field(default_factory=list)
     sections_retrieved: list[str] = field(default_factory=list)
@@ -85,7 +52,7 @@ class RetrievalOutcome:
 
 
 class Phase3RetrievalRunner:
-    """Bounded, read-only section retrieval through the ToolDispatcher."""
+    """bounded, read-only section retrieval through the tooldispatcher"""
 
     def __init__(
         self,
@@ -96,13 +63,8 @@ class Phase3RetrievalRunner:
         browser_state: dict[str, Any] | None = None,
     ) -> None:
         self.dispatcher = dispatcher
-        # capID1/2/3 + module + agency — the identity needed to re-land on the
-        # record detail when a targeted read is required from another page.
         self.record_ref = dict(record_ref) if record_ref else {}
         self.max_reads_per_pass = max_reads_per_pass
-        # Phase 7: the settled page identity the planner's loop key consumes.
-        # Callers pass the World's browser_state dict so retrieval writes
-        # where the page actually settled, in place.
         self.browser_state = browser_state if browser_state is not None else {}
         self._current_url: str | None = None
 
@@ -111,7 +73,7 @@ class Phase3RetrievalRunner:
         return self._current_url
 
     def _sync_url(self, result: dict[str, Any]) -> None:
-        """Track position from each dispatcher outcome (no planner involved)."""
+        """track position from each dispatcher outcome (no planner involved)"""
         url = result.get("url") or (result.get("data") or {}).get("url")
         if url:
             self._current_url = str(url)
@@ -119,12 +81,7 @@ class Phase3RetrievalRunner:
     async def retrieve_missing_sections(
         self, state: PermitState, needed: list[dict[str, str]]
     ) -> RetrievalOutcome:
-        """Fetch the sections a question still needs; merge into ``state``.
-
-        Returns the per-section outcome. Sections whose read failed stay listed
-        in ``sections_failed`` — the caller reports a partial answer rather
-        than looping.
-        """
+        """fetch the sections a question still needs; merge into ``state``"""
         outcome = RetrievalOutcome(sections_requested=[item["section"] for item in needed])
         for item in needed:
             if len(outcome.sections_retrieved) >= self.max_reads_per_pass:
@@ -142,10 +99,7 @@ class Phase3RetrievalRunner:
                 continue
             observation = accela_extract.observation_for(section, data)
             if observation.get("coverage") == "loading":
-                # ACA renders "Loading..." first; one best-effort settle and
-                # reread, then accept what is there. A mid-load read must never
-                # become a fact, and a section that never finishes loading is
-                # reported as such rather than blocked on.
+                # aca renders "loading..." first; one best-effort settle and reread, then accept what is there
                 await self._settle(outcome)
                 data = await self._read_current(outcome)
                 if data is not None:
@@ -160,21 +114,11 @@ class Phase3RetrievalRunner:
             merge_partial_states(state, extract_partial_state(observation))
             outcome.sections_retrieved.append(section)
             if data:
-                # Phase 7 (portal integration): persist the *settled* page identity so the
-                # planner's loop key is built from where the page actually
-                # settled, never from a live render token (the adversarial review handoff
-                # residual). browser_state is excluded from the World
-                # fingerprint, so this cannot fake progress either.
                 self._record_browser_state(data)
         return outcome
 
     def _record_browser_state(self, data: dict[str, Any]) -> None:
-        """Fold one settled read into the caller's browser-state dict.
-
-        `settled_browser_state` writes url path, record identity (capID1/2/3),
-        flow step and the portal findings; plain dict in, plain dict out, no
-        imports from the planner layer.
-        """
+        """fold one settled read into the caller's browser-state dict"""
         from licet.phase7.portal import settled_browser_state
 
         merged = settled_browser_state(data)
@@ -192,7 +136,7 @@ class Phase3RetrievalRunner:
             outcome.actions.append({"wait": "until_absent=Loading...", "ok": False})
 
     async def _read_section(self, section: str, outcome: RetrievalOutcome) -> dict[str, Any] | None:
-        """Land on the record detail (and the section's postback, if any), then read."""
+        """land on the record detail (and the section's postback, if any), then read"""
         if not self._on_record_detail():
             url = self._detail_url()
             if url is None:
@@ -204,14 +148,8 @@ class Phase3RetrievalRunner:
             outcome.actions.append({"navigate": url, "ok": bool(result.get("success"))})
             if not result.get("success"):
                 return None
-            # The record URL already carries `IsToShowInspection=` (the
-            # inspection-context deep link, verified in the UI map), so the
-            # first settled read may already show the section. Read before
-            # clicking and keep the read only when it is *decisive* evidence
-            # for the section (complete or explicitly empty): a partial or
-            # loading summary read is not the section, and the postback click
-            # still has to be tried. If the read shows a portal finding, the
-            # normal failure path below applies.
+            # the record url already carries `istoshowinspection=` (the inspection-context deep link,
+            # verified in the ui map), so the first settled read may already show the section
             data = await self._read_current(outcome)
             if data is not None:
                 observation = accela_extract.observation_for(section, data)
@@ -226,8 +164,8 @@ class Phase3RetrievalRunner:
                 if (section != "inspections" or not all(self.record_ref.get(k) for k in ("capID1", "capID2", "capID3"))
                         or not outcome.actions[-1].get("section_unavailable")):
                     return None
-                # The captured P13 route shows inspections only with this view
-                # flag; the ordinary summary's section anchors can be hidden.
+                # the captured p13 route shows inspections only with this view flag; the ordinary
+                # summary's section anchors can be hidden
                 url = inspection_detail_url(self.record_ref)
                 result = await self.dispatcher.execute(
                     ToolCall("navigate", {"url": url}), self._state_shim()
@@ -249,17 +187,7 @@ class Phase3RetrievalRunner:
     async def _click_section(
         self, section: str, label: str, outcome: RetrievalOutcome
     ) -> dict[str, Any] | None:
-        """Open a section by its postback label, trying the known label variants.
-
-        The primary label is tried first; if the client reports it present but
-        not actionable (the dead-but-rendered shape live-verified on Null
-        Island), the next variant is tried before giving up. The settled read
-        from a successful variant is returned so the caller's `loading` path
-        sees the section the click actually opened, and the provenance of the
-        call that changed the page is checked against the benign resolution —
-        a click resolved to anything other than a read-record target is
-        refused regardless of its outcome.
-        """
+        """open a section by its postback label, trying the known label variants"""
         for index, candidate in enumerate(_SECTION_LABEL_VARIANTS.get(section, (label,))):
             result = await self.dispatcher.execute(
                 ToolCall("click", {"target": candidate, "by": "text"}), self._state_shim()
@@ -270,9 +198,7 @@ class Phase3RetrievalRunner:
             if result.get("success"):
                 provenance = str((result.get("resolution") or {}).get("provenance") or "")
                 if provenance != "benign_target":
-                    # The guard resolved this label to something other than a
-                    # read-record target. Fail closed: report the click failed
-                    # rather than reading whatever the click opened.
+                    # the guard resolved this label to something other than a read-record target
                     outcome.actions.append(
                         {"click": candidate, "ok": False, "refused": "not a benign section target"}
                     )
@@ -288,8 +214,8 @@ class Phase3RetrievalRunner:
             last_variant = index + 1 >= len(_SECTION_LABEL_VARIANTS.get(section, (label,)))
             if not not_actionable or last_variant:
                 return None
-            # Present-but-not-visible on a non-final variant: the portal is
-            # rendering a dead wrapper for this label. Try the next one.
+            # present-but-not-visible on a non-final variant: the portal is rendering a dead wrapper for
+            # this label
         return None
 
     async def _read_current(self, outcome: RetrievalOutcome) -> dict[str, Any] | None:
@@ -323,12 +249,7 @@ class Phase3RetrievalRunner:
             return None
 
     def _state_shim(self) -> Any:
-        """Minimal AgentState the dispatcher records outcomes onto.
-
-        Phase 3 retrieval runs outside a planner run, so it gets a private
-        scratch state (own counters, own flow position) instead of sharing the
-        planner's. The current URL is tracked here from each outcome.
-        """
+        """minimal agentstate the dispatcher records outcomes onto"""
         if not hasattr(self, "_scratch"):
             from licet.agent.state import AgentState
 
@@ -339,7 +260,7 @@ class Phase3RetrievalRunner:
 
 
 def record_ref_from_url(url: str) -> dict[str, str] | None:
-    """capID1/2/3 + module + agency out of a CapDetail URL (runner re-entry)."""
+    """capid1/2/3 + module + agency out of a capdetail url (runner re-entry)"""
     parsed = parse_ref_from_url(url or "")
     return parsed or None
 
@@ -351,7 +272,7 @@ def run_retrieval(
     *,
     record_ref: dict[str, str] | None = None,
 ) -> RetrievalOutcome:
-    """Sync wrapper for script callers (asyncio.run under the hood)."""
+    """sync wrapper for script callers (asyncio.run under the hood)"""
     runner = Phase3RetrievalRunner(dispatcher, record_ref=record_ref)
     return asyncio.run(runner.retrieve_missing_sections(state, needed))
 

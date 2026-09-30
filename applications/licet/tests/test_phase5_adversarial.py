@@ -1,16 +1,4 @@
-"""Adversarial planner review (adversarial review) — attack the loop, then lock it.
-
-Each case is a counterexample that was reproduced against the pre-review planner
-(or is a positive control proving the guard is not vacuous). The targets are the
-Phase 5 hazards named in the assignment: constraint loss across replanning,
-circular planning, repeated information gathering, "success" without verified
-state, a missing precondition, an ignored external dependency, and treating
-partial completion as full success.
-
-Reasons are stated in terms of the planner's *own* contracts: a completion fact
-must be at least as well-evidenced as the execution gate that guards the same
-work, and no observed fact may be bound to another record, snapshot, or question.
-"""
+"""adversarial planner review (adversarial review) — attack the loop, then lock it"""
 import asyncio
 from copy import deepcopy
 from dataclasses import replace
@@ -38,15 +26,8 @@ VAGUE = "Fix my permit."
 MUTATION_VALUES = {action.value for action in MUTATIONS}
 
 
-# --------------------------------------------------------------------------- #
-# A1-A5: an interpretation may only establish completion for THIS record,      #
-# snapshot and question. The pre-review predicate accepted `answerability ==   #
-# "answered"` alone, then declared SUCCESS before the planner's own STOP,      #
-# contradiction and stale-snapshot guards could run.                           #
-# --------------------------------------------------------------------------- #
-
 class _Reasoning:
-    """Injects one modified ReasoningResult through the capability interface."""
+    """injects one modified reasoningresult through the capability interface"""
 
     def __init__(self, mutate):
         self.mutate = mutate
@@ -100,8 +81,7 @@ def test_unsound_reasoning_cannot_establish_blockers_identified(mutate, label):
 
 
 def test_sound_reasoning_still_establishes_blockers_identified():
-    # Positive control: the guard must reject the five deviations above, not
-    # every reasoning result.
+    # positive control: the guard must reject the five deviations above, not every reasoning result
     world = ready_world()
     assert reasoning_is_sound(world, goal())
     assert "blockers_identified" in established(world, goal())
@@ -116,8 +96,8 @@ def test_unsound_reasoning_never_reaches_success_end_to_end(mutate):
 
 
 def test_reasoner_demanding_an_unread_section_cannot_declare_success():
-    # A reasoner that keeps asking for a section must either get that section or
-    # stop; it must never satisfy the goal by asserting it is answered.
+    # a reasoner that keeps asking for a section must either get that section or stop; it must never
+    # satisfy the goal by asserting it is answered
     result, capabilities = run(parse_goal(VAGUE), _Reasoning(_needs_a_section).capabilities())
     assert result.status != Status.SUCCESS
     assert Action.READ_FEES in capabilities.calls
@@ -125,15 +105,10 @@ def test_reasoner_demanding_an_unread_section_cannot_declare_success():
 
 
 def test_reasoning_record_mismatch_still_cannot_establish_completion():
-    # The one binding the pre-review predicate did have; kept as a lock.
     world = ready_world()
     world.reasoning.record_key = "another/record"
     assert "blockers_identified" not in established(world, goal())
 
-
-# --------------------------------------------------------------------------- #
-# A6: `next_inspection_identified` was granted from any proposal at all.       #
-# --------------------------------------------------------------------------- #
 
 @pytest.mark.parametrize("change", [
     {"record_key": "another/record"},
@@ -145,8 +120,7 @@ def test_unbound_proposal_cannot_satisfy_next_inspection_identified(change):
     world.proposal = replace(world.proposal, **change)
     world.selection = replace(world.selection, **change)
     assert "next_inspection_identified" not in established(world, goal())
-    # mutation_denial agrees with the completion predicate; the two must not
-    # disagree about the same proposal.
+    # mutation_denial agrees with the completion predicate; the two must not disagree about the same proposal
     assert mutation_denial(Run(goal(), deepcopy(world)), Action.SCHEDULE_INSPECTION)
 
 
@@ -175,10 +149,6 @@ def test_unbound_permit_cannot_claim_approval():
     world.permit.record_key = "another/record"
     assert "permit_approved" not in established(world, goal(success_conditions=("permit_verified", "permit_approved")))
 
-
-# --------------------------------------------------------------------------- #
-# Constraint loss across replanning: the headline "attack the planner" case.   #
-# --------------------------------------------------------------------------- #
 
 def _stripping_capabilities():
     class Stripping(ScriptedCapabilities):
@@ -229,8 +199,8 @@ def test_no_spend_and_no_signature_survive_every_replan(cost, signature):
 
 
 def test_immutable_constraints_survive_repeated_replanning():
-    # Every capability call must observe the same frozen goal object: replanning
-    # must not be able to hand a widened goal to the mutation path.
+    # every capability call must observe the same frozen goal object: replanning must not be able to hand
+    # a widened goal to the mutation path
     constrained = goal(constraints=("without spending money",))
     result, capabilities = run(constrained)
     assert capabilities.seen_goals, "the planner produced no observations"
@@ -244,10 +214,6 @@ def test_prohibited_operation_is_still_refused_after_a_replan():
     assert Action.CANCEL_INSPECTION not in capabilities.calls
     assert result.status != Status.SUCCESS
 
-
-# --------------------------------------------------------------------------- #
-# Redundant action, loops and the step budget.                                 #
-# --------------------------------------------------------------------------- #
 
 def test_one_attempted_mutation_is_never_replayed():
     result, capabilities = run()
@@ -285,8 +251,8 @@ def test_churning_portal_stays_within_budget_and_does_not_duplicate_a_mutation()
         async def perform(self, action, goal, world, **kwargs):
             self.sequence += 1
             observation = await super().perform(action, goal, world, **kwargs)
-            # A new snapshot label every call is not progress; a planner that
-            # treats it as progress would loop inside the budget indefinitely.
+            # a new snapshot label every call is not progress; a planner that treats it as progress would
+            # loop inside the budget indefinitely
             observation.world.snapshot_id = f"churn-{self.sequence}"
             return observation
 
@@ -296,15 +262,11 @@ def test_churning_portal_stays_within_budget_and_does_not_duplicate_a_mutation()
 
 
 def test_repeated_information_gathering_is_cut_off():
-    # A read whose result never changes the structured state is not progress.
+    # a read whose result never changes the structured state is not progress
     result, capabilities = run(cap=ScriptedCapabilities(failure=Action.READ_PERMIT_STATE))
     assert result.error == Error.PLAN_LOOP_DETECTED
     assert capabilities.calls.count(Action.READ_PERMIT_STATE) <= 3
 
-
-# --------------------------------------------------------------------------- #
-# Preconditions and external dependencies before any mutation.                 #
-# --------------------------------------------------------------------------- #
 
 def test_ineligible_but_available_record_cannot_be_scheduled():
     class Ineligible(ScriptedCapabilities):
@@ -365,10 +327,6 @@ def test_step_budget_is_global_across_replanning():
     assert len(capabilities.calls) == 3
     assert result.semantic_steps == 3
 
-
-# --------------------------------------------------------------------------- #
-# Policy agreement: the planner and the Phase 4 policy must not disagree.      #
-# --------------------------------------------------------------------------- #
 
 def test_planner_denial_and_policy_agree_for_a_cancellation():
     world = ready_world()

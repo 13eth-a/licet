@@ -1,23 +1,5 @@
 #!/usr/bin/env python
-"""Phase 7 portal-weirdness replay (portal integration review).
-
-Re-derives the portal lane's end-to-end rows against the current tree:
-
-- the checklist's portal integration scenarios (empty table that populates asynchronously,
-  session expiry as a *modal*, redirect home mid-workflow, popup, new tab,
-  wizard step sharing one URL) through the real classifier/router;
-- the settled-identity loop-key audit (adversarial review handoff): the legacy caller
-  shape (raw page text) versus the settled identity, on the same inputs;
-- the planner integration rows (terminal downgrade on a failed read,
-  evidence-free marking on an unsettled page) through the real GoalPlanner;
-- Phase 7 portal metrics (all unsafe targets zero).
-
-    python scripts/phase7_portal_replay.py
-    python scripts/phase7_portal_replay.py --json docs/phase7/portal_evidence.json
-
-Read-only: nothing is written except the optional ``--json`` evidence file. No
-browser, model, credential or live mutation is used.
-"""
+"""phase 7 portal-weirdness replay (portal integration review)"""
 from __future__ import annotations
 
 import argparse
@@ -62,9 +44,6 @@ def check(name: str, ok: bool, detail: str = "") -> str:
     if not ok:
         failures.append(f"{name}: {detail}")
     return detail
-
-
-# --- the real observation shape, without a browser ---------------------------
 
 
 class _Frame:
@@ -118,9 +97,6 @@ def read_page(url: str, text: str) -> dict:
     return asyncio.run(SolariClient(_Page(url, text)).read_page()).data
 
 
-# --- end-to-end rows ---------------------------------------------------------
-
-
 def scenario_rows() -> list[dict]:
     rows = []
 
@@ -129,7 +105,6 @@ def scenario_rows() -> list[dict]:
                      "unsafe": unsafe})
         check(f"scenario {name}", not unsafe, outcome)
 
-    # portal integration scenario: rows empty for 2 seconds, then populate.
     pending = PortalState.from_observation(
         {"url": DETAIL, "text": "Inspections | No data available in table"}
     )
@@ -142,7 +117,6 @@ def scenario_rows() -> list[dict]:
         f" -> settled findings={len(settled.findings)}",
         bool(pending.unsettled is False or settled.findings))
 
-    # portal integration scenario: session expiry as a modal over the current page.
     modal = PortalState.from_observation(
         {"url": DETAIL, "text": "Warning: your session is about to expire. Do you want to stay logged in?"}
     )
@@ -151,13 +125,11 @@ def scenario_rows() -> list[dict]:
         f"{route.strategy} terminal={route.terminal} findings={[f.value for f in modal.findings]}",
         not (route.terminal and route.strategy == "STOP" and modal.findings == (PortalFinding.SESSION_EXPIRED_MODAL,)))
 
-    # portal integration scenario: redirect home mid-workflow.
     home = PortalState.from_observation({"url": HOME, "text": "welcome"})
     route = route_recovery(home)
     row("redirected to portal home mid-workflow", "re-search permit, verify, resume",
         f"{route.strategy} ({route.failure_type.value})", route.strategy != "RECOVER_FROM_HOME")
 
-    # Popup open and a new tab target.
     popup = route_recovery(PortalState.from_observation({"url": DETAIL, "text": "", "popup_open": True}))
     tab = route_recovery(PortalState.from_observation(
         {"url": f"{accela.SITE_ROOT}/NULLISLAND/Cap/printview.aspx?id=1", "text": "printable"}))
@@ -165,7 +137,6 @@ def scenario_rows() -> list[dict]:
         f"popup={popup.strategy} tab={tab.strategy}",
         popup.strategy != "DISMISS_OR_RETURN" or tab.strategy != "RETURN_TO_ORIGIN_TAB")
 
-    # Wizard steps share one URL; the settled step still separates them.
     type_step = PageIdentity.from_observation(
         {"url": DETAIL, "text": "Available Inspection Types (13)",
          "flow": {"flow": "schedule_inspection", "step": "select_type"}})
@@ -186,9 +157,7 @@ def loop_key_rows() -> list[dict]:
                      "legacy_unsafe": unsafe_legacy})
         check(f"loop key {name}", unsafe_legacy or legacy != current, current)
 
-    # Legacy caller shape: raw page text as the page-state string. A render
-    # timestamp makes every occurrence unique, so a three-iteration loop is
-    # never detected (its third observation is the first with *that* timestamp).
+    # legacy caller shape: raw page text as the page-state string
     controller = RecoveryController()
     legacy_key = "Loading... 17:42:03"
     hits = [
@@ -201,7 +170,6 @@ def loop_key_rows() -> list[dict]:
         "settled identity: same key every occurrence",
         True)
 
-    # Settled caller shape through the real helper.
     controller2 = RecoveryController()
     settled = identity_from_world(World(browser_state=settled_browser_state(
         {"url": DETAIL, "text": "Loading... 17:42:03"})))
@@ -218,7 +186,7 @@ def loop_key_rows() -> list[dict]:
         "legacy_unsafe": False,
     })
 
-    # Wizard step change must still be a *different* page (no false loop).
+    # wizard step change must still be a *different* page (no false loop)
     controller3 = RecoveryController()
     step1 = identity_from_world(World(browser_state={"active_section": "select_type", "url": DETAIL}))
     step2 = identity_from_world(World(browser_state={"active_section": "select_date", "url": DETAIL}))
@@ -256,7 +224,6 @@ def planner_rows() -> list[dict]:
         routes = [t for t in result.trace if t.get("event") == "PORTAL_RECOVERY_ROUTE"]
         return result, routes
 
-    # Terminal downgrade: a read fails while a session modal is on the page.
     result, routes = run_planner(
         {"url": DETAIL, "text": "your session is about to expire"},
         failure=Action.READ_PERMIT_STATE,
@@ -270,7 +237,6 @@ def planner_rows() -> list[dict]:
         "unsafe": not ok,
     })
 
-    # Evidence-free marking: the page was still rendering when the read failed.
     result, routes = run_planner(
         {"url": DETAIL, "text": "Inspections | Loading...", "loading": ["loading..."]},
         failure=Action.READ_PERMIT_STATE,
@@ -284,7 +250,7 @@ def planner_rows() -> list[dict]:
         "unsafe": not ok,
     })
 
-    # Mutations are never portal-routed.
+    # mutations are never portal-routed
     cap = _PortalScripted({"url": DETAIL, "text": "your session is about to expire"})
     clean = asyncio.run(GoalPlanner(cap).run(goal()))
     ok = clean.status is Status.SUCCESS and not any(

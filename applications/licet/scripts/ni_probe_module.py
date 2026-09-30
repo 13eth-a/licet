@@ -1,10 +1,4 @@
-"""Probe module switching in the Null Island record grid (read-only).
-
-The grid frame has select[name=moduleList] with onchange=switchModule(this).
-Try: (a) select_option + wait + verify frame URL/rows changed;
-     (b) direct GET of a pagination-style URL with the target module.
-Whichever works becomes the module sweep mechanism.
-"""
+"""probe module switching in the null island record grid (read-only)"""
 from __future__ import annotations
 
 import asyncio
@@ -70,7 +64,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(10000), 20)
         out("logged in")
 
-        # test A: select_option on moduleList → Planning
         fr = await grid_frame(page)
         out(f"grid frame: {fr.url[:130] if fr else None}")
         sel = fr.locator('select[name="moduleList"]')
@@ -83,7 +76,6 @@ async def main() -> int:
         out(f"rows={rows} ids={sorted(ids)[:6]}")
         await page.screenshot(path=os.path.join(SHOTS, f"{stamp}_moduleA.png"))
 
-        # test B: direct GET pagination URL with module=Planning
         url = (
             f"{AV_URL}portlets/cap/capSearch.do?pageNo=1&totalPages=1"
             f"&column=altID&module=Planning&spaceName=spaces.nullisland.record"
@@ -96,7 +88,6 @@ async def main() -> int:
         rows, ids = await row_count(page)
         fr3 = await grid_frame(page)
         out(f"B: rows={rows} ids={sorted(ids)[:6]} frame={fr3.url[:110] if fr3 else None}")
-        # check for the access-denied panel
         denied = False
         for f4 in page.frames:
             try:

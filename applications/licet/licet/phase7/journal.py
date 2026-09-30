@@ -1,9 +1,4 @@
-"""Crash-safe mutation quarantine for real portal sessions.
-
-Reserve immediately before submit. An unresolved record remains quarantined
-across processes; only independent verification completes the same operation.
-There is deliberately no automatic expiry or 'assume absent' unlock.
-"""
+"""crash-safe mutation quarantine for real portal sessions"""
 import sqlite3
 from pathlib import Path
 

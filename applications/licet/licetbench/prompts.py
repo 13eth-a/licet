@@ -1,8 +1,4 @@
-"""Reviewed prompt-through-parser suite, separate from frozen component v1.
-
-Expected intents are hand-authored and never supplied to the planner. Scripted
-capabilities isolate language/planning effects; this is not live portal evidence.
-"""
+"""reviewed prompt-through-parser suite, separate from frozen component v1"""
 from dataclasses import replace, asdict
 from datetime import date
 import asyncio
@@ -28,7 +24,7 @@ def build_prompt_tasks():
             prompt,{'environment':'sandbox','reference_date':'2026-09-24'},
             {'autonomous':autonomous,'operation':operation,'status':status,'permit_id':'P-1'},
             source='prompt',suite='prompts',max_steps=20))
-    # The reviewed discovery variants retain independent candidate rows and goldens.
+    # the reviewed discovery variants retain independent candidate rows and goldens
     from licetbench.variants import build_variant_prompt_tasks
     for task in build_variant_prompt_tasks():
         if task.source=='discovery' and 'DISCOVERY-009' not in task.id:

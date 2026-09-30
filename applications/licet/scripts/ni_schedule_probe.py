@@ -1,21 +1,4 @@
-"""Map the citizen scheduling wizard — READ-ONLY, nothing is scheduled.
-
-The last unmapped surface, and the one that decides whether the flagship demo
-is viable on this sandbox. Answers, per record:
-
-- what inspection types the sandbox offers (`Available Inspection Types (N)`),
-- which of them are `(required)` vs `(optional)`,
-- what the next step looks like (date/time availability),
-- which controls commit the request.
-
-Walks it through the real `licet` stack (SolariSession → SolariClient →
-ToolDispatcher). It never clicks a confirm/schedule/submit control, and leaves
-each wizard by navigating away rather than clicking Cancel (Cancel resolves to
-`cancel_inspection`, which the guard holds — correct, and deliberately avoided
-here).
-
-Run:  .venv/bin/python scripts/ni_schedule_probe.py [--only ID,ID] [--deep ID]
-"""
+"""map the citizen scheduling wizard — read-only, nothing is scheduled"""
 
 from __future__ import annotations
 
@@ -56,8 +39,7 @@ def _excerpt(data: dict, limit: int = 1200) -> str:
 
 
 class Probe:
-    """Reads, plus a transcript of every dispatcher call so failures are
-    diagnosable from the report instead of only from stdout."""
+    """reads, plus a transcript of every dispatcher call so failures are diagnosable from the report instead of only from stdout"""
 
     def __init__(self) -> None:
         self.steps: list[dict] = []
@@ -132,7 +114,7 @@ class Probe:
 
 
 def record_summary(text: str) -> dict:
-    """`Record BLD26-00469: / Commercial Electrical / Record Status: Submitted`."""
+    """`record bld26-00469: / commercial electrical / record status: submitted`"""
     summary: dict = {}
     import re
 
@@ -163,7 +145,7 @@ async def read(dispatcher, state, probe: Probe, name: str) -> dict:
 
 
 async def open_scheduling(dispatcher, state, probe: Probe, permit_id: str) -> dict:
-    """Get to the wizard for one record and leave it there (uncommitted)."""
+    """get to the wizard for one record and leave it there (uncommitted)"""
     await probe.act(
         dispatcher,
         state,
@@ -220,13 +202,7 @@ async def open_scheduling(dispatcher, state, probe: Probe, permit_id: str) -> di
 
 
 async def dump_type_dialogs(client, stamp: str, tag: str) -> list[str]:
-    """Save the raw HTML of any frame holding the type grid.
-
-    Evidence capture only (raw frame content), not an operational path — the
-    `(required)`/`(optional)` wording and the radio markup are what decide how a
-    type gets selected, and guessing at them from a parsed inventory is how a
-    plausible-but-wrong selector gets written.
-    """
+    """save the raw html of any frame holding the type grid"""
     saved: list[str] = []
     frames = list(getattr(client.page, "frames", []) or [])
     for index, frame in enumerate(frames):
@@ -243,12 +219,12 @@ async def dump_type_dialogs(client, stamp: str, tag: str) -> list[str]:
 
 
 async def walk_one_step_deeper(dispatcher, state, probe: Probe, deep: str, data: dict) -> dict | None:
-    """Choose a type and continue — the commit is later, and is never clicked."""
+    """choose a type and continue — the commit is later, and is never clicked"""
     options = accela.parse_inspection_types(data.get("fields") or [])
     if not options:
         out("  nothing to select: the wizard offers no inspection types")
         return None
-    # prefer a required type: it is the one ACA will not let you skip
+    # prefer a required type: it is the one aca will not let you skip
     choice = next((option for option in options if option.required), options[0])
     out(f"  selecting '{choice.name}' (required={choice.required})")
 
@@ -363,7 +339,7 @@ async def main() -> int:
                         *await dump_type_dialogs(client, stamp, "date_step"),
                     ]
 
-            # leave the wizard without clicking Cancel (the guard holds it)
+            # leave the wizard without clicking cancel (the guard holds it)
             await probe.act(
                 dispatcher,
                 state,

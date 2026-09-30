@@ -1,7 +1,4 @@
-"""LicetBench v1: reproducible, offline-first evaluation for Licet.
-
-Benchmark code is intentionally kept outside the production ``licet`` package.
-"""
+"""licetbench v1: reproducible, offline-first evaluation for licet"""
 
 from licetbench.schema import (
     BENCHMARK_VERSION,

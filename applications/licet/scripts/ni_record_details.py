@@ -1,15 +1,4 @@
-"""Open every Null Island record's capDetail.do and capture full details.
-
-capDetail.do?mode=view&serviceProviderCode=NULLISLAND&ID1=&ID2=&ID3=&module=
-renders the Record section with readonly inputs:
-    value(capType)     → e.g. "Building/Residential/Mechanical/NA"
-    value(capStatus)   → record status (also plain text)
-plus Opened Date, Application Name, Description, fee totals.
-
-READ-ONLY. Checkpoints JSON after each record.
-
-Run:  .venv/bin/python scripts/ni_record_details.py
-"""
+"""open every null island record's capdetail.do and capture full details"""
 
 from __future__ import annotations
 
@@ -70,7 +59,6 @@ async def main() -> int:
     try:
         page = await asyncio.wait_for(browser.new_page(), 60)
 
-        # --- login ---
         await asyncio.wait_for(
             page.goto(AV_URL, timeout=60000, wait_until="domcontentloaded"), 70
         )
@@ -107,8 +95,6 @@ async def main() -> int:
                 )
                 await asyncio.wait_for(page.wait_for_timeout(2000), 10)
 
-                # capDetail renders in the main frame or a child — take the
-                # largest frame containing value(capType)
                 best_html = ""
                 for fr in page.frames:
                     try:
@@ -152,7 +138,6 @@ async def main() -> int:
         except Exception:
             pass
 
-    # --- summarize by full type ---
     out(f"\n=== details for {done}/{len(records)} records ===")
     by_type: dict[str, list[dict]] = {}
     for r in records.values():

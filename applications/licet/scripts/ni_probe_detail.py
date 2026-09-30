@@ -1,4 +1,4 @@
-"""Probe capDetail.do with explicit capID params (read-only, single record)."""
+"""probe capdetail.do with explicit capid params (read-only, single record)"""
 from __future__ import annotations
 
 import asyncio

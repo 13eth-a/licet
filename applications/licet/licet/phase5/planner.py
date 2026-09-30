@@ -1,4 +1,4 @@
-"""Bounded semantic planning over existing capabilities, never DOM operations."""
+"""bounded semantic planning over existing capabilities, never dom operations"""
 from __future__ import annotations
 
 import asyncio
@@ -58,9 +58,7 @@ def next_actions(run: Run) -> tuple[Action, ...]:
         return (Action.DETERMINE_NEXT_INSPECTION,) if w.selection is None else (Action.STOP,)
     if not w.availability_checked:
         return (Action.CHECK_INSPECTION_AVAILABILITY,)
-    # Inspection identification and preflight are read-only. A non-autonomous
-    # goal may gather those facts, but must stop before any schedule/reschedule/
-    # cancel action is proposed.
+    # inspection identification and preflight are read-only
     if not goal.autonomous:
         return (Action.STOP,)
     if not w.eligibility_verified or (goal.operation != "cancel" and not w.available_dates):
@@ -69,7 +67,7 @@ def next_actions(run: Run) -> tuple[Action, ...]:
 
 
 def _observed_no_availability_reason(run: Run) -> str | None:
-    """Explain an empty calendar only when identity-bound calendar evidence exists."""
+    """explain an empty calendar only when identity-bound calendar evidence exists"""
     availability = run.world.preflight_details.get("availability", {})
     if (not run.world.availability_checked or run.world.available_dates
             or availability.get("calendar_read") is not True
@@ -90,8 +88,6 @@ def make_plan(run: Run) -> Plan:
     actions = next_actions(run)
     steps = [PlanStep(f"r{len(run.plans)}-{i}", a,
                       "Obtain the missing prerequisite or verify the requested outcome") for i, a in enumerate(actions)]
-    # A short horizon: parallel relevant reads followed by interpretation. The
-    # next revision replaces this horizon as soon as new evidence arrives.
     if actions and all(a in READS for a in actions):
         steps.append(PlanStep(f"r{len(run.plans)}-reason", Action.DETERMINE_BLOCKERS,
                               "Reassess fresh structured state", tuple(s.id for s in steps)))
@@ -101,15 +97,7 @@ def make_plan(run: Run) -> Plan:
 
 
 def confirmation_for(run: Run) -> ConfirmationRequest | None:
-    """The scoped, single-use approval the run's pending action needs.
-
-    Built from the run's own verified proposal, so the object a human approves
-    names the exact permit, inspection type, existing appointment and record the
-    executor will present at commit time. A later replan produces a different
-    proposal and therefore a different object; the previous one cannot satisfy
-    it, which is what makes "approval for one action" enforceable rather than a
-    convention between the planner and the executor.
-    """
+    """the scoped, single-use approval the run's pending action needs"""
     proposal = run.world.proposal
     if proposal is None:
         return None
@@ -196,8 +184,6 @@ class GoalPlanner:
         return await self._exclusive(Run(goal, deepcopy(world) if world else World()))
 
     async def resume(self, run: Run, *, token: str, approved: bool) -> Run:
-        # Resumption is explicit, bound to this exact paused proposal; silence
-        # has no path here. Grants are consumed at the first mutation attempt.
         if run.status != Status.NEEDS_APPROVAL or not token or token != run.approval_token or token in self._consumed_approvals:
             raise ValueError("approval does not match the pending proposal")
         self._consumed_approvals.add(token)
@@ -285,8 +271,6 @@ class GoalPlanner:
                     if decision.choice != RecoveryChoice.REPLAN or not self.recovery.allow_replan():
                         return self._stop(run, Error.NO_VALID_PLAN, f"invalid semantic decision: {exc}", failed=True)
                     self._replan_pending = True
-                    # Discard the invalid selection. Rebuild the closed plan on
-                    # the next iteration; no executor ever receives the bad verb.
                     continue
             if action == Action.STOP:
                 dependencies = "; ".join(d.description for d in run.world.dependencies)
@@ -338,9 +322,6 @@ class GoalPlanner:
                 needs_confirmation = action in self.confirmations or policy.requires_confirmation
                 if needs_confirmation and not confirmed:
                     run.status, run.approval_token = Status.NEEDS_APPROVAL, ticket
-                    # Issue the approval now, against this exact proposal, and
-                    # keep it for the resumption. Nothing downstream may invent
-                    # one, and it is consumed by the policy layer on execution.
                     run.pending_confirmation = confirmation_for(run)
                     plan.status = run.status
                     run.reason = "explicit approval required for the current record, action, constraints and availability"
@@ -349,8 +330,6 @@ class GoalPlanner:
                     return run
                 if not policy.allowed:
                     return self._stop(run, Error.NO_SAFE_ACTIONS, policy.reason)
-                # The human's grant becomes the scoped approval object, and the
-                # run's copy is dropped so nothing can present it twice.
                 approval = run.pending_confirmation if confirmed else None
                 run.pending_confirmation = None
                 if not self.recovery.mutation_started(key):
@@ -359,11 +338,6 @@ class GoalPlanner:
                 run.approval_token, grant = None, None
             before = run.world.fingerprint()
             pair = digest([action.value, before])
-            # The loop key is the *settled* page identity (adversarial review handoff):
-            # active_section is written by the Phase 3 retrieval runner from
-            # the settled flow step, never by a live render token, and a
-            # postback wizard's step change updates it even though the URL
-            # does not move.
             if self.recovery.loop_observed(
                 action.value,
                 identity_from_world(run.world),
@@ -433,18 +407,14 @@ class GoalPlanner:
                               "mutation_key": operation_key(run.world) if action in MUTATIONS else None,
                               "remaining_goal": sorted(set(run.goal.success_conditions) - established(run.world, run.goal))})
             if action in MUTATIONS:
-                # Regardless of provider success, the next step independently
-                # re-reads. An uncertain action is never retried automatically.
+                # regardless of provider success, the next step independently re-reads
                 run.world.verified_inspection = None
                 run.no_progress = 0
             elif action == Action.VERIFY_STATE:
                 if not observation.success or not run.world.verified_inspection:
                     self.recovery.mutation_reconciled(operation_key(run.world), occurred=None)
                     return self._stop(run, Error.PRECONDITION_NOT_MET, "action outcome remains unverified; no replay")
-                # A mutation this run actually issued is now independently
-                # confirmed. The key is only ever added for an attempted action,
-                # so a pre-existing appointment observed on a read is not
-                # recorded as something Licet did.
+                # a mutation this run actually issued is now independently confirmed
                 if operation_key(run.world) in run.attempted_mutations:
                     if set(run.goal.success_conditions) <= established(run.world, run.goal):
                         run.verified_mutations.add(operation_key(run.world))

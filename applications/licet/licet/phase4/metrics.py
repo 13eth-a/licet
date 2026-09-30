@@ -1,19 +1,4 @@
-"""Phase 4 mutation metrics: the numbers Phase 4's zero-targets are measured by.
-
-Mirrors the Phase 2 lookup KPIs (``licet.lookup.LookupMetrics``): raw counters,
-derived rates computed from the counters (never averaged), ``merge``/``combine``
-for aggregation, and an ``as_dict`` snapshot a ``RunLogger`` can persist.
-
-Two kinds of number live here, and they are not the same:
-
-* **Throughput** — attempts, submissions, verified successes.
-* **Invariants** — ``duplicate_submissions``, ``wrong_record_mutations``,
-  ``wrong_inspection_mutations``, ``constraint_violations``,
-  ``unverified_successes``. These must be 0. They are counted by re-checking
-  the action plus the executor's own recorded audit against the promises the
-  executor makes, so a later change that weakens a gate shows up here as a
-  violation rather than silently becoming a rate.
-"""
+"""phase 4 mutation metrics: the numbers phase 4's zero-targets are measured by"""
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -37,7 +22,7 @@ def _kind(action_type: str) -> str:
 
 
 def _date_within(action: InspectionAction, scheduled_date: str | None) -> bool:
-    """Whether a verified appointment date satisfies the action's own window."""
+    """whether a verified appointment date satisfies the action's own window"""
     if not (action.date_window_start or action.date_window_end or action.preferred_date):
         return True
     if not scheduled_date:
@@ -51,9 +36,8 @@ def _date_within(action: InspectionAction, scheduled_date: str | None) -> bool:
 
 @dataclass
 class Phase4Metrics:
-    """Counters for one run (or an aggregate of runs)."""
+    """counters for one run (or an aggregate of runs)"""
 
-    # Throughput.
     actions_attempted: int = 0
     submission_attempts: int = 0
     verified_successes: int = 0
@@ -67,33 +51,27 @@ class Phase4Metrics:
     cancellation_attempts: int = 0
     cancellation_successes: int = 0
 
-    # Selection.
     selection_attempts: int = 0
     actions_selected: int = 0
     expected_selections: int = 0
     selection_matches: int = 0
 
-    # Invariants — every one of these must be 0. See the module docstring.
+    # invariants — every one of these must be 0
     duplicate_submissions: int = 0
     wrong_record_mutations: int = 0
     wrong_inspection_mutations: int = 0
     constraint_violations: int = 0
     unverified_successes: int = 0
 
-    # Per-code detail, for diagnosing a non-zero invariant.
+    # per-code detail, for diagnosing a non-zero invariant
     refusals: dict[str, int] = field(default_factory=dict)
     selection_stops: dict[str, int] = field(default_factory=dict)
 
-    # --- recording ---------------------------------------------------------
 
     def record_selection(
         self, selection: ActionSelection, *, expected: InspectionAction | None = None
     ) -> None:
-        """Count one selection outcome, optionally against a known-correct target.
-
-        ``expected`` is supplied by an eval caller that knows the right answer;
-        without it, selection accuracy is not measurable, so it is not claimed.
-        """
+        """count one selection outcome, optionally against a known-correct target"""
         self.selection_attempts += 1
         if selection.action is None:
             key = selection.status.value
@@ -111,7 +89,7 @@ class Phase4Metrics:
         result: InspectionActionResult,
         audits: Iterable[MutationAudit] = (),
     ) -> None:
-        """Count one executed action and check the executor's safety invariants."""
+        """count one executed action and check the executor's safety invariants"""
         audits = tuple(audits)
         kind = _kind(action.action_type)
         self.actions_attempted += 1
@@ -122,8 +100,8 @@ class Phase4Metrics:
         elif kind == "cancel":
             self.cancellation_attempts += 1
 
-        # A submission is inferred from the audit's recorded browser steps: the
-        # executor logs "submit" only on a path that attempted the mutation.
+        # a submission is inferred from the audit's recorded browser steps: the executor logs "submit"
+        # only on a path that attempted the mutation
         submitted = any("submit" in audit.browser_steps for audit in audits)
         if submitted:
             self.submission_attempts += 1
@@ -179,7 +157,6 @@ class Phase4Metrics:
             expected.inspection_type or "", [selected.inspection_type or ""]
         ) is not None
 
-    # --- derived rates -----------------------------------------------------
 
     def _rate(self, numerator: int, denominator: int) -> float:
         return numerator / denominator if denominator else 0.0
@@ -226,7 +203,7 @@ class Phase4Metrics:
 
     @property
     def safety_violations(self) -> int:
-        """Total observations that contradict an executor guarantee. Must be 0."""
+        """total observations that contradict an executor guarantee"""
         return (
             self.duplicate_submissions
             + self.wrong_record_mutations
@@ -236,7 +213,7 @@ class Phase4Metrics:
         )
 
     def zero_targets(self) -> dict[str, int]:
-        """The Phase 4 checklist's strict targets, named as they are stated."""
+        """the phase 4 checklist's strict targets, named as they are stated"""
         return {
             "wrong_permit_mutation": self.wrong_record_mutations,
             "wrong_inspection_mutation": self.wrong_inspection_mutations,
@@ -245,7 +222,6 @@ class Phase4Metrics:
             "unverified_success": self.unverified_successes,
         }
 
-    # --- aggregation -------------------------------------------------------
 
     _COUNTERS = (
         "actions_attempted",
@@ -272,11 +248,7 @@ class Phase4Metrics:
     )
 
     def merge(self, other: "Phase4Metrics") -> "Phase4Metrics":
-        """Fold another run's counters in, returning self.
-
-        Raw counters are summed rather than rates averaged, so a one-action run
-        cannot outweigh a fifty-action one.
-        """
+        """fold another run's counters in, returning self"""
         for name in self._COUNTERS:
             setattr(self, name, getattr(self, name) + getattr(other, name))
         for name in ("refusals", "selection_stops"):
@@ -293,7 +265,7 @@ class Phase4Metrics:
         return total
 
     def as_dict(self) -> dict[str, object]:
-        """Counters, derived rates and the zero-target verdict, JSON-serializable."""
+        """counters, derived rates and the zero-target verdict, json-serializable"""
         snapshot: dict[str, object] = {name: getattr(self, name) for name in self._COUNTERS}
         snapshot.update(
             refusals=dict(self.refusals),

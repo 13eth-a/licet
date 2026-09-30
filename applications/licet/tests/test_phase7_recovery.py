@@ -112,7 +112,7 @@ def test_loop_detector_uses_action_page_and_permit_state():
     assert not detector.observe("READ_INSPECTIONS", "record/inspections", "P-1")
     assert not detector.observe("READ_INSPECTIONS", "record/inspections", "P-1")
     assert detector.observe("READ_INSPECTIONS", "record/inspections", "P-1")
-    # A changed page or permit is not the same loop.
+    # a changed page or permit is not the same loop
     assert not detector.observe("READ_INSPECTIONS", "record/overview", "P-1")
     assert not detector.observe("READ_INSPECTIONS", "record/inspections", "P-2")
 

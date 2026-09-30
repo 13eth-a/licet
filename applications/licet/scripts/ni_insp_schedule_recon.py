@@ -1,13 +1,4 @@
-"""Recon: does NI have usable inspection calendars? (read-only)
-
-Opens an existing Building record's CapTabSummary.do, walks to its
-Inspections section, and opens the Schedule-inspection form WITHOUT
-submitting. The inspection-type dropdown and available dates in that form
-prove whether calendars are configured for Building types — and map the
-scheduling UI Licet must automate later.
-
-Run:  .venv/bin/python scripts/ni_insp_schedule_recon.py
-"""
+"""recon: does ni have usable inspection calendars? (read-only)"""
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +13,6 @@ load_dotenv()
 AV_URL = "https://nullisland-test-av.accela.com/"
 USER, PASSWORD = "developer", "accela"
 OUTDIR = os.path.join("logs", "ni_backoffice", "inventory")
-# a Building/Commercial/Mechanical record from the 2026-09-19 inventory
 CAP = {"ID1": "REC26", "ID2": "00000", "ID3": "000AE"}
 
 
@@ -75,7 +65,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(10000), 20)
         out("logged in")
 
-        # 1. record summary (direct URL, known-good pattern)
         qs = (f"mode=tabSummary&serviceProviderCode=NULLISLAND"
               f"&ID1={CAP['ID1']}&ID2={CAP['ID2']}&ID3={CAP['ID3']}"
               f"&requireNotice=YES&clearForm=clearForm&module=Building"
@@ -88,7 +77,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(5000), 12)
         out(f"record page: {page.url[:120]} frames={len(page.frames)}")
 
-        # 2. collect section/tab links across frames
         links: dict[str, str] = {}
         for fr in page.frames:
             try:
@@ -108,7 +96,6 @@ async def main() -> int:
             for t, h in sorted(links.items()):
                 f.write(f"{t}\t{h}\n")
 
-        # 3. navigate to the inspection section (keep session; same tab)
         target = None
         for t, h in insp.items():
             target = h if h.startswith("http") else AV_URL + h.lstrip("/")
@@ -118,7 +105,6 @@ async def main() -> int:
             )
             await asyncio.wait_for(page.wait_for_timeout(4000), 10)
             await dump_frames(page, "inspSection", stamp)
-            # any schedule control?
             for fr in page.frames:
                 try:
                     fh = await asyncio.wait_for(fr.content(), 10)

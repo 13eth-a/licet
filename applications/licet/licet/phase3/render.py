@@ -1,12 +1,4 @@
-"""Narrative rendering from a validated Phase 3 ``ReasoningResult``.
-
-The reasoning contract's last gate: the user-facing answer is generated *from
-the structured result only* — never from raw page text — and it must preserve
-the FACT / INFERENCE / UNCERTAIN distinctions, every simultaneous material
-blocker, and the classification (confirmed gate / observed problem / potential
-impediment). This renderer is deterministic: it introduces no new claims, no
-requirements, and no confidence upgrades while formatting.
-"""
+"""narrative rendering from a validated phase 3 ``reasoningresult``"""
 from __future__ import annotations
 
 from licet.phase3.state import (
@@ -40,7 +32,7 @@ def render_blockers(result: ReasoningResult) -> list[str]:
 
 
 def render_next_actions(result: ReasoningResult) -> list[str]:
-    """Candidates with their requirement strength, never stated as obligations."""
+    """candidates with their requirement strength, never stated as obligations"""
     lines: list[str] = []
     for candidate in result.next_actions:
         strength = candidate.requirement_strength
@@ -69,12 +61,7 @@ def render_uncertainties(result: ReasoningResult) -> list[str]:
 
 
 def render_answer(result: ReasoningResult) -> str:
-    """The full structured answer, question-shaped.
-
-    Sections appear only when they carry content, and unsupported conclusions
-    are structurally impossible here: every line comes from a validated claim,
-    blocker or candidate that already carries its evidence and classification.
-    """
+    """the full structured answer, question-shaped"""
     sections: list[str] = []
 
     if result.answerability == "conflicting":
@@ -92,9 +79,8 @@ def render_answer(result: ReasoningResult) -> str:
 
     facts = render_claims(result)
     if facts:
-        # A disputed value must not be presented as settled portal fact
-        # (adversarial review A14): the heading carries the qualification, the
-        # named conflicts stay in the uncertainties block below.
+        # a disputed value must not be presented as settled portal fact (adversarial review a14): the
+        # heading carries the qualification, the named conflicts stay in the uncertainties block below
         heading = (
             "Facts reported by the portal (some are disputed; see Uncertainties):"
             if result.contradictions

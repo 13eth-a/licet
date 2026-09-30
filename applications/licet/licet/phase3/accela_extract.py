@@ -1,25 +1,4 @@
-"""Accela page-to-observation adapter (Phase 3 extraction specialist).
-
-The bridge between the real portal and the Phase 3 runtime: one ``read_page``
-payload (the dict ``SolariClient.read_page`` assembles) becomes the section
-observations ``licet.phase3.extract`` consumes. This module is deliberately
-dumb about meaning — it maps *where ACA renders things* onto the observation
-shape, and never invents values it did not see:
-
-- The record-detail header (``Record <id>: <type> / Record Status: <status>``)
-  becomes the overview observation.
-- The detail page's Inspections section renders text only, so inspection rows
-  here carry raw lines plus the wizard's own type list (offered types, with
-  ACA's ``(required)`` marker preserved as requirement evidence). Table-shaped
-  sections are handled by the same row contract the eval fixtures use.
-- ACA's AJAX hazard is honored end to end: a section read while
-  ``Loading...`` is still in the text is flagged, so downstream coverage
-  degrades to ``partial`` instead of licensing a "no entries" claim
-  (live finding, 2026-09-20: the Inspections section says "You have not added
-  any inspections" before it finishes loading).
-- The calendar and scheduling wizard are surfaced as offered types +
-  availability — availability is not a requirement.
-"""
+"""accela page-to-observation adapter (phase 3 extraction specialist)"""
 from __future__ import annotations
 
 from datetime import datetime as _datetime
@@ -28,8 +7,6 @@ from typing import Any, Mapping
 
 from licet.browser import accela
 
-# The overview observation is keyed off ACA's own section labels, which the
-# detail page renders for all 8 owned Null Island records (2026-09-20).
 _SECTION_BY_LABEL: tuple[tuple[str, str], ...] = (
     ("record info", "overview"),
     ("inspections", "inspections"),
@@ -39,13 +16,7 @@ _SECTION_BY_LABEL: tuple[tuple[str, str], ...] = (
     ("conditions", "conditions"),
 )
 
-# Rendered section tables, mapped by *meaning* rather than one hard-coded
-# header string. Agencies configure their own column labels (the Phase 3
-# handoff named fees grids as the first fixture gap), so a header cell is
-# resolved to the canonical field ``licet.phase3.extract`` reads. Without this,
-# a grid whose wording differs from the Null Island capture produced an
-# "Unnamed fee" with no amount and "Unknown inspection" rows — a silent
-# mis-parse rather than the honest ``partial`` coverage the handoff promised.
+# rendered section tables, mapped by *meaning* rather than one hard-coded header string
 _HEADER_FIELDS: dict[str, dict[str, str]] = {
     "inspections": {
         "inspection": "type", "inspection type": "type", "inspection name": "type",
@@ -100,19 +71,13 @@ _HEADER_FIELDS: dict[str, dict[str, str]] = {
     },
 }
 
-# Columns that carry no structured meaning for licet (links/controls). One such
-# column is tolerated in a header row so real grids with an Actions cell still
-# parse; anything else unmapped means the header shape is not understood.
+# columns that carry no structured meaning for licet (links/controls)
 _ACTION_COLUMNS = {
     "", "action", "actions", "edit", "select", "view", "open", "delete",
     "download", "attach", "attach file", "details", "link",
 }
 
-# ACA renders dates as MM/DD/YYYY (Phase 1 capture), but municipality wording
-# varies. Attempt ordering (rules `_attempt_order`) and Phase 4 date math
-# consume ISO strings: a portal date left as MM/DD/YYYY silently reads as
-# "attempt order unknown" downstream, which a planner cannot distinguish from
-# an honestly unordered history. Parse or keep the raw text — never drop it.
+# aca renders dates as mm/dd/yyyy (phase 1 capture), but municipality wording varies
 _DATE_FORMATS = ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%m-%d-%Y", "%d-%b-%Y", "%b %d, %Y")
 _DATE_TOKEN_RE = re.compile(
     r"^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$|\d{4}-\d{2}-\d{2}$|^\d{1,2}-[A-Za-z]{3}-\d{4}$"
@@ -120,7 +85,7 @@ _DATE_TOKEN_RE = re.compile(
 
 
 def _normalize_date(value: Any) -> str | None:
-    """A portal date token as ISO, or None when it is not a parseable date."""
+    """a portal date token as iso, or none when it is not a parseable date"""
     text = str(value or "").strip()
     if not text:
         return None
@@ -133,14 +98,7 @@ def _normalize_date(value: Any) -> str | None:
 
 
 def _is_legend_type(value: str | None) -> bool:
-    """Whether a would-be inspection *type* is itself a lifecycle/outcome word.
-
-    Legend or summary lines (``Scheduled | Completed | Failed``) validate cell
-    by cell against the vocabularies, so without this guard a legend becomes a
-    fabricated row whose inspection type is "Completed" (H01). Real ACA type
-    names ("Rough Electrical", "Electrical Final") never normalize as either
-    dimension.
-    """
+    """whether a would-be inspection *type* is itself a lifecycle/outcome word"""
     from licet.phase3.extract import normalize_lifecycle, normalize_result
 
     text = (value or "").strip()
@@ -148,7 +106,7 @@ def _is_legend_type(value: str | None) -> bool:
 
 
 def _header_field(section: str, cell: str) -> str | None:
-    """Canonical extractor field for a rendered header cell, or None."""
+    """canonical extractor field for a rendered header cell, or none"""
     key = re.sub(r"[^a-z0-9 ]+", " ", (cell or "").lower())
     key = " ".join(key.split())
     return _HEADER_FIELDS.get(section, {}).get(key)
@@ -168,9 +126,7 @@ def _paid_from_cell(text: str) -> bool | None:
         return True
     if "unpaid" in lowered or "not paid" in lowered or "balance due" in lowered:
         return False
-    # ACA agency wordings that state non-payment without the word "unpaid"
-    # (observed fee-grid statuses). Anything still unrecognized stays None —
-    # an unknown payment state must never silently become "paid".
+    # aca agency wordings that state non-payment without the word "unpaid" (observed fee-grid statuses)
     if lowered in {"in collection", "past due", "delinquent", "overdue"}:
         return False
     return None
@@ -203,7 +159,7 @@ def _bool_from_cell(text: str) -> bool | None:
 
 
 def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
-    """Coerce header-keyed cells into the canonical extract row contract."""
+    """coerce header-keyed cells into the canonical extract row contract"""
     if section == "fees":
         if "paid" in row:
             paid = _paid_from_cell(str(row.pop("paid")))
@@ -215,9 +171,8 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
                 row["due"] = due
         if row.get("paid") is False and "due" not in row:
             row["due"] = True
-        # A due date is not a payment status: keep the money facts without
-        # letting a date-shaped cell fabricate one (H04). The raw amount text
-        # is already preserved by the extractor when `amount_text` is absent.
+        # a due date is not a payment status: keep the money facts without letting a date-shaped cell
+        # fabricate one (h04)
         row.pop("due_date", None)
     elif section == "documents":
         for field in ("required", "downloadable"):
@@ -226,10 +181,7 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
                 if value is not None:
                     row[field] = value
     elif section == "inspections":
-        # Some agencies render the outcome in the status column (or "Failed"
-        # as a bare result). The lifecycle vocabulary stays the authority for
-        # status; an outcome word found there is carried as the result too, so
-        # a live failure never silently disappears (H06).
+        # some agencies render the outcome in the status column (or "failed" as a bare result)
         from licet.phase3.extract import normalize_result
 
         status = str(row.get("status") or "").strip()
@@ -242,9 +194,8 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
             key = ("scheduled_date" if "schedul" in status_lower else
                    "completed_date" if ("complet" in status_lower or "done" in status_lower)
                    else "requested_date")
-            # Parseable -> ISO; anything else keeps the portal's raw token so
-            # downstream ordering honestly reports unknown instead of losing
-            # the evidence.
+            # parseable -> iso; anything else keeps the portal's raw token so downstream ordering honestly
+            # reports unknown instead of losing the evidence
             row.setdefault(key, normalized or str(date))
         for key in ("requested_date", "scheduled_date", "completed_date"):
             if key in row:
@@ -255,7 +206,7 @@ def _finalize_row(section: str, row: dict[str, Any]) -> dict[str, Any]:
 
 
 def section_for_page(data: Mapping[str, Any]) -> str | None:
-    """Which record section this read_page payload is showing, best-effort."""
+    """which record section this read_page payload is showing, best-effort"""
     text = (str(data.get("text") or "")).lower()
     for marker, section in _SECTION_BY_LABEL:
         if marker in text:
@@ -264,11 +215,7 @@ def section_for_page(data: Mapping[str, Any]) -> str | None:
 
 
 def record_key_from_page(data: Mapping[str, Any]) -> str | None:
-    """Stable record identity from the page URL, in ``PermitState.record_key`` form.
-
-    Same key format as ``RecordRef.as_key`` — the string both merge and the
-    foreign-record rejection compare. None when the page is not a record page.
-    """
+    """stable record identity from the page url, in ``permitstate.record_key`` form"""
     from licet.schema.extract import ref_from_page
 
     ref = ref_from_page(dict(data))
@@ -291,7 +238,7 @@ def _header_fields(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _address_fields(data: Mapping[str, Any]) -> dict[str, Any]:
-    """Work-location block: labeled lines only, never positional guessing."""
+    """work-location block: labeled lines only, never positional guessing"""
     text = str(data.get("text") or "")
     fields: dict[str, Any] = {}
     for line in text.splitlines():
@@ -309,15 +256,7 @@ def _address_fields(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _section_table_rows(text: str, section: str) -> list[dict[str, Any]]:
-    """Rows of a rendered section table, or [] when none is present.
-
-    Line-shaped path for text-mode reads: a ``Label | Value | Value`` header row
-    is recognized when its cells map onto the section's canonical fields (one
-    unmapped action/link column tolerated), then subsequent rows are zipped by
-    column position and coerced by ``_finalize_row``. Rows carry the same
-    contract the eval fixtures use, so section wording differences change which
-    labels are recognized, not whether the data survives extraction.
-    """
+    """rows of a rendered section table, or [] when none is present"""
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     rows: list[dict[str, Any]] = []
     fields: list[str | None] | None = None
@@ -341,11 +280,9 @@ def _section_table_rows(text: str, section: str) -> list[dict[str, Any]]:
         for field, value in zip(fields, cells):
             if field and value and field not in row:
                 row[field] = value
-        # A row whose every cell was just used as the header's canonical fields
-        # is a legend/summary line ("Scheduled | Completed | Failed"), not data:
-        # zipping it produces a fabricated row whose "type" is a lifecycle word.
-        # Accept it only when at least one value differs from its own column
-        # header word.
+        # a row whose every cell was just used as the header's canonical fields is a legend/summary line
+        # ("scheduled | completed | failed"), not data: zipping it produces a fabricated row whose "type"
+        # is a lifecycle word
         if row and all(
             cell.casefold() == (field or "").replace("_", " ").casefold()
             or cell.casefold() in {"n/a", "none", "-"}
@@ -361,7 +298,7 @@ def _section_table_rows(text: str, section: str) -> list[dict[str, Any]]:
 
 
 def overview_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The overview observation: header identity + labeled overview fields."""
+    """the overview observation: header identity + labeled overview fields"""
     fields = _header_fields(data)
     fields.update(_address_fields(data))
     fields = {key: value for key, value in fields.items() if value}
@@ -379,15 +316,7 @@ def overview_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _inspection_lines_as_rows(text: str) -> list[dict[str, str]]:
-    """Validated row candidates from inspection-shaped text lines.
-
-    ACA's citizen detail renders inspection rows as delimited text. A line
-    becomes a row only when its cells actually validate against the known
-    lifecycle/result vocabularies (from ``licet.phase3.extract``) — a line that
-    does not validate is never force-parsed. A line that begins with an
-    explicit ``Comment:`` marker attaches to the most recent row (the marker is
-    the linkage evidence; without it a comment stays unassigned).
-    """
+    """validated row candidates from inspection-shaped text lines"""
     from licet.phase3.extract import normalize_lifecycle, normalize_result
 
     rows: list[dict[str, str]] = []
@@ -414,9 +343,6 @@ def _inspection_lines_as_rows(text: str) -> list[dict[str, str]]:
             row["status"] = status
         if result:
             row["result"] = result
-        # A trailing date token becomes the status-appropriate ISO date, so a
-        # Scheduled row keeps its appointment date and a Completed row its
-        # completion date — the fields attempt ordering downstream depends on.
         leftover = [c for c in cells if c not in {type_cell, status, result}]
         if leftover and _DATE_TOKEN_RE.match(leftover[-1]):
             key = "scheduled_date" if status and "schedul" in status.lower() else (
@@ -429,14 +355,7 @@ def _inspection_lines_as_rows(text: str) -> list[dict[str, str]]:
 
 
 def inspections_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The Inspections section observation.
-
-    Structured table rows win when present; otherwise validated text-line rows
-    are used (see ``_inspection_lines_as_rows``). "No inspections" is only
-    claimed when the page says so explicitly, the section is not loading, AND
-    no rows were parsed — a declared-empty marker beside parsed rows means the
-    page shape is not understood, and the read degrades to partial.
-    """
+    """the inspections section observation"""
     text = str(data.get("text") or "")
     offered = [
         {"name": option["name"], "required": option["required"]}
@@ -448,12 +367,8 @@ def inspections_observation(data: Mapping[str, Any]) -> dict[str, Any]:
     if loading:
         coverage = "loading"
     elif rows and declares_empty:
-        # "You have not added any inspections." beside parsed rows: the page
-        # shape is not understood (or the marker is stale template text). The
-        # rows are kept — they validated against the vocabularies — but the
-        # coverage must not claim completeness while the page contradicts
-        # itself, or a planner reads a confident complete history from a
-        # self-disputing section (H05).
+        # "you have not added any inspections." beside parsed rows: the page shape is not understood (or
+        # the marker is stale template text)
         coverage = "partial"
     elif rows:
         coverage = "complete"
@@ -483,7 +398,7 @@ def inspections_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def fees_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The Fees/Payments section observation."""
+    """the fees/payments section observation"""
     text = str(data.get("text") or "")
     loading = list(data.get("loading") or [])
     rows = _section_table_rows(text, "fees")
@@ -503,11 +418,7 @@ def fees_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _money_lines_as_rows(text: str) -> list[dict[str, str]]:
-    """Fee-shaped lines: ``<description> | <money>`` or ``<desc>: <money>``.
-
-    ACA's Payments section often renders one line per fee; a money value makes
-    the row a fee line without claiming which column is which beyond that.
-    """
+    """fee-shaped lines: ``<description> | <money>`` or ``<desc>: <money>``"""
     rows: list[dict[str, str]] = []
     for line in str(text or "").splitlines():
         line = line.strip()
@@ -528,7 +439,7 @@ def _money_lines_as_rows(text: str) -> list[dict[str, str]]:
 
 
 def documents_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The Attachments section observation."""
+    """the attachments section observation"""
     text = str(data.get("text") or "")
     loading = list(data.get("loading") or [])
     rows = _section_table_rows(text, "documents")
@@ -546,12 +457,7 @@ def documents_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def conditions_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The Conditions observation, when the agency renders one at all.
-
-    Null Island's citizen detail renders no Conditions section; callers should
-    treat ``section_for_page`` saying so as CONDITIONS_NOT_FOUND coverage, not
-    as "no conditions exist".
-    """
+    """the conditions observation, when the agency renders one at all"""
     text = str(data.get("text") or "")
     loading = list(data.get("loading") or [])
     rows = _section_table_rows(text, "conditions")
@@ -569,7 +475,7 @@ def conditions_observation(data: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def history_observation(data: Mapping[str, Any]) -> dict[str, Any]:
-    """The workflow/history observation, when the agency renders one."""
+    """the workflow/history observation, when the agency renders one"""
     text = str(data.get("text") or "")
     loading = list(data.get("loading") or [])
     rows = _section_table_rows(text, "history")
@@ -597,25 +503,16 @@ OBSERVATION_BUILDERS = {
 
 
 def observation_for(section: str, data: Mapping[str, Any]) -> dict[str, Any]:
-    """Build the observation dict for one section from a read_page payload."""
+    """build the observation dict for one section from a read_page payload"""
     builder = OBSERVATION_BUILDERS.get(section)
     if builder is None:
         raise ValueError(f"no observation builder for section {section!r}")
     return builder(data)
 
 
-# Public alias: Phase 4's portal adapter reuses the *validated* inspection-row
-# parser (rows only exist when a line actually validates against the lifecycle
-# and result vocabularies), so a mutation adapter never re-derives rows from
-# raw text. It is the same function `inspections_observation` calls.
 parse_inspection_rows = _inspection_lines_as_rows
 
 
 def offered_type_facts(data: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """The scheduling wizard's type list as offer facts (never requirements).
-
-    ``required: true`` here is ACA's own ``(required)`` marker — the only
-    requirement signal the wizard carries. It is preserved verbatim for the
-    caller to weigh; this adapter asserts nothing beyond what ACA printed.
-    """
+    """the scheduling wizard's type list as offer facts (never requirements)"""
     return list(data.get("inspection_types") or [])

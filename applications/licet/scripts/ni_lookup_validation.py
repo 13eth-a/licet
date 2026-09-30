@@ -1,19 +1,4 @@
-"""Live Phase 2 acceptance: the lookup runner against the real sandbox.
-
-Drives `licet.lookup_runner.LookupRunner` — plan → search form → results →
-rank → open → verify — through the dispatcher, exactly as a planner run would.
-Read-only lookups only: nothing here schedules, pays, or submits.
-
-Probes (all against known ground truth in `licet/eval/records.py`):
-  record     exact record number  -> FOUND + identity verified + opened
-  address    address + type       -> FOUND on the one matching record
-  ambiguity  street-only request  -> AMBIGUOUS (never a guessed record)
-  mismatch   opened record is not the selected one -> no opened permit
-  typo       nonexistent number   -> NOT_FOUND after bounded retries
-
-Run: .venv/bin/python scripts/ni_lookup_validation.py --probe record
-     .venv/bin/python scripts/ni_lookup_validation.py --all
-"""
+"""live phase 2 acceptance: the lookup runner against the real sandbox"""
 
 from __future__ import annotations
 
@@ -30,10 +15,7 @@ from licet.lookup import LookupMetrics, LookupStatus, PermitLookupRequest, parse
 from licet.lookup_runner import LookupRunner
 from licet.logging.logger import RunLogger, new_run_id
 
-# Ground truth (licet/eval/records.py): our own records, all Submitted, all
-# owned by the public-user test account. Commerce Ave hosts one record per
-# number from 81 to 91 (odd), 77 Licet Eval Way hosts two Sign - Temporary.
-TARGET_RECORD = "000000014"  # Commercial Alteration, 81 Commerce Ave
+TARGET_RECORD = "000000014"
 TARGET_ADDRESS = "81 Commerce Ave"
 AMBIGUOUS_ADDRESS = "77 Licet Eval Way"
 NONEXISTENT_RECORD = "BLD26-99999"
@@ -41,7 +23,7 @@ RUNNER_KWARGS = {"max_attempts": 2, "max_pages": 3}
 
 
 async def _authenticate(client) -> None:
-    """The eval records are only visible to their owning account."""
+    """the eval records are only visible to their owning account"""
     auth = await client.authenticate()
     if not auth.ok or not auth.data.get("authenticated"):
         raise RuntimeError("authentication failed; records are account-scoped")
@@ -69,7 +51,7 @@ def _expect_found(runner: LookupRunner, result, record: str) -> bool:
 
 
 async def probe_record(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """Exact record number: narrowest search, must open + verify."""
+    """exact record number: narrowest search, must open + verify"""
     request = PermitLookupRequest(record_number=TARGET_RECORD)
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(f"Find permit {TARGET_RECORD}", request, state)
@@ -81,7 +63,7 @@ async def probe_record(dispatcher, state, metrics: LookupMetrics) -> bool:
 
 
 async def probe_address(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """Address + type: the Phase 2 flagship shape, resolved to one record."""
+    """address + type: the phase 2 flagship shape, resolved to one record"""
     request = parse_lookup_request(f"commercial alteration at {TARGET_ADDRESS}")
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(
@@ -91,8 +73,7 @@ async def probe_address(dispatcher, state, metrics: LookupMetrics) -> bool:
 
 
 async def probe_ambiguity(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """Two Sign - Temporary records share one address; nothing distinguishes
-    them, so the only correct outcome is AMBIGUOUS with both candidates."""
+    """two sign - temporary records share one address; nothing distinguishes them, so the only correct outcome is ambiguous with both candidates"""
     request = parse_lookup_request(f"permits at {AMBIGUOUS_ADDRESS}")
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(
@@ -109,14 +90,7 @@ async def probe_ambiguity(dispatcher, state, metrics: LookupMetrics) -> bool:
 
 
 async def probe_mismatch(dispatcher, state, metrics: LookupMetrics) -> bool:
-    """Ask for one record, force-open a different one via its own result row:
-    identity verification must refuse to bless the wrong record.
-
-    Concretely: request a record that does not exist, then check the runner
-    reports NOT_FOUND (never opening some near-match) — the mismatch path is
-    covered deterministically in tests/test_lookup_runner.py; here we verify
-    its live precondition, that a near-miss number yields zero candidates.
-    """
+    """ask for one record, force-open a different one via its own result row: identity verification must refuse to bless the wrong record"""
     request = PermitLookupRequest(record_number=NONEXISTENT_RECORD)
     runner = LookupRunner(dispatcher, metrics=metrics, **RUNNER_KWARGS)
     result = await runner.run(f"Find permit {NONEXISTENT_RECORD}", request, state)
@@ -154,9 +128,8 @@ async def main(probes: list[str]) -> int:
         client = await session.client()
         await _authenticate(client)
         dispatcher = ToolDispatcher(client, logger=logger)
-        # One accumulator shared by every probe, so the report carries the
-        # aggregate retrieval KPIs (wrong-record rate must be 0) alongside the
-        # per-probe verdicts.
+        # one accumulator shared by every probe, so the report carries the aggregate retrieval kpis
+        # (wrong-record rate must be 0) alongside the per-probe verdicts
         lookup_metrics = LookupMetrics()
         for name in probes:
             state = AgentState(goal=f"Phase 2 lookup probe: {name}")

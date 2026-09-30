@@ -1,10 +1,4 @@
-"""Deterministic Phase 2 permit discovery primitives.
-
-This module deliberately stops before workflow reasoning. It converts a user
-lookup into normalized search inputs, parses candidate rows, ranks them, and
-refuses to select an ambiguous record. Browser execution remains in the browser
-layer; these functions are pure and can be tested against captured ACA markup.
-"""
+"""deterministic phase 2 permit discovery primitives"""
 
 from __future__ import annotations
 
@@ -52,12 +46,6 @@ class LookupMethod(str, Enum):
     APPLICANT = "applicant_name"
 
 
-# --- confidence model -------------------------------------------------------
-# Ranking weights order candidates without overriding explicit constraints.
-# Record numbers establish identity; parcels may contain many records. The values are set so a full street address (number + name) reaches
-# 0.80 — above the default 0.75 floor — while a lone street-name hit stays at
-# 0.40 (LOW). First-pass values: calibrate from live retrieval metrics
-# (see docs/known_limitations.md).
 WEIGHT_RECORD_NUMBER = 1.0
 WEIGHT_PARCEL = 0.8
 WEIGHT_STREET_NUMBER = 0.4
@@ -68,20 +56,12 @@ WEIGHT_APPLICANT = 0.15
 
 DEFAULT_MIN_CONFIDENCE = 0.75
 DEFAULT_AMBIGUITY_MARGIN = 0.10
-# A search returning more candidates than this was too broad to rank reliably;
-# it becomes TOO_MANY_RESULTS unless identity alone already matched.
 DEFAULT_MAX_CANDIDATES = 50
 
-# Reasons that identify one record by themselves (`resolve_lookup` treats them as
-# decisive, and `confidence_band` as HIGH).
 STRONG_IDENTITY_REASONS = frozenset({"exact record number"})
 
-# Applicant/contact is not a property identity: a name is not unique and the
-# portal may return several records for one person. It can still resolve a
-# lookup, but only as the *sole* matching candidate and never above MEDIUM —
-# an ambiguity is always preferred to a wrong record. This is the calibrated
-# confidence reported for a unique applicant match, deliberately above the
-# floor so it can be selected at all, and deliberately below identity.
+# applicant/contact is not a property identity: a name is not unique and the portal may return several
+# records for one person
 APPLICANT_UNIQUE_CONFIDENCE = 0.80
 
 
@@ -97,13 +77,7 @@ def confidence_band(
     *,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
 ) -> ConfidenceBand:
-    """Map a score plus its evidence onto the HIGH/MEDIUM/LOW vocabulary.
-
-    HIGH is reserved for identity evidence (an exact record number),
-    matching the Phase 2 examples: an exact address resolved with a permit type
-    scores 1.0 but is still MEDIUM, because it is contextual rather than
-    identity. Anything under the floor is LOW.
-    """
+    """map a score plus its evidence onto the high/medium/low vocabulary"""
     if any(reason in STRONG_IDENTITY_REASONS for reason in reasons):
         return ConfidenceBand.HIGH
     return ConfidenceBand.MEDIUM if score >= min_confidence else ConfidenceBand.LOW
@@ -199,7 +173,7 @@ class LookupResult(BaseModel):
 
     @property
     def band(self) -> ConfidenceBand:
-        """HIGH/MEDIUM/LOW for the evidence behind this result."""
+        """high/medium/low for the evidence behind this result"""
         reasons = self.selected.match_reasons if self.selected else ()
         return confidence_band(self.confidence, reasons)
 
@@ -226,15 +200,12 @@ class SearchAttempt:
     method: LookupMethod
     fields: dict[str, str]
     reason: str
-    # Set on the retry built by `empty_result_retry`: the same query with the
-    # search date window widened, because an agency pre-filled window (NI:
-    # 09/18/2024→09/18/2026) can hide records that a wider search finds.
+    # set on the retry built by `empty_result_retry`: the same query with the search date window widened,
+    # because an agency pre-filled window (ni: 09/18/2024→09/18/2026) can hide records that a wider search
+    # finds
     widen_dates: bool = False
 
 
-# The search-mode dropdown value each method needs. `None` means the default
-# form already shows the required field (the permit-number input is on NI's
-# initial search form — live-verified), so no mode postback is issued.
 _SEARCH_MODE_BY_METHOD: dict[LookupMethod, str | None] = {
     LookupMethod.RECORD_NUMBER: None,
     LookupMethod.FULL_ADDRESS: "address",
@@ -249,20 +220,7 @@ def _type_action(target: str, text: str) -> dict[str, Any]:
 
 
 def search_actions(attempt: SearchAttempt) -> list[dict[str, Any]]:
-    """Translate a planned attempt into dispatcher calls, without browser I/O.
-
-    Two contract points the live portal forced:
-
-    - The search-mode dropdown is an auto-postback that swaps the whole form.
-      Its option labels are agency-configured, so the emitted `value` is a
-      *logical mode key* ("address"/"parcel"/"applicant"); the executor must
-      substitute the observed option label (`accela.search_mode_option`) from a
-      form read AFTER the postback, and must not cache field ids across it.
-    - Address fields are addressed as comma-grouped id-suffix selectors, because
-      NI's address mode uses the `txtAPO_Search_by_Address_*` family and drops
-      the `txtGS*` controls entirely (live-verified); other agencies keep GS.
-      One selector matches whichever family the form actually rendered.
-    """
+    """translate a planned attempt into dispatcher calls, without browser i/o"""
     actions: list[dict[str, Any]] = []
     mode = _SEARCH_MODE_BY_METHOD[attempt.method]
     if mode:
@@ -307,15 +265,12 @@ _ORDINAL_RE = re.compile(r"\b(\d+)(?:st|nd|rd|th)\b", re.I)
 
 
 def street_name_search_form_value(value: str | None) -> str:
-    """ACA's street-name field wants digits only for numbered streets
-    (`72nd` → `72`, per the recorded UI map). Normalized text in, form value
-    out; a name with no ordinal passes through unchanged."""
+    """aca's street-name field wants digits only for numbered streets (`72nd` → `72`, per the recorded ui map)"""
     return _ORDINAL_RE.sub(r"\1", normalize_street_name(value))
 
 
 def empty_result_retry(attempt: SearchAttempt) -> SearchAttempt:
-    """The bounded reformulation for a search that executed and returned zero
-    rows: same fields, but widen the pre-filled date window."""
+    """the bounded reformulation for a search that executed and returned zero rows: same fields, but widen the pre-filled date window"""
     return SearchAttempt(attempt.method, dict(attempt.fields), "widen pre-filled date window", widen_dates=True)
 
 
@@ -335,7 +290,7 @@ class LookupMetrics:
 
     @property
     def exact_match_accuracy(self) -> float:
-        """Share of successes that came from an exact identity match."""
+        """share of successes that came from an exact identity match"""
         return self.exact_matches / self.successful if self.successful else 0.0
 
     @property
@@ -344,7 +299,7 @@ class LookupMetrics:
 
     @property
     def wrong_record_rate(self) -> float:
-        """The number that must be 0: selected records that were not the target."""
+        """the number that must be 0: selected records that were not the target"""
         return self.wrong_records / self.attempts if self.attempts else 0.0
 
     @property
@@ -356,11 +311,7 @@ class LookupMetrics:
         return self.browser_actions / self.attempts if self.attempts else 0.0
 
     def merge(self, other: "LookupMetrics") -> "LookupMetrics":
-        """Fold another lookup's counters into this one, returning self.
-
-        Raw counters are summed rather than per-run rates averaged: averaging
-        rates would let a one-attempt lookup outweigh a twenty-attempt one.
-        """
+        """fold another lookup's counters into this one, returning self"""
         self.attempts += other.attempts
         self.successful += other.successful
         self.exact_matches += other.exact_matches
@@ -372,14 +323,14 @@ class LookupMetrics:
 
     @classmethod
     def combine(cls, metrics: Iterable["LookupMetrics"]) -> "LookupMetrics":
-        """One aggregate over any number of per-lookup metrics."""
+        """one aggregate over any number of per-lookup metrics"""
         total = cls()
         for item in metrics:
             total.merge(item)
         return total
 
     def as_dict(self) -> dict[str, Any]:
-        """Counters plus derived KPIs, JSON-serializable for run logs."""
+        """counters plus derived kpis, json-serializable for run logs"""
         return {
             "attempts": self.attempts,
             "successful": self.successful,
@@ -449,12 +400,7 @@ def compact(value: str | None) -> str:
 
 
 def normalize_street_name(value: str | None) -> str:
-    """Case, whitespace, directionals, suffixes and numeric ordinals.
-
-    Ordinals are stripped here so a query for `72nd Avenue` and a portal row
-    rendering `72 Ave` normalize identically — and so the search form's
-    digit-only convention is this same normalization, not a second one.
-    """
+    """case, whitespace, directionals, suffixes and numeric ordinals"""
     words = normalize_whitespace(value).lower().replace(",", "").split()
     normalized = [
         _ORDINAL_RE.sub(r"\1", _DIRECTIONALS.get(word, _STREET_ABBREVIATIONS.get(word, word)))
@@ -499,7 +445,6 @@ def normalize_permit_type(value: str | None) -> str:
     return _PERMIT_TYPE_CANONICAL.get(text.casefold(), text)
 
 
-
 @dataclass(frozen=True)
 class AddressParts:
     street_number: str | None = None
@@ -516,7 +461,7 @@ _STREET_SUFFIXES = frozenset(_STREET_ABBREVIATIONS.values())
 
 
 def address_parts(value: str | None) -> AddressParts:
-    """Parse components; a unit/ZIP can never become a house-number match."""
+    """parse components; a unit/zip can never become a house-number match"""
     text = normalize_whitespace(value)
     if not text:
         return AddressParts()
@@ -548,7 +493,7 @@ def address_parts(value: str | None) -> AddressParts:
 
 
 def strip_unit_suffix(value: str | None) -> str:
-    """Compatibility helper for form values only; never discard semantic units."""
+    """compatibility helper for form values only; never discard semantic units"""
     return address_parts(value).street_name or ""
 
 
@@ -560,8 +505,6 @@ def normalize_request(request: PermitLookupRequest) -> PermitLookupRequest:
     return PermitLookupRequest(
         record_number=normalize_record_number(request.record_number) or None,
         street_number=normalize_whitespace(request.street_number).lower() or None,
-        # A street name can begin with a number (72nd Ave); don't move that
-        # number to the house field when the caller already separated fields.
         street_name=normalize_street_name(_UNIT_RE.sub("", request.street_name or "")) or None,
         zip_code=normalize_zip(request.zip_code) or None,
         parcel_number=normalize_parcel(request.parcel_number) or None,
@@ -574,13 +517,7 @@ def normalize_request(request: PermitLookupRequest) -> PermitLookupRequest:
     )
 
 
-# Where an extracted address ends. Besides the next lookup keyword and the end
-# of the string, an address stops at the start of trailing commentary: the
-# em-dash/colon clause and the parenthetical in the DISCOVERY-005 wordings
-# ("123 Main Street — multiple records there.", "123 Main Street (there are
-# two).") describe the result set, not the street, so they must not enter the
-# street field. The character class in each address pattern cannot cross an
-# em dash, so the lookahead is what actually ends these matches.
+# where an extracted address ends
 _ADDRESS_END = (r"(?=\s+(?:zip|parcel|permit|record|for|applicant|contact|"
                 r"and\s+(?:at|on|address))\b|\s*[—–:;]|\s*\(|$)")
 
@@ -591,12 +528,7 @@ _APPLICANT_RE = re.compile(r"\b(?:applicant|contact)\s*[:=]?\s+(.+?)(?=\s+(?:at|
 
 
 def parse_lookup_request(text: str) -> PermitLookupRequest:
-    """Extract non-overlapping typed spans, rejecting unsupported composition.
-
-    This deterministic parser deliberately asks for clarification rather than
-    inventing the meaning of exclusions, alternatives, or relative references.
-    Offsets refer to the original raw text, not a whitespace-normalized copy.
-    """
+    """extract non-overlapping typed spans, rejecting unsupported composition"""
     raw = text
     if re.search(r"\b(?:not|except|excluding|instead|or|rather than)\b", raw, re.I):
         raise ValueError("invalid_lookup_input: clarify exclusions or alternatives")
@@ -646,11 +578,9 @@ def parse_lookup_request(text: str) -> PermitLookupRequest:
         + _ADDRESS_END, re.I)
     addresses = list(address_pattern.finditer(raw))
     if not addresses:
-        # "Look up 123 Main Street", "Find 123 Main Avenue" (DISCOVERY-002/004
-        # wording family): no at/on/for/address keyword introduces the address,
-        # so a bare lookup verb followed by a house-number span is the address.
-        # Record numbers were already consumed above and their spans are
-        # occupied, so "Find BLD-1" still resolves by record, never by street.
+        # "look up 123 main street", "find 123 main avenue" (discovery-002/004 wording family): no
+        # at/on/for/address keyword introduces the address, so a bare lookup verb followed by a
+        # house-number span is the address
         addresses = list(re.finditer(r"\b(?:look\s*up|find|locate|search(?:\s+for)?)\s+(\d+[A-Za-z]?(?:-\d+)?(?:\s+\d+/\d+)?\s+[A-Za-z][A-Za-z0-9 .,'#/-]+?)" + _ADDRESS_END, raw, re.I))
     if not addresses:
         addresses = list(re.finditer(r"\b(?:on|at)\s+([A-Za-z][A-Za-z0-9 .,'#/-]+?)" + _ADDRESS_END, raw, re.I))
@@ -659,9 +589,8 @@ def parse_lookup_request(text: str) -> PermitLookupRequest:
     if addresses:
         match = addresses[0]
         if free(*match.span(1)):
-            # Sentence punctuation after a terminal address must not enter the
-            # street field: "123 Main Street?" normalized to "main street?" and
-            # then matched nothing (PROMPT-DISCOVERY-002-P029).
+            # sentence punctuation after a terminal address must not enter the street field: "123 main
+            # street?" normalized to "main street?" and then matched nothing (prompt-discovery-002-p029)
             parts = address_parts(match.group(1).rstrip(" .?!"))
             for field in ("street_number", "street_name", "unit", "city", "state", "zip_code"):
                 value = getattr(parts, field)
@@ -670,7 +599,7 @@ def parse_lookup_request(text: str) -> PermitLookupRequest:
     if not any(values.values()):
         raise ValueError("invalid_lookup_input: no supported lookup fields found")
     request = normalize_request(PermitLookupRequest(**values, raw_text=raw, source_spans=spans))
-    choose_search_strategy(request)  # ZIP/type alone is not executable in this adapter.
+    choose_search_strategy(request)  # zip/type alone is not executable in this adapter
     return request
 
 
@@ -690,7 +619,7 @@ def choose_search_strategy(request: PermitLookupRequest) -> LookupMethod:
 
 
 def build_search_plan(request: PermitLookupRequest, max_attempts: int = 3) -> list[SearchAttempt]:
-    """Build a narrow-to-broad bounded plan; never broaden indefinitely."""
+    """build a narrow-to-broad bounded plan; never broaden indefinitely"""
     request = normalize_request(request)
     method = choose_search_strategy(request)
     attempts: list[SearchAttempt] = []
@@ -706,11 +635,7 @@ def build_search_plan(request: PermitLookupRequest, max_attempts: int = 3) -> li
         if request.permit_type:
             full["permit_type"] = request.permit_type
         attempts.append(SearchAttempt(method, full, "full address"))
-        # Fewer fields before fewer words. An over-filled form is a classic cause
-        # of zero rows, so drop the optional constraints once before broadening
-        # to a street-only search (spec fallback: 123+Main+ZIP -> 123+Main ->
-        # Main). Zero-result date-widening is added by the runner per attempt,
-        # and NI's pre-filled window (live, 2026-09-18) is why that exists.
+        # fewer fields before fewer words
         if full != base:
             attempts.append(SearchAttempt(method, dict(base), "drop optional constraints"))
         attempts.append(SearchAttempt(LookupMethod.PARTIAL_ADDRESS, {"street_name": request.street_name or ""}, "bounded street fallback"))
@@ -727,12 +652,7 @@ def _request_summary(request: PermitLookupRequest) -> str:
 
 
 def _contains_token_sequence(haystack: str, needle: str) -> bool:
-    """Contiguous whole-token containment.
-
-    `"main st"` is contained in `"123 main st apt 4"` but NOT in `"domain st"` —
-    plain substring matching selected the wrong street there, which is exactly
-    the wrong-record class Phase 2 must never produce.
-    """
+    """contiguous whole-token containment"""
     hay = normalize_street_name(haystack).split()
     need = normalize_street_name(needle).split()
     if not need:
@@ -741,22 +661,18 @@ def _contains_token_sequence(haystack: str, needle: str) -> bool:
 
 
 def _token_subset(small: str, large: str) -> bool:
-    """Every token of `small` appears in `large` (order-independent)."""
+    """every token of `small` appears in `large` (order-independent)"""
     small_tokens = normalize_person(small).replace(",", " ").split()
     large_tokens = set(normalize_person(large).replace(",", " ").split())
     return bool(small_tokens) and set(small_tokens) <= large_tokens
 
 
 def _type_matches(expected: str | None, actual: str | None) -> bool:
-    """Permit-type equality tolerant of the portal's longer labels.
-
-    Only a trailing generic "Permit" is optional. Shorter substantive labels
-    remain distinct, including "Commercial" and "Commercial Alteration".
-    """
+    """permit-type equality tolerant of the portal's longer labels"""
     if not expected or not actual:
         return False
-    # A trailing generic word is an explicit harmless label variant; arbitrary
-    # token subsets ("Commercial" vs "Commercial Alteration") are not equality.
+    # a trailing generic word is an explicit harmless label variant; arbitrary token subsets ("commercial"
+    # vs "commercial alteration") are not equality
     canonical = lambda value: re.sub(r"\s+permits?$", "", normalize_person(value))
     return canonical(expected) == canonical(actual)
 
@@ -767,19 +683,13 @@ def _applicant_matches(expected: str | None, actual: str | None) -> bool:
     expected_text, actual_text = normalize_person(expected), normalize_person(actual)
     if expected_text == actual_text:
         return True
-    # "Doe, Jane" == "Jane Doe"
     return sorted(expected_text.replace(",", " ").split()) == sorted(
         actual_text.replace(",", " ").split()
     )
 
 
 def _applicant_only_request(request: PermitLookupRequest) -> bool:
-    """True when the request has no identity/address key to fall back on.
-
-    An applicant name alongside an address or record number is corroboration in
-    the normal ranking path; on its own it needs the stricter unique-match rule.
-    `permit_type` is allowed to accompany it for disambiguation.
-    """
+    """true when the request has no identity/address key to fall back on"""
     return bool(request.applicant_name) and not any(
         (
             request.record_number,
@@ -792,7 +702,7 @@ def _applicant_only_request(request: PermitLookupRequest) -> bool:
 
 
 def _zip_codes_in(address: str | None) -> set[str]:
-    """ZIP codes rendered as digit-boundary tokens in an address."""
+    """zip codes rendered as digit-boundary tokens in an address"""
     return set(re.findall(r"(?<!\d)(\d{5})(?:-\d{4})?(?!\d)", address or ""))
 
 
@@ -809,8 +719,7 @@ def _dedupe(results: Iterable[SearchResult]) -> list[SearchResult]:
 
 def record_numbers_match(expected: str, actual: str) -> bool:
     expected, actual = normalize_record_number(expected), normalize_record_number(actual)
-    # Preserve boundaries when both sides provide them. A compact portal label
-    # can match its formatted equivalent, but BLD-1-23 is not BLD-12-3.
+    # preserve boundaries when both sides provide them
     if "-" in expected and "-" in actual:
         return expected == actual
     return bool(expected and actual) and compact(expected) == compact(actual)
@@ -820,7 +729,6 @@ def _street_matches(expected: str, actual: str) -> bool:
     need, got = normalize_street_name(expected).split(), normalize_street_name(actual).split()
     if need == got:
         return True
-    # Omitted suffixes permit broader searches; specified suffixes are binding.
     return bool(need and got) and not any(w in _STREET_SUFFIXES for w in need) and got[:len(need)] == need
 
 
@@ -851,13 +759,7 @@ def match_constraints(request: PermitLookupRequest, row: SearchResult) -> dict[s
 
 
 def rank_results(request: PermitLookupRequest, results: Iterable[SearchResult]) -> list[SearchResult]:
-    """Score candidates using identity first, then contextual evidence.
-
-    Weights order candidates; every requested constraint is checked separately.
-    A parcel can contain several records and never establishes unique identity.
-    Only
-    `resolve_lookup` decides whether the best score is enough to select.
-    """
+    """score candidates using identity first, then contextual evidence"""
     request = normalize_request(request)
     ranked: list[SearchResult] = []
     for original in _dedupe(results):
@@ -889,8 +791,8 @@ def rank_results(request: PermitLookupRequest, results: Iterable[SearchResult]) 
         result.score = min(score, 1.0)
         result.match_reasons = reasons
         ranked.append(result)
-    # Deterministic: ties order by the sort key, so the same query yields the
-    # same ranking on every run (Phase 2 repeated-run requirement).
+    # deterministic: ties order by the sort key, so the same query yields the same ranking on every run
+    # (phase 2 repeated-run requirement)
     return sorted(
         ranked,
         key=lambda item: (-item.score, item.record_number, item.record_type or "", item.address or ""),
@@ -905,11 +807,7 @@ def resolve_lookup(
     method: LookupMethod | None = None, attempts: int = 1,
     complete: bool = True,
 ) -> LookupResult:
-    """Return a provisional CANDIDATE only after all constraints are supported.
-
-    Scores order evidence; they cannot compensate for contradictions or missing
-    fields on competing rows. FOUND belongs exclusively to detail verification.
-    """
+    """return a provisional candidate only after all constraints are supported"""
     if not 0 <= min_confidence <= 1 or ambiguity_margin < 0 or max_candidates < 1:
         raise ValueError("invalid lookup thresholds")
     request = normalize_request(request)
@@ -946,8 +844,7 @@ def verify_record_identity(expected: str, observed: str, *, expected_address: st
     return True, None, "record identity verified"
 
 
-# Lightweight captured-HTML table parsing. It preserves empty cells so ACA's
-# empty Project Name column cannot shift address/status into the wrong fields.
+# lightweight captured-html table parsing
 _TAG_RE = re.compile(r"<[^>]+>")
 _ROW_RE = re.compile(r"<tr\b([^>]*)>(.*?)</tr>", re.I | re.S)
 _CELL_RE = re.compile(r"<t[dh]\b([^>]*)>(.*?)</t[dh]>", re.I | re.S)
@@ -960,7 +857,7 @@ def _clean(fragment: str) -> str:
 
 
 class _ResultTables(HTMLParser):
-    """Keep row/cell boundaries and links scoped to their owning table."""
+    """keep row/cell boundaries and links scoped to their owning table"""
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stack = []
@@ -1001,7 +898,7 @@ class _ResultTables(HTMLParser):
 
 
 def parse_search_results(source: str, *, max_results: int = 200) -> tuple[list[SearchResult], dict[str, Any]]:
-    """Read only tables with record headers; missing coverage stays unknown."""
+    """read only tables with record headers; missing coverage stays unknown"""
     parser = _ResultTables()
     parser.feed(source or "")
     parsed = []
@@ -1019,7 +916,6 @@ def parse_search_results(source: str, *, max_results: int = 200) -> tuple[list[S
             if headers is None:
                 continue
             if len(values) != len(headers):
-                # A pager has no record link; a short record row is corrupt.
                 if any(c["href"] and ("capdetail" in c["href"].lower()) for c in cells):
                     malformed = True
                 continue
@@ -1060,16 +956,7 @@ def lookup_not_found(result: LookupResult) -> bool:
 
 
 def classify_results_page(text: str) -> str:
-    """What a post-search page is showing, from its visible text alone.
-
-    Three verdicts the executor must distinguish (and that a planner reading raw
-    text conflates):
-    - ``zero_results``: the search executed and ACA says so explicitly.
-    - ``results``: a result grid rendered (its header labels are visible text).
-    - ``parse_failed``: neither — the search may not have executed at all
-      (validation error, error page), so this must never be reported as "no
-      records exist".
-    """
+    """what a post-search page is showing, from its visible text alone"""
     if accela.looks_like_zero_results(text or ""):
         return "zero_results"
     if accela.has_results_table(text or ""):
@@ -1078,20 +965,12 @@ def classify_results_page(text: str) -> str:
 
 
 def pagination_actions() -> list[dict[str, Any]]:
-    """Dispatcher calls that advance the result grid one page.
-
-    ACA paginates with postback "Next" links — the URL never changes — so the
-    caller must verify the page actually turned by re-parsing the fresh
-    `read_page` (a new page number or different first row), never by trusting
-    the click's success flag.
-    """
+    """dispatcher calls that advance the result grid one page"""
     return [{"name": "click", "args": {"target": accela.PAGINATION_NEXT_TEXT, "by": "text", "intent": "search_records"}}]
 
 
 def should_scan_next_page(metadata: dict[str, Any], pages_scanned: int, max_pages: int = 5) -> bool:
-    """Bounded pagination: scan on only when the grid declares more pages and
-    the scan budget allows. `pages_scanned` counts pages already parsed, so a
-    budget of N can never yield more than N page reads."""
+    """bounded pagination: scan on only when the grid declares more pages and the scan budget allows"""
     if pages_scanned >= max_pages:
         return False
     return bool(metadata.get("has_next"))

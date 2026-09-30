@@ -1,15 +1,4 @@
-"""Enumerate record types offered by Null Island's APPLY flow (read-only).
-
-The back-office inventory (ni_record_inventory.py) shows which types HAVE
-records. The apply flow (citizen portal CapWiz) shows which types are
-CONFIGURED for application — types can exist with 0 records. This script
-GETs the CapWiz type-chooser for each module and dumps every <select>'s
-options so we can match Licet's 7 target categories against what a citizen
-can actually apply for.
-
-Run:  .venv/bin/python scripts/ni_apply_types.py
-Read-only: no application is started or submitted; type-chooser pages only.
-"""
+"""enumerate record types offered by null island's apply flow (read-only)"""
 
 from __future__ import annotations
 
@@ -41,7 +30,7 @@ def stamp_now() -> str:
 
 
 def parse_selects(html: str) -> dict[str, list[str]]:
-    """Extract every <select> with its non-empty option labels."""
+    """extract every <select> with its non-empty option labels"""
     selects: dict[str, list[str]] = {}
     for m in re.finditer(r"<select[^>]*>", html):
         tag = m.group(0)
@@ -111,7 +100,6 @@ async def main() -> int:
             else:
                 selects = parse_selects(html)
                 entry["selects"] = selects
-                # compact type list for eyeballing
                 types: set[str] = set()
                 for labels in selects.values():
                     for lab in labels:
@@ -128,7 +116,6 @@ async def main() -> int:
                 )
             save(data, stamp)  # checkpoint after each module
 
-        # summary
         out("\n=== summary ===")
         for module, entry in data["modules"].items():
             if "selects" in entry:

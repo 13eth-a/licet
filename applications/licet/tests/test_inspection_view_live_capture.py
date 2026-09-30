@@ -1,4 +1,4 @@
-"""P13's captured summary/inspection views through real dispatch and policy."""
+"""p13's captured summary/inspection views through real dispatch and policy"""
 import asyncio
 import json
 from pathlib import Path

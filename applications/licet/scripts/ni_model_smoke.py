@@ -1,23 +1,4 @@
-"""Live smoke test of the model boundary (`licet/agent/model.py`).
-
-Phase 1's first prerequisite: the provider swap is only real if a call actually
-succeeds, a tool call actually decodes, and the failure paths behave. This script
-makes real API calls and reports what happened. It touches no browser and no
-Accela record — nothing is submitted, scheduled, paid or cancelled.
-
-Cases:
-
-1. the key resolves at all (reported by length only, never by value)
-2. a plain text reply comes back with usage and a model id
-3. a tool call round-trips: decoded args, raw blob kept, call id present, and the
-   tool name is one the catalogue actually offers
-4. the `intent` enum is usable for a record link — the value the fail-closed
-   resolver needs before it will click a search result
-5. the fallback model serves the reply when the primary is unavailable
-6. a bad key raises `ModelError` instead of returning an empty plan
-
-Run:  .venv/bin/python scripts/ni_model_smoke.py
-"""
+"""live smoke test of the model boundary (`licet/agent/model.py`)"""
 
 from __future__ import annotations
 
@@ -76,9 +57,6 @@ def account(reply: Any, elapsed: float) -> str:
         f"model={reply.model or '?'}{served} {elapsed:.1f}s "
         f"in={reply.input_tokens} out={reply.output_tokens}"
     )
-
-
-# --- cases -------------------------------------------------------------------
 
 
 def case_key_present() -> tuple[bool, str]:
@@ -161,7 +139,7 @@ async def case_tool_call(client: OpenAIModel) -> bool:
 
 
 async def case_intent_enum(client: OpenAIModel) -> bool:
-    """A record link is blocked unless the call carries a classified `intent`."""
+    """a record link is blocked unless the call carries a classified `intent`"""
     started = time.monotonic()
     reply = await client.reply(
         system=SYSTEM + " The search result links are grid anchors, so name the record.",
@@ -202,7 +180,7 @@ async def case_intent_enum(client: OpenAIModel) -> bool:
 
 
 async def case_fallback(config: Any) -> bool:
-    """A bogus primary slug must fall through to the configured fallback."""
+    """a bogus primary slug must fall through to the configured fallback"""
     client = OpenAIModel(
         "gpt-5.6-sol-nonexistent-model",
         api_key=config.openai_api_key,
@@ -231,7 +209,7 @@ async def case_fallback(config: Any) -> bool:
 
 
 async def case_bad_key() -> bool:
-    """Authentication failure must surface as a ModelError, never an empty plan."""
+    """authentication failure must surface as a modelerror, never an empty plan"""
     client = OpenAIModel("gpt-5.4-mini", api_key="sk-invalid-0000000000000000", max_retries=0)
     try:
         reply = await client.reply(system="s", messages=[{"role": "user", "content": "hi"}])
@@ -244,9 +222,6 @@ async def case_bad_key() -> bool:
         f"no error raised; text={reply.text[:40]!r} tool_calls={len(reply.tool_calls)}",
     )
     return False
-
-
-# --- main --------------------------------------------------------------------
 
 
 async def main() -> int:

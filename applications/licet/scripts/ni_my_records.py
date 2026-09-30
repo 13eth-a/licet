@@ -1,17 +1,4 @@
-"""Read the logged-in citizen portal's My Records grid (ground truth capture).
-
-Verifies what `scripts/ni_apply_batch.py` actually issued: the apply flow's
-confirmation page prints "Your Record Number is <ID>", but altID formats vary
-per agency config (Sign - Temporary -> BLD26-00467, Commercial Alteration ->
-000000014), and a mis-parsed confirmation is indistinguishable from a real
-record. My Records is the authoritative list of records owned by the
-public-user account, so this is the read-back verification step.
-
-Login -> MyRecordsCap.aspx -> dump HTML/screenshot -> parse the grid rows
-(and any capID1/2/3 deep links per row) -> write JSON keyed by record number.
-
-Run:  .venv/bin/python scripts/ni_my_records.py
-"""
+"""read the logged-in citizen portal's my records grid (ground truth capture)"""
 from __future__ import annotations
 
 import asyncio
@@ -34,10 +21,9 @@ USER = os.environ.get("ACCELA_TEST_USERNAME", "").strip()
 PWD = os.environ.get("ACCELA_TEST_PASSWORD", "").strip()
 MY_RECORDS = f"{CITIZEN}/Cap/MyRecordsCap.aspx?TabName=Home"
 
-# records the batch flow claims to have issued (key -> record number)
 CLAIMED = {
     "sign_temp": "BLD26-00467",
-    "sign_temp_dupe": "BLD26-00466",  # earlier submit run; kept as a spare slot
+    "sign_temp_dupe": "BLD26-00466",
     "comm_alt": "000000014",
     "res_add": "BLD26-00468",
     "comm_elec": "BLD26-00469",
@@ -48,7 +34,6 @@ CLAIMED = {
 DETAILS = "--details" in sys.argv
 CAPID_RE = re.compile(
     r"capID1=([^&\"']+).*?capID2=([^&\"']+).*?capID3=([^&\"']+)", re.I | re.S)
-# record-detail sections worth pinning as eval ground truth
 SECTION_WORDS = ("Record Info", "Processing Status", "Inspection", "Fees",
                  "Attachments", "Related Records", "Payment", "Conditions",
                  "Parcels", "Contacts", "Licensed Professional", "Reviews",
@@ -56,13 +41,8 @@ SECTION_WORDS = ("Record Info", "Processing Status", "Inspection", "Fees",
 ROW_SPLIT_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.I | re.S)
 CELL_RE = re.compile(r"<t[dh][^>]*>(.*?)</t[dh]>", re.I | re.S)
 
-# ACA renders the grid's pager as an ordinary <tr> inside the same table, so a
-# header-driven read counts it as a record — its "Record Number" cell holds the
-# page number. Observed live 2026-09-30: a page declaring "showing 1-10 of 14"
-# parsed as 11 rows (the 11th being `Date='< Prev'`, `Record Number='1'`,
-# `Project Name='Next >'`), which failed the declared-range check and aborted
-# the whole capacity query with `record_grid_rows_do_not_match_declared_range`.
-# The pager is not a record, so it is not returned as one.
+# aca renders the grid's pager as an ordinary <tr> inside the same table, so a header-driven read counts
+# it as a record — its "record number" cell holds the page number
 PAGER_CELL_RE = re.compile(
     r"^\s*(?:&lt;|&gt;|<|>)*\s*(?:prev(?:ious)?|next|more)\s*"
     r"(?:&lt;|&gt;|<|>)*\s*$",
@@ -132,17 +112,11 @@ async def body_text(page) -> str:
 
 
 def parse_grid(html: str) -> list[dict]:
-    """Rows of the data grid whose header includes 'Record Number'.
-
-    Header-driven, so we get named fields (Date / Record Number / Record Type
-    / Address / Status / Description / Expiration Date) instead of raw cells.
-    """
+    """rows of the data grid whose header includes 'record number'"""
     headers: list[str] = []
     rows: list[dict] = []
     for m in ROW_SPLIT_RE.finditer(html):
         row = m.group(1)
-        # keep EMPTY cells: dropping them shifts every column left (the grid
-        # has an empty Project Name column on these rows)
         cells = [clean(c) for c in CELL_RE.findall(row)]
         if not any(cells):
             continue
@@ -154,7 +128,6 @@ def parse_grid(html: str) -> list[dict]:
             continue
         if len(cells) < 2:
             continue
-        # a row whose first cell is a header word means a second grid started
         if cells[0] in ("Date", "Record Number"):
             continue
         rec = {headers[i] if i < len(headers) else f"col{i}": v
@@ -173,8 +146,8 @@ def parse_grid(html: str) -> list[dict]:
 
 
 async def capture_detail(page, rid: str, href: str) -> dict:
-    """Read one record's detail page: status, type, and section links."""
-    # grid hrefs are site-absolute (/NULLISLAND/Cap/...), not agency-relative
+    """read one record's detail page: status, type, and section links"""
+    # grid hrefs are site-absolute (/nullisland/cap/...), not agency-relative
     url = f"{SITE}{_html.unescape(href)}"
     info: dict = {"url": url}
     try:
@@ -236,7 +209,6 @@ async def main() -> int:
         await dump_page(page, stamp, "my_records")
         data["body_excerpt"] = body[:1500]
 
-        # the grid may live in the top frame or an inner frame; parse all
         rows: list[dict] = []
         for f in list(page.frames):
             try:

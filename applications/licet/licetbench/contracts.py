@@ -1,4 +1,4 @@
-"""Freeze the complete reused fixture contract, not only its visible summary."""
+"""freeze the complete reused fixture contract, not only its visible summary"""
 from dataclasses import asdict
 from pathlib import Path
 import json

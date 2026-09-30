@@ -1,8 +1,4 @@
-"""Recon round 2: click through the AV SPA menu into Calendaring & Inspections.
-
-Read-only navigation: click the all-pages menu, enter "Inspections", dump the
-loaded portlet URLs/frames, and look for Inspection Types / Calendars pages.
-"""
+"""recon round 2: click through the av spa menu into calendaring & inspections"""
 from __future__ import annotations
 
 import asyncio
@@ -79,7 +75,6 @@ async def main() -> int:
         await asyncio.wait_for(page.wait_for_timeout(10000), 20)
         out("logged in")
 
-        # open the all-pages menu ("All Pages" / grid icon) then Inspections
         opened = await click_by_text(page, "Inspections")
         if not opened:
             out("direct Inspections click failed — trying menu expand first")
@@ -91,7 +86,6 @@ async def main() -> int:
         out(f"url after Inspections click: {page.url[:140]}")
         await dump_all(page, "inspections_portlet", stamp)
 
-        # scan frame URLs + content for calendar/inspection-type admin hints
         for fr in page.frames:
             u = fr.url
             if any(k in u for k in ("inspection", "calendar", "portlets")):

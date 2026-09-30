@@ -1,24 +1,4 @@
-"""Browser execution for Phase 2 permit lookups.
-
-`licet/lookup.py` decides *what* to do; this module makes it *happen* through
-`ToolDispatcher` — the only path to the browser — so the guard, the run log and
-step accounting apply to a lookup exactly as they do to a planner step.
-
-Two live-verified behaviors shape everything below (2026-09-18/20):
-
-- Selecting a search mode is an auto-postback that swaps the whole form, and
-  the option labels are agency-configured. `search_actions` therefore emits a
-  *logical mode key*; the runner resolves the observed option label from the
-  dropdown's own options (`accela.search_mode_option`) and re-reads the field
-  inventory after the postback. Field ids are never cached across a mode switch.
-- An agency pre-fills a narrow search date window (NI: 09/18/2024→09/18/2026)
-  that can hide records entirely, so "widen the dates" is the standard
-  zero-result retry before anything may conclude a record does not exist.
-
-The runner is deliberately bounded: attempts come from the plan, pages from
-`should_scan_next_page`, and there is no fallback beyond the plan — "never
-broaden indefinitely" is enforced here, not left to model discipline.
-"""
+"""browser execution for phase 2 permit lookups"""
 
 from __future__ import annotations
 
@@ -63,11 +43,7 @@ MAX_RESULT_PAGES = 5
 
 @dataclass
 class LookupTrace:
-    """The audit trail: what was parsed, what was tried, what was seen.
-
-    Textual on purpose (GOAL → PARSED → SEARCH → RESULT → …) so a run log or a
-    test can show the lookup's decision chain without a browser session.
-    """
+    """the audit trail: what was parsed, what was tried, what was seen"""
 
     goal: str
     parsed: PermitLookupRequest | None = None
@@ -105,12 +81,12 @@ class LookupTrace:
 
 @dataclass(frozen=True)
 class _Observed:
-    """One postback-settled look at the results page."""
+    """one postback-settled look at the results page"""
 
     read: dict[str, Any]
     rows: list[SearchResult]
     metadata: dict[str, Any]
-    classification: str  # results | zero_results | parse_failed
+    classification: str
 
 
 class _LookupFailure(Exception):
@@ -120,7 +96,7 @@ class _LookupFailure(Exception):
 
 
 class LookupRunner:
-    """Drive one `PermitLookupRequest` end to end through the dispatcher."""
+    """drive one `permitlookuprequest` end to end through the dispatcher"""
 
     def __init__(
         self,
@@ -140,20 +116,15 @@ class LookupRunner:
         self.max_pages = max_pages
         self.min_confidence = min_confidence
         self.ambiguity_margin = ambiguity_margin
-        # Optional DOM source for table parsing (tests inject a fake). Live runs
-        # use `client.page.content()` — a read, never an action.
+        # optional dom source for table parsing (tests inject a fake)
         self._html_source = html_source
         self.trace = LookupTrace(goal="")
         self.opened: Permit | None = None
         self.identity_verified: bool = False
         self.open_error: str | None = None
-        # Retrieval metrics accumulate across every `run` on this runner, so a
-        # caller can hand one object to several runs (or several runners) and
-        # read success/ambiguity/wrong-record rates off it directly.
         self.metrics = metrics if metrics is not None else LookupMetrics()
         self.actions_taken = 0
 
-    # --- low-level helpers -------------------------------------------------
 
     async def _html(self) -> str:
         if self._html_source is not None:
@@ -171,8 +142,6 @@ class LookupRunner:
     async def _step(
         self, name: str, args: dict[str, Any], state: AgentState
     ) -> tuple[bool, dict[str, Any]]:
-        # Every browser action goes through here, so this is the one place the
-        # "browser actions per lookup" metric can be counted honestly.
         if state.no_valid_action_reason:
             raise _LookupFailure({"error": state.no_valid_action_reason})
         self.actions_taken += 1
@@ -194,18 +163,11 @@ class LookupRunner:
                 return [str(option) for option in (field.get("options") or [])]
         return []
 
-    # --- form handling -----------------------------------------------------
 
     async def _resolve_actions(
         self, attempt: SearchAttempt, state: AgentState
     ) -> list[dict[str, Any]]:
-        """Turn the plan's logical actions into concrete dispatcher calls.
-
-        The search-mode dropdown's labels are agency-configured, so the plan's
-        *mode key* is resolved against the dropdown's actual options before the
-        auto-postback fires; the field inventory is then re-read fresh, because
-        the postback replaced the whole form.
-        """
+        """turn the plan's logical actions into concrete dispatcher calls"""
         actions = search_actions(attempt)
         mode_key = next(
             (a["args"]["value"] for a in actions if a["name"] == "select"), None
@@ -216,7 +178,6 @@ class LookupRunner:
                 self._dropdown_options(inventory, accela.SEARCH_MODE_DROPDOWN), mode_key
             )
             if label is None:
-                # This agency exposes no such search mode: fall back, don't guess.
                 return []
             ok, _ = await self._step("select", {
                 "target": f"#{accela.SEARCH_MODE_DROPDOWN}",
@@ -234,16 +195,7 @@ class LookupRunner:
     def _bind_fields(
         actions: list[dict[str, Any]], fields: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:
-        """Drop type actions whose field the current form does not render.
-
-        Selectors are comma-grouped id-suffix lists (`txtAPO…, txtGS…`), so
-        presence of *any* family keeps the action — the portal legitimately
-        drops the other family on a mode switch. Filling a field the form no
-        longer has would dispatch into nothing and the search would silently
-        run unfiltered. If NONE of the attempt's fields are present, the attempt
-        cannot run as planned: return empty so the caller records a form
-        failure instead of submitting a search with no constraints at all.
-        """
+        """drop type actions whose field the current form does not render"""
 
         def rendered(selector: str) -> bool:
             for option in selector.split(","):
@@ -270,7 +222,6 @@ class LookupRunner:
             return []
         return bound
 
-    # --- results -----------------------------------------------------------
 
     async def _observe_results(self, state: AgentState) -> _Observed:
         _ok, step = await self._step("read_page", {"include": ["text", "form", "errors"]}, state)
@@ -282,20 +233,13 @@ class LookupRunner:
         elif rows:
             classification = "results"
         else:
-            classification = classify_results_page(text)  # zero_results | parse_failed
+            classification = classify_results_page(text)
         return _Observed(read=step, rows=rows, metadata=metadata, classification=classification)
 
     async def _scan_all_pages(
         self, state: AgentState, first: _Observed
     ) -> tuple[list[SearchResult], _Observed]:
-        """Collect rows across result pages, bounded by `max_pages`.
-
-        ACA paginates with postback links and never changes its URL, so a
-        pagination click must *prove* it turned the page: the grid footer's
-        first/last/total must change. A click that reproduces the same footer is
-        treated as a dead link and the scan stops rather than re-parsing the
-        same rows (duplicate rows would skew ranking and ambiguity).
-        """
+        """collect rows across result pages, bounded by `max_pages`"""
         self._coverage_valid = not (first.metadata.get("parse_error") or first.metadata.get("truncated"))
         rows: list[SearchResult] = [r.model_copy(update={"source_page": 1}) for r in first.rows]
         observed = first
@@ -330,15 +274,9 @@ class LookupRunner:
         self.trace.pages_scanned += len(pages)
         return rows, observed
 
-    # --- the loop ----------------------------------------------------------
 
     async def run(self, goal: str, request: PermitLookupRequest, state: AgentState) -> LookupResult:
-        """Run one lookup, then fold its outcome into `metrics`.
-
-        Wrapping (rather than instrumenting every early return) is what keeps
-        the counts exact: `_execute` has a return per outcome, and a metric
-        incremented by hand at each one would eventually miss a branch.
-        """
+        """run one lookup, then fold its outcome into `metrics`"""
         self.actions_taken = 0
         self.submissions = 0
         state.clear_active_permit()
@@ -354,13 +292,7 @@ class LookupRunner:
         return result
 
     def _record_metrics(self, result: LookupResult) -> None:
-        """Update the Phase 2 retrieval KPIs for one completed lookup.
-
-        Retries count search submissions beyond the first (plan attempts plus
-        the runner's zero-result date-widening). A `RECORD_MISMATCH` is the
-        wrong-record event; it never increments verified successes. The rate
-        uses all lookup attempts as its denominator.
-        """
+        """update the phase 2 retrieval kpis for one completed lookup"""
         self.metrics.attempts += 1
         self.metrics.browser_actions += self.actions_taken
         self.metrics.retries += max(0, self.submissions - 1)
@@ -377,11 +309,7 @@ class LookupRunner:
             self.metrics.wrong_records += 1
 
     async def _execute(self, goal: str, request: PermitLookupRequest, state: AgentState) -> LookupResult:
-        """Plan → search → rank → (disambiguate) → open → verify.
-
-        Never raises: every outcome — including "the form would not cooperate" —
-        lands in the returned `LookupResult`, with `trace` carrying the evidence.
-        """
+        """plan → search → rank → (disambiguate) → open → verify"""
         self.trace = LookupTrace(goal=goal)
         self.opened = None
         self.identity_verified = False
@@ -399,9 +327,8 @@ class LookupRunner:
             self.trace.result = result
             return result
 
-        # Search results are a postback of CapHome.aspx with no URL of their
-        # own, so a previous lookup's grid can still be on the page. A fresh
-        # navigation is what guarantees the run never reads stale results.
+        # search results are a postback of caphome.aspx with no url of their own, so a previous lookup's
+        # grid can still be on the page
         navigated, _ = await self._step("navigate", {"url": accela.search_url()}, state)
         if not navigated:
             result = LookupResult(
@@ -491,7 +418,7 @@ class LookupRunner:
     async def _run_attempt(
         self, attempt: SearchAttempt, state: AgentState
     ) -> _Observed | None:
-        """Fill, submit, settle, observe. None means the form never submitted."""
+        """fill, submit, settle, observe"""
         actions = await self._resolve_actions(attempt, state)
         if not actions:
             return None
@@ -501,7 +428,6 @@ class LookupRunner:
                 return None
         return await self._observe_results(state)
 
-    # --- open + identity verification --------------------------------------
 
     async def _open_and_verify(self, result, request, state) -> LookupResult:
         selected = result.selected
@@ -525,7 +451,7 @@ class LookupRunner:
 
     async def _verify_detail(self, request, state, data, *, selected=None,
                              method=None, matches=None, confidence=1.0) -> LookupResult:
-        # Detail facts come only from this fresh observation, never the grid.
+        # detail facts come only from this fresh observation, never the grid
         text = str(data.get("text") or "")
         def labelled(*labels):
             pattern = r"(?:^|\n)\s*(?:" + "|".join(labels) + r")\s*:?\s*\n?([^\n]+)"

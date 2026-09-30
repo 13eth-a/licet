@@ -1,12 +1,4 @@
-"""Read-only: what does the back office's Application Acceptance task expose?
-
-Before any write, map what accepting/issuing a record actually requires. This
-probe opens the task *detail* only — it clicks a task/record title, never an
-action button (Accept / Issue / Save / Continue / Submit are reported, not
-pressed), and dumps text + HTML for review.
-
-Run:  .venv/bin/python scripts/ni_backoffice_task_recon.py [--record BLD26-00468]
-"""
+"""read-only: what does the back office's application acceptance task expose?"""
 from __future__ import annotations
 
 import argparse
@@ -21,7 +13,7 @@ load_dotenv()
 AV_URL = "https://nullisland-test-av.accela.com/"
 USER, PASSWORD = "developer", "accela"
 SHOTS = os.path.join("logs", "ni_backoffice")
-# Never click these: they are the write actions this recon exists to describe.
+# never click these: they are the write actions this recon exists to describe
 FORBIDDEN_CLICKS = ("issue", "accept", "save", "submit", "continue", "approve",
                     "reject", "delete", "update", "post", "record issued")
 INTERESTING = ("issue", "issued", "accept", "workflow", "status", "task",
@@ -44,13 +36,7 @@ async def find_first_visible(scope, selectors: list[str]):
 
 
 async def safe_click(page, text: str) -> bool:
-    """Click a *navigation* element whose text matches, in any frame.
-
-    Safety is by element type, not by wording: a task *title* legitimately reads
-    "Application Acceptance", while the write control for it is a `<button>` or
-    `<input>`. So links/rows/spans are clicked; buttons and inputs are refused
-    outright and only reported.
-    """
+    """click a *navigation* element whose text matches, in any frame"""
     for scope in (page, *page.frames):
         try:
             candidates = scope.get_by_text(text, exact=False)
@@ -80,12 +66,7 @@ async def safe_click(page, text: str) -> bool:
 
 
 async def dom_click(page, text: str) -> bool:
-    """Click a navigation element by DOM dispatch, skipping write controls.
-
-    The portal renders its task list in framework-generated markup that
-    `get_by_text` does not resolve, so find the element whose own innerText
-    contains the needle and dispatch a click on it — refusing BUTTON/INPUT.
-    """
+    """click a navigation element by dom dispatch, skipping write controls"""
     script = """(needle) => {
         const all = [...document.querySelectorAll('*')].filter(e => {
             const tag = (e.tagName || '').toUpperCase();
@@ -179,7 +160,6 @@ async def main() -> int:
         out("logged in")
         before = await dump(page, stamp, "dashboard")
 
-        # 1. open the task by its type label, then by the record id.
         opened = await safe_click(page, args.task) or await dom_click(page, args.task)
         out(f"task click ({args.task!r}): {opened}")
         await page.wait_for_timeout(7000)

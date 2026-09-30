@@ -1,4 +1,4 @@
-"""Scripted Phase 5 capability fixtures; no live browser or model calls."""
+"""scripted phase 5 capability fixtures; no live browser or model calls"""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -86,16 +86,8 @@ class ScriptedCapabilities:
         return Observation(world, message="observed")
 
 
-# ============================================================================
-# Fixture addition: the checklist's 30-scenario deterministic planner set,
-# as reusable data plus a library-level replay function. The scenario builder is
-# intentionally small; each scenario is resolved through the production planner
-# with a scripted capability, not asserted against an ad-hoc mock. That makes the
-# set evidence about the *current* planner, not a narrative assumption.
-# ============================================================================
-
 class _ScenarioGoal:
-    """Readable scenario header; the real goal is built by ``_scenario_goal_to_planner_goal``."""
+    """readable scenario header; the real goal is built by ``_scenario_goal_to_planner_goal``"""
 
     def __init__(self, text, constraints=(), prohibited=(), autonomous=True,
                  success_conditions=None, operation="schedule", inspection_type=None,
@@ -119,15 +111,7 @@ class _ScenarioGoal:
 
 
 class PlanScenario:
-    """One deterministic planner scenario that the eval can replay and the suite can parametrize.
-
-    Scenarios are plain data: readable by humans, replayable offline, and closed by a single
-    outcome assertion plus metric assertions. The id prefix is the checklist group:
-    ``SC`` simple completion, ``RP`` replanning, ``PC`` partial completion,
-    ``CH`` constraint handling, ``EB`` external blockers, ``LE`` loop/error recovery.
-    ``planner_kwargs`` lets one scenario exercise a bounded ``GoalPlanner`` (for example
-    the shared step budget) without inventing a separate runner.
-    """
+    """one deterministic planner scenario that the eval can replay and the suite can parametrize"""
 
     def __init__(self, id, name, goal, capability_factory=None, expected_status=Status.SUCCESS,
                  expected_error=None, expected_actions=None, expected_remaining=(),
@@ -199,8 +183,6 @@ def _run_planner(cap, g, **planner_kwargs):
     import asyncio
     return asyncio.run(GoalPlanner(cap, **planner_kwargs).run(g))
 
-
-# --- small capability factories used by the 30-scenario set --------------------
 
 def _ineligible_capability():
     class Cap(ScriptedCapabilities):
@@ -285,11 +267,7 @@ def _double_submit_capability():
 
 
 def _churning_capability():
-    """A portal that hands out a fresh snapshot label on every read while the
-    structured state never advances. The World fingerprint deliberately ignores
-    snapshot labels, so this must read as *no progress* and stop as a loop
-    instead of letting label churn reset the progress detector.
-    """
+    """a portal that hands out a fresh snapshot label on every read while the structured state never advances"""
 
     class Cap(ScriptedCapabilities):
         def __init__(self):
@@ -302,8 +280,8 @@ def _churning_capability():
             self.sequence += 1
             if action == Action.FIND_PERMIT:
                 world.permit_id, world.record_key, world.permit_verified = "P-1", KEY, True
-            # Every subsequent read "succeeds" with a new snapshot label and no
-            # new facts; the label change must not count as progress.
+            # every subsequent read "succeeds" with a new snapshot label and no new facts; the label
+            # change must not count as progress
             world.snapshot_id = f"churn-{self.sequence}"
             if world.reasoning is not None:
                 world.reasoning.snapshot_id = f"churn-{self.sequence}"
@@ -313,18 +291,9 @@ def _churning_capability():
 
 
 def planner_scenarios():
-    """The Phase 5 checklist's deterministic planner set, as data.
-
-    5 simple goal completion
-    5 replanning
-    5 partial completion
-    5 constraint handling
-    5 external blockers
-    5 loop/error recovery
-    """
+    """the phase 5 checklist's deterministic planner set, as data"""
     S = []
 
-    # ---- 5 simple goal completion ----
 
     S.append(PlanScenario(
         id="SC01", name="simple flagship completion",
@@ -383,7 +352,6 @@ def planner_scenarios():
         assert_metrics=dict(goal_completion_rate=1.0, mutations_attempted=1),
     ))
 
-    # ---- 5 replanning ----
 
     S.append(PlanScenario(
         id="RP01", name="replanning after failed read loops and stops",
@@ -404,8 +372,7 @@ def planner_scenarios():
         expected_error=Error.NO_SAFE_ACTIONS,
         expected_actions=["FIND_PERMIT", "READ_PERMIT_STATE", "DETERMINE_BLOCKERS", "DETERMINE_NEXT_INSPECTION", "CHECK_INSPECTION_AVAILABILITY"],
         expected_remaining=("inspection_scheduled",),
-        # No mutation is attempted, so the recorded violation rate is unmeasured
-        # (None), not a fabricated zero.
+        # no mutation is attempted, so the recorded violation rate is unmeasured (none), not a fabricated zero
         assert_metrics=dict(constraint_violation_rate=None, mutations_attempted=0),
     ))
 
@@ -442,7 +409,6 @@ def planner_scenarios():
         assert_metrics=dict(mutations_attempted=0),
     ))
 
-    # ---- 5 partial completion ----
 
     S.append(PlanScenario(
         id="PC01", name="partial completion when fee gate blocks without payment",
@@ -499,7 +465,6 @@ def planner_scenarios():
         assert_metrics=dict(partial_completion_rate=1.0, mutations_attempted=0),
     ))
 
-    # ---- 5 constraint handling ----
 
     S.append(PlanScenario(
         id="CH01", name="constraint preserved across replanning with no-spend",
@@ -513,8 +478,8 @@ def planner_scenarios():
         expected_error=Error.PRECONDITION_NOT_MET,
         expected_actions=["FIND_PERMIT", "READ_PERMIT_STATE", "DETERMINE_BLOCKERS", "DETERMINE_NEXT_INSPECTION", "CHECK_INSPECTION_AVAILABILITY"],
         expected_remaining=("inspection_scheduled",),
-        # The constraint held and stopped the run before any mutation, so the
-        # recorded violation rate is unmeasured (None), not a fabricated zero.
+        # the constraint held and stopped the run before any mutation, so the recorded violation rate is
+        # unmeasured (none), not a fabricated zero
         assert_metrics=dict(constraint_violation_rate=None, mutations_attempted=0),
     ))
 
@@ -534,11 +499,6 @@ def planner_scenarios():
 
     S.append(PlanScenario(
         id="CH03", name="contradictory instruction halts as CONSTRAINT_CONFLICT",
-        # "Cancel ... but do not cancel anything" is the checklist's contradictory
-        # instruction: it cannot be resolved into one reading, so Phase 6's
-        # `detect_constraint_conflict` halts the run before any browser access
-        # rather than proceeding and refusing later. Prohibited-cancellation
-        # without a contradiction is still covered by CH05.
         goal=_ScenarioGoal(
             text="Cancel the Rough Electrical inspection for permit P-1, but do not cancel anything.",
             operation="cancel",
@@ -581,7 +541,6 @@ def planner_scenarios():
         assert_metrics=dict(constraint_violation_rate=None, mutations_attempted=0),
     ))
 
-    # ---- 5 external blockers ----
 
     S.append(PlanScenario(
         id="EB01", name="external blocker inspector required",
@@ -638,7 +597,6 @@ def planner_scenarios():
         assert_metrics=dict(mutations_attempted=0),
     ))
 
-    # ---- 5 loop/error recovery ----
 
     S.append(PlanScenario(
         id="LE01", name="loop recovery on repeated failed read",
@@ -670,8 +628,8 @@ def planner_scenarios():
         expected_status=Status.SUCCESS,
         expected_actions=["FIND_PERMIT", "READ_PERMIT_STATE", "DETERMINE_BLOCKERS", "DETERMINE_NEXT_INSPECTION", "CHECK_INSPECTION_AVAILABILITY", "SCHEDULE_INSPECTION", "VERIFY_STATE"],
         expected_remaining=(),
-        # The no-replay guard means the mutation is submitted exactly once, so
-        # there is no duplicate action even though the fixture would refuse one.
+        # the no-replay guard means the mutation is submitted exactly once, so there is no duplicate
+        # action even though the fixture would refuse one
         assert_metrics=dict(duplicate_action_rate=0.0, mutations_attempted=1),
     ))
 
@@ -681,8 +639,8 @@ def planner_scenarios():
         capability_factory=_churning_capability,
         expected_status=Status.BLOCKED,
         expected_error=Error.PLAN_LOOP_DETECTED,
-        # Only the identity read advances state; each further read changes the
-        # snapshot label but no fact, so progress detection stops the loop.
+        # only the identity read advances state; each further read changes the snapshot label but no fact,
+        # so progress detection stops the loop
         expected_actions=["FIND_PERMIT", "READ_PERMIT_STATE", "READ_PERMIT_STATE"],
         expected_remaining=("next_inspection_identified", "inspection_scheduled"),
         assert_metrics=dict(planner_loop_rate=1.0, mutations_attempted=0),

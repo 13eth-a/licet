@@ -1,10 +1,4 @@
-"""Offline tests for the human-attestation handoff.
-
-The invariant under test is that the *agent* never operates the attestation
-control. Every fake here records agent clicks separately from the "human"
-clicks the test injects, so a regression that starts accepting the disclaimer
-would show up as a non-zero `agent_clicks`.
-"""
+"""offline tests for the human-attestation handoff"""
 from __future__ import annotations
 
 import asyncio
@@ -51,9 +45,6 @@ def sleep_factory(clock: FakeClock, on_tick=None):
     return sleep
 
 
-# --- detection ---------------------------------------------------------------
-
-
 def test_disclaimer_url_detection_ignores_query_and_case():
     assert is_attestation_disclaimer_url(DISCLAIMER_URL)
     assert is_attestation_disclaimer_url(DISCLAIMER_URL.upper())
@@ -71,9 +62,6 @@ def test_is_disclaimer_page_reads_top_level_and_frames():
     frame.url = NEXT_STEP_URL
     assert disclaimer_frames(page) == []
     assert is_disclaimer_page(page) is False
-
-
-# --- the waiting loop --------------------------------------------------------
 
 
 def test_waits_for_the_operator_then_reports_satisfied_while_waiting_once():
@@ -95,7 +83,7 @@ def test_waits_for_the_operator_then_reports_satisfied_while_waiting_once():
     assert report.permits_continuation() is True
     assert report.stop is None
     assert report.polls == 3
-    assert notified["n"] == 1  # asked the human exactly once
+    assert notified["n"] == 1
 
 
 def test_timeout_is_a_legal_attestation_stop_not_a_silent_pass():
@@ -138,7 +126,7 @@ def test_declined_attestation_stops_instead_of_waiting_out():
 
     assert report.outcome is HandoffOutcome.DECLINED_BY_HUMAN
     assert report.stop is SafetyStopCondition.LEGAL_ATTESTATION
-    assert report.elapsed_s == 0  # no waiting once the human has declined
+    assert report.elapsed_s == 0
 
 
 def test_sync_probe_and_async_notify_are_both_supported():
@@ -163,12 +151,7 @@ def test_sync_probe_and_async_notify_are_both_supported():
 
 
 def test_a_pre_satisfied_control_is_not_reported_as_human_acceptance():
-    """NI ships its agree box pre-ticked, so 'checked' proves nobody's action.
-
-    Reading that as "the operator accepted" would let the run continue past a
-    legal attestation while attributing it to a human who never did anything —
-    which is exactly what the first `res_alt` run did.
-    """
+    """ni ships its agree box pre-ticked, so 'checked' proves nobody's action"""
     clock = FakeClock()
     notified: list[int] = []
 
@@ -182,7 +165,7 @@ def test_a_pre_satisfied_control_is_not_reported_as_human_acceptance():
     assert report.permits_continuation() is False
     assert report.stop is SafetyStopCondition.LEGAL_ATTESTATION
     assert report.polls == 1
-    assert notified == []  # nobody to ask: the control was already satisfied
+    assert notified == []
 
 
 @pytest.mark.parametrize("kwargs", [{"timeout_s": 0}, {"poll_s": 0}, {"timeout_s": -1}])
@@ -197,11 +180,8 @@ def test_non_positive_budgets_are_rejected(kwargs):
         asyncio.run(run())
 
 
-# --- the Playwright-shaped adapter ------------------------------------------
-
-
 class FakeBox:
-    """The attestation checkbox, counting *agent* interactions separately."""
+    """the attestation checkbox, counting *agent* interactions separately"""
 
     def __init__(self) -> None:
         self.present = True
@@ -319,7 +299,7 @@ def test_adapter_never_checks_the_box_and_advances_when_it_flips_while_waiting()
 
     assert report.permits_continuation() is True
     assert box.agent_clicks == 0, "the agent must never operate the attestation control"
-    assert frame.continue_clicks == 1  # navigation past the satisfied disclaimer
+    assert frame.continue_clicks == 1
 
 
 def test_adapter_does_not_advance_when_the_human_never_accepts():
@@ -356,15 +336,9 @@ def test_adapter_can_be_told_not_to_advance():
 
 
 def test_adapter_does_not_advance_a_pre_ticked_portal_default():
-    """The live NI page renders its agree box already ticked and self-advances.
-
-    Observed 2026-09-30: `ctl00_PlaceHolderMain_termAccept` reads checked=True
-    ~3s after load, with no agent or human interaction at all, and the wizard
-    moves to CapType on its own. The adapter must not call that a human
-    acceptance, and must not click through on the strength of it.
-    """
+    """the live ni page renders its agree box already ticked and self-advances"""
     page, frame, box = _disclaimer_page()
-    box.checked = True  # exactly as the portal renders it
+    box.checked = True
 
     report = asyncio.run(accept_disclaimer_with_human(
         page, sleep=sleep_factory(FakeClock()), monotonic=FakeClock(),
@@ -385,8 +359,8 @@ def test_adapter_treats_navigating_past_the_disclaimer_as_satisfied():
     def portal_advances() -> None:
         ticks["n"] += 1
         if ticks["n"] >= 1:
-            # The attestation was satisfied and ACA moved the wizard on; the
-            # checkbox is gone because the page is no longer the disclaimer.
+            # the attestation was satisfied and aca moved the wizard on; the checkbox is gone because the
+            # page is no longer the disclaimer
             box.present = False
             page.url = NEXT_STEP_URL
             frame.url = NEXT_STEP_URL
@@ -401,19 +375,17 @@ def test_adapter_treats_navigating_past_the_disclaimer_as_satisfied():
 
 
 def test_portal_default_opt_in_permits_continuation_without_relabelling_it():
-    """The opt-in changes what the caller may do, not what happened."""
+    """the opt-in changes what the caller may do, not what happened"""
     page, frame, box = _disclaimer_page()
-    box.checked = True  # the portal's own pre-tick
+    box.checked = True
 
     report = asyncio.run(accept_disclaimer_with_human(
         page, sleep=sleep_factory(FakeClock()), monotonic=FakeClock(),
         timeout_s=30, allow_portal_default=True,
     ))
 
-    # It proceeds past the disclaimer...
     assert report.permits_continuation(allow_portal_default=True) is True
     assert frame.continue_clicks == 1
-    # ...while still reporting honestly that no human acted.
     assert report.outcome is HandoffOutcome.SATISFIED_WITHOUT_HUMAN_ACTION
     assert report.permits_continuation() is False
     assert box.agent_clicks == 0
@@ -428,13 +400,13 @@ def test_portal_default_opt_in_is_not_granted_by_default():
         timeout_s=30, allow_portal_default=True,
     ))
 
-    # A caller that did not ask for the opt-in still may not continue.
+    # a caller that did not ask for the opt-in still may not continue
     assert report.permits_continuation() is False
-    assert frame.continue_clicks == 1  # this caller did ask for it
+    assert frame.continue_clicks == 1
 
 
 def test_portal_default_opt_in_does_not_rescue_a_real_stop():
-    """Opting in must not turn a timeout or a decline into a pass."""
+    """opting in must not turn a timeout or a decline into a pass"""
     page, frame, box = _disclaimer_page()
     clock = FakeClock()
 
@@ -456,25 +428,21 @@ def test_continuation_is_gated_on_what_the_run_actually_observed():
         HandoffOutcome.SATISFIED_WITHOUT_HUMAN_ACTION, 1, 0.0,
         SafetyStopCondition.LEGAL_ATTESTATION, "")
 
-    # The run asked the operator and the control ended up satisfied.
     assert waited.permits_continuation() is True
-    # Nothing in the run supports the operator having been involved, so only
-    # the explicit opt-in carries it.
+    # nothing in the run supports the operator having been involved, so only the explicit opt-in carries it
     assert portal_default.permits_continuation() is False
     assert portal_default.permits_continuation(allow_portal_default=True) is True
 
 
 def test_adapter_keeps_waiting_when_only_the_box_rerenders():
-    # A re-render that drops the checkbox while the page is still the
-    # disclaimer must not be mistaken for acceptance.
+    # a re-render that drops the checkbox while the page is still the disclaimer must not be mistaken for
+    # acceptance
     page, frame, box = _disclaimer_page()
     clock = FakeClock()
     ticks = {"n": 0}
 
     def rerender() -> None:
         ticks["n"] += 1
-        # The checkbox is momentarily gone while ACS re-renders the step, but
-        # the page is still the disclaimer.
         box.present = False
 
     report = asyncio.run(accept_disclaimer_with_human(

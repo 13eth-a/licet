@@ -1,27 +1,4 @@
-"""The browser interface exposed to the planning model.
-
-Phase 0 review §2 changed this set:
-
-- `go_back` is **not exposed**. ACA is WebForms: history navigation resubmits
-  postbacks, which is how a duplicate record got created (BLD26-00466 beside
-  BLD26-00467). `navigate` is the supported way back; the client still has no
-  back operation on purpose. `refresh` is excluded for the same reason (a
-  reload can replay the last POST); `navigate(current_url)` is the safe
-  equivalent.
-- `click`/`type`/`select` take a **semantic target** (`by="text"` or
-  `by="label"`, with `frame=` for the iframe overlays) plus an optional
-  `intent`. ACA ids are ~60-char `ctl00_PlaceHolderMain_...` values that differ
-  per agency; every live script ended up resolving by `fieldname`/label/text.
-- `read_page` carries the observations the failures demanded: visible text,
-  field inventory, ACA's validation panel, and the frame/popup inventory.
-- `intent` is enumerated from `risk_levels.KNOWN_ACTIONS`, which is also the
-  vocabulary the safety guard classifies — the model cannot invent an action
-  the guard has never heard of.
-
-Execution lives in `licet/browser/dispatcher.py`, which maps a call onto a
-semantic action, runs the guard, then the client. Module-level bound functions
-are gone: they bound config at import time, which made runs unconfigurable.
-"""
+"""the browser interface exposed to the planning model"""
 
 from __future__ import annotations
 
@@ -35,11 +12,7 @@ TOOL_NAMES = ("navigate", "click", "type", "select", "read_page", "wait", "scree
 
 @dataclass(frozen=True)
 class BrowserResult:
-    """Provider-independent result contract for a browser action.
-
-    Solari's richer payload remains available under ``data`` in its adapter;
-    this compact shape is suitable for logs, alternate providers, and tests.
-    """
+    """provider-independent result contract for a browser action"""
 
     success: bool
     action: str

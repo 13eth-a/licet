@@ -1,19 +1,4 @@
-"""Golden-state fixtures and Phase 3 eval cases.
-
-The interpretation oracles are the architecture review’s 30 worked decisions
-(``docs/phase3/reasoning_cases.md``): each case below binds one structured
-permit state to the verdict the contract requires — including the *forbidden*
-conclusions, because a hedged restatement of an unsupported claim is still an
-unsupported claim. Extraction quality and reasoning quality are scored
-separately (contract: separate extraction errors from reasoning errors), so
-golden reasoning cases run on verified structured inputs while extraction
-cases run page payloads through the adapter first.
-
-Ground truth is data, not prose: ``GOLDEN_STATES`` records the manually
-verified state per synthetic record, and the flagship case asserts the exact
-shape the Phase 3 exit condition demands — facts stated, inference labeled by
-strength, unsupported requirement abstained from, nothing executed.
-"""
+"""golden-state fixtures and phase 3 eval cases"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,7 +13,7 @@ from licet.phase3.state import PermitState
 
 @dataclass(frozen=True)
 class GoldenRecord:
-    """Manually recorded ground truth for one synthetic permit."""
+    """manually recorded ground truth for one synthetic permit"""
 
     record_key: str
     record_number: str
@@ -73,19 +58,6 @@ GOLDEN_STATES: dict[str, GoldenRecord] = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Per-municipality extraction fixtures.
-#
-# Reasoning cases above run on *verified structured inputs*. These run a real
-# ``read_page`` payload through the ACA adapter first, so extraction errors stay
-# separable from reasoning errors (reasoning contract: "separate extraction
-# errors from reasoning errors by running reasoning both on verified golden
-# structured inputs and extracted inputs"). Agencies configure their own section
-# column labels; the fees grid was the named first gap (runtime_integration.md),
-# so each municipal wording below is a header variant that must resolve to the
-# same canonical row contract rather than degrading to a phantom "Unnamed fee".
-# ---------------------------------------------------------------------------
-
 PAGE_URL = (
     "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
     "&capID1=REC26&capID2=00000&capID3=9F101&agencyCode=NULLISLAND"
@@ -95,13 +67,12 @@ PAGE_RECORD_KEY = "NULLISLAND/Building/REC26/00000/9F101"
 
 @dataclass(frozen=True)
 class ExtractionFixture:
-    """One per-municipality page shape and what it must extract."""
+    """one per-municipality page shape and what it must extract"""
 
     fixture_id: str
     municipality: str
     section: str
     text: str
-    # canonical dataclass fields -> required value on the first extracted row
     first_row: dict[str, Any]
     count: int = 1
     question: str | None = None
@@ -158,8 +129,6 @@ ACA_PAGE_FIXTURES: tuple[ExtractionFixture, ...] = (
             "type": "Rough Electrical",
             "lifecycle_normalized": "COMPLETED",
             "result_normalized": "FAILED",
-            # Portal MM/DD/YYYY is normalized to ISO at extraction (portal integration Phase 5
-            # review H02) so downstream attempt ordering sees comparable dates.
             "completed_date": "2026-09-18",
         },
         question="Why is this permit not moving forward?",
@@ -205,11 +174,7 @@ def _fixture_page(fixture: ExtractionFixture) -> dict[str, Any]:
 
 
 def run_extraction_fixtures() -> list[dict[str, Any]]:
-    """Page payload -> adapter -> partial state, checked against each fixture.
-
-    Returns one row per fixture with ``passed`` and human-readable ``problems``,
-    so the eval harness and CI score extraction the same way reasoning is scored.
-    """
+    """page payload -> adapter -> partial state, checked against each fixture"""
     from licet.phase3 import accela_extract
     from licet.phase3.extract import extract_partial_state
     from licet.phase3.reasoning import understand
@@ -271,11 +236,7 @@ def _page(record_key: str, section: str, **values: Any) -> dict[str, Any]:
 
 
 def flagship_state() -> PermitState:
-    """The Phase 3 flagship record, as verified golden structured input.
-
-    Issued permit; latest relevant Rough Electrical attempt failed Sept 18 with
-    a linked inspector comment; $74.50 unpaid balance with no gate evidence.
-    """
+    """the phase 3 flagship record, as verified golden structured input"""
     key = GOLDEN_STATES["flagship-001"].record_key
     overview = extract_partial_state(
         _page(key, "overview", fields={"record_number": "BLD-GOLD-001", "status": "Issued", "record_type": "Commercial Alteration", "address": "1 Flagship Way"})
@@ -317,7 +278,7 @@ def _reinspection_scheduled_state() -> PermitState:
 
 
 def _passed_after_failure_state() -> PermitState:
-    """Same scope, dated later pass: the earlier failure is history, not current."""
+    """same scope, dated later pass: the earlier failure is history, not current"""
     key = GOLDEN_STATES["golden-003"].record_key
     overview = extract_partial_state(
         _page(key, "overview", fields={"record_number": "BLD-GOLD-003", "status": "Issued"})
@@ -336,7 +297,7 @@ def _passed_after_failure_state() -> PermitState:
 
 
 def build_cases() -> list["Phase3Case"]:
-    """All golden reasoning cases (run on verified structured inputs)."""
+    """all golden reasoning cases (run on verified structured inputs)"""
     from licet.eval.phase3 import Phase3Case
 
     cases: list[Phase3Case] = []
@@ -345,7 +306,6 @@ def build_cases() -> list["Phase3Case"]:
     scheduled = _reinspection_scheduled_state()
     resolved = _passed_after_failure_state()
 
-    # --- status extraction (oracle S01–S05) ---------------------------------
     add(Phase3Case("S01", "What is the current status?", flagship, (), (), "answered",
                    must_mention=("Issued",), must_not_claim=("ready",)))
     add(Phase3Case("S02-submitted", "What is the status of golden-002?",
@@ -366,10 +326,8 @@ def build_cases() -> list["Phase3Case"]:
                                                ])),
                    ("failed_inspection",), ("expired_permit",), "answered",
                    must_not_claim=("scheduled",)))
-    # Oracle S03: both facts are retained and the conflict must be flagged,
-    # never silently resolved by scrape order. Conflicting is the required
-    # verdict; the answer must still cite the portal's status and demand
-    # renewal evidence rather than pick a winner.
+    # oracle s03: both facts are retained and the conflict must be flagged, never silently resolved by
+    # scrape order
     add(Phase3Case("S03-expired-event", "What is the status?",
                    merge_partial_states(
                        extract_partial_state(_page(GOLDEN_STATES["golden-004"].record_key, "overview",
@@ -381,11 +339,6 @@ def build_cases() -> list["Phase3Case"]:
                    must_mention=("Issued",),
                    must_not_claim=("currently valid",)))
 
-    # --- inspection history (oracle H01–H05) --------------------------------
-    # H01: the later pass resolves the failure for that scope, and the resolved
-    # failure must NOT remain a blocker — but a blocker question whose route
-    # sections (conditions/history) are unread stays provisional, so the
-    # runtime can never imply "nothing blocks" from covered evidence alone.
     add(Phase3Case("H01-later-pass-same-scope", "What is blocking approval?", resolved, (), ("failed_inspection",), "partial",
                    must_not_claim=("currently failed",)))
     add(Phase3Case("H02-scheduled-followup", "What should happen next?", scheduled, ("unpaid_fee",), (), "answered",
@@ -413,7 +366,6 @@ def build_cases() -> list["Phase3Case"]:
                    ("failed_inspection",), (), "answered",
                    must_not_claim=("passed",)))
 
-    # --- failure and comments (oracle F01–F05) ------------------------------
     add(Phase3Case("F01-flagship", "Why is this permit not moving forward, and what needs to happen next?",
                    flagship, ("failed_inspection", "unpaid_fee"), (), "answered",
                    must_mention=("Enclose exposed junction box", "$74.50"),
@@ -442,7 +394,6 @@ def build_cases() -> list["Phase3Case"]:
                                                comments=["Electrical defect: exposed junction box."])),
                    (), (), "answered"))
 
-    # --- blockers and requirements (oracle B01–B05) -------------------------
     add(Phase3Case("B01-unpaid-not-gate", "What is blocking approval?", flagship, ("failed_inspection", "unpaid_fee"), (), "answered",
                    must_not_claim=("payment required before", "must pay before")))
     add(Phase3Case("B02-explicit-payment-gate", "What is blocking approval?",
@@ -476,7 +427,6 @@ def build_cases() -> list["Phase3Case"]:
                    ),
                    ("active_condition", "failed_inspection", "unpaid_fee"), (), "answered"))
 
-    # --- next actions and readiness (oracle N01–N05) ------------------------
     add(Phase3Case("N01-catalog-not-required", "What inspection is next?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "inspections",
                                                rows=[], offered_types=[{"name": "Electrical Final", "required": False}])),
@@ -487,9 +437,9 @@ def build_cases() -> list["Phase3Case"]:
                                                rows=[{"type": "Rough Electrical", "result": "Passed"}],
                                                offered_types=[{"name": "Rough Electrical", "required": False}, {"name": "Electrical Final", "required": True}])),
                    (), (), "answered"))
-    # Oracle N03: readiness without a named target or prerequisite evidence is
-    # UNKNOWN — the observed failure and its conditional candidates are
-    # reported, but the verdict stays withheld (must_not_claim "ready").
+    # oracle n03: readiness without a named target or prerequisite evidence is unknown — the observed
+    # failure and its conditional candidates are reported, but the verdict stays withheld (must_not_claim
+    # "ready")
     add(Phase3Case("N03-fee-not-readiness", "Is this ready for its next inspection?",
                    merge_partial_states(
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "inspections",
@@ -504,8 +454,6 @@ def build_cases() -> list["Phase3Case"]:
                                                    rows=[{"name": "Revised plans", "type": "Plan", "status": "Missing", "required": True}])),
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees",
                                                    rows=[{"name": "Permit balance", "amount": "$74.50", "paid": False, "due": True, "gate_text": "Payment required before issuance"}])),
-                       # the readiness rule needs conditions/history covered for a
-                       # full "what next" verdict; provide them explicitly here
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "conditions", rows=[])),
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "history", rows=[])),
                    ),
@@ -521,7 +469,6 @@ def build_cases() -> list["Phase3Case"]:
                    ("expired_permit",), (), "answered",
                    must_not_claim=("appointment proves", "renewal complete")))
 
-    # --- missing data, conflict, isolation (oracle U01–U05) -----------------
     add(Phase3Case("U01-explicitly-empty", "Are there any inspections?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "inspections", rows=[])),
                    (), (), "answered",
@@ -553,10 +500,6 @@ def build_cases() -> list["Phase3Case"]:
                    _foreign_record_state(),
                    (), (), "conflicting"))
 
-    # --- adversarial regressions (adversarial review A1–A11) -------------------
-    # Counterexamples reproduced against the inherited rules. Negative
-    # assertions carry as much weight as expected ones here, and gate
-    # classification is asserted directly rather than inferred from the type.
     add(Phase3Case("A01-negated-payment-gate", "What is blocking approval?",
                    merge_partial_states(
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees",
@@ -567,8 +510,8 @@ def build_cases() -> list["Phase3Case"]:
                    ("unpaid_fee",), (), None,
                    must_not_claim=("Resolve outstanding fee", "required:"),
                    forbidden_classifications=(("unpaid_fee", "confirmed_gate"),)))
-    # A real gate is kept, but the gated stage comes from the portal's wording
-    # instead of defaulting to issuance.
+    # a real gate is kept, but the gated stage comes from the portal's wording instead of defaulting to
+    # issuance
     add(Phase3Case("A02-gate-stage-from-wording", "What is blocking approval?",
                    merge_partial_states(
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees",
@@ -584,7 +527,7 @@ def build_cases() -> list["Phase3Case"]:
                                                rows=[{"description": "Administrative hold released", "status": "Hold released"}])),
                    (), ("active_condition",), None,
                    must_not_claim=("confirmed gate",)))
-    # The latest attempt failed: an earlier pass must not resolve it away.
+    # the latest attempt failed: an earlier pass must not resolve it away
     add(Phase3Case("A04-later-failure-not-resolved", "Why is this permit not moving forward?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-003"].record_key, "inspections",
                                                rows=[
@@ -620,8 +563,8 @@ def build_cases() -> list["Phase3Case"]:
                    ("unpaid_fee",), (), None,
                    must_mention=("$100.00",),
                    must_not_claim=("$74.50",)))
-    # Two same-record reads disagree: the competition must surface, never be
-    # silently decided by whichever read landed first.
+    # two same-record reads disagree: the competition must surface, never be silently decided by whichever
+    # read landed first
     add(Phase3Case("A09-stale-fee-observation", "Are there unpaid fees?",
                    merge_partial_states(
                        extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees",
@@ -635,16 +578,13 @@ def build_cases() -> list["Phase3Case"]:
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees",
                                                rows=[{"name": "Permit balance", "amount": "$0.00", "paid": False, "due": True}])),
                    (), ("unpaid_fee",), None))
-    # "Pending" is not "missing": the requirement stays open as an uncertainty.
+    # "pending" is not "missing": the requirement stays open as an uncertainty
     add(Phase3Case("A11-required-document-pending", "What is blocking approval?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "documents",
                                                rows=[{"name": "Grading plan", "status": "Pending", "required": True}])),
                    (), ("missing_required_document",), None,
                    expect_uncertainty_on=("whether it satisfies the requirement",)))
 
-    # --- requirement-strength correctness (contract's last open metric) -----
-    # A failed inspection is an observed problem and supports a LIKELY
-    # correction + a POSSIBLE reinspection, never a REQUIRED reinspection.
     add(Phase3Case(
         "RS01-failed-inspection-strength",
         "What should happen next?",
@@ -698,11 +638,6 @@ def build_cases() -> list["Phase3Case"]:
         must_not_claim=("affects: final inspection",),
     ))
 
-    # --- checklist: absent sections are coverage, not failure ----------------
-    # "Test missing sections: no fees, no inspections, no comments, no documents,
-    # no history. Make sure absence of data is not treated as failure."
-    # (U01 already covers inspections; these add the other sections so the
-    # observed-empty claim is exercised everywhere it can appear.)
     add(Phase3Case("U06-empty-fees", "Are there unpaid fees?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "fees", rows=[])),
                    (), (), "answered",
@@ -726,7 +661,6 @@ def build_cases() -> list["Phase3Case"]:
                                                rows=[{"type": "Rough Electrical", "status": "Completed", "result": "Failed"}])),
                    ("failed_inspection",), (), "answered",
                    must_not_claim=("because", "due to")))
-    # "Test multi-blocker cases: missing document + pending review".
     add(Phase3Case("B06-missing-and-pending-document", "What is blocking approval?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "documents",
                                                rows=[
@@ -736,10 +670,6 @@ def build_cases() -> list["Phase3Case"]:
                    ("missing_required_document",), (), "answered",
                    expect_uncertainty_on=("whether it satisfies the requirement",),
                    must_not_claim=("review is late",)))
-    # Agency label variants for conditions and documents (the handoff's
-    # "next capture targets"): a real-world active hold label still gates, and
-    # an explicit missing label still blocks; unknown labels stay uncertainties
-    # (locked by tests/test_phase3_adversarial.py).
     add(Phase3Case("C01-hold-label-variant", "What is blocking approval?",
                    extract_partial_state(_page(GOLDEN_STATES["golden-002"].record_key, "conditions",
                                                rows=[{"description": "Site work suspended", "status": "On Hold"}])),
@@ -750,7 +680,6 @@ def build_cases() -> list["Phase3Case"]:
                                                rows=[{"name": "Grading plan", "status": "Not Uploaded", "required": True}])),
                    ("missing_required_document",), (), "answered"))
 
-    # --- flagship acceptance cases ------------------------------------------
     add(Phase3Case("FLAGSHIP-STATUS", "What is the current status?", flagship, (), (), "answered",
                    must_mention=("Issued",)))
     add(Phase3Case("FLAGSHIP-NEXT", "What should happen next?", flagship, ("failed_inspection", "unpaid_fee"), (), "answered",
@@ -776,7 +705,7 @@ def build_cases() -> list["Phase3Case"]:
 
 
 def _foreign_record_state() -> PermitState:
-    """Record A's state plus a rejected observation from record B (oracle U04)."""
+    """record a's state plus a rejected observation from record b (oracle u04)"""
     base = extract_partial_state(
         _page(GOLDEN_STATES["flagship-001"].record_key, "overview", fields={"record_number": "BLD-GOLD-001", "status": "Issued"})
     )

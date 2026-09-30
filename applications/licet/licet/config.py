@@ -1,9 +1,4 @@
-"""Environment-driven configuration for Licet.
-
-Use :func:`load_config` in application code so tests and future entry points
-can provide an explicit environment mapping. The compatibility constants at
-the bottom keep the Phase 0 modules simple until a runtime is introduced.
-"""
+"""environment-driven configuration for licet"""
 
 from __future__ import annotations
 
@@ -16,11 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# OpenAI model ids, verified against developers.openai.com/api/docs/models
-# (2026-09-20). Both support function calling, which is what the tool loop
-# needs; `gpt-5.6-sol` is the flagship tier and `gpt-5.4-mini` is the fast,
-# cheap, computer-use-capable fallback. Model ids are configuration, not code:
-# a bad slug used to fail at runtime with nothing having validated it.
+# openai model ids, verified against developers.openai.com/api/docs/models (2026-09-20)
 DEFAULT_AGENT_MODEL = "gpt-5.6-sol"
 DEFAULT_FALLBACK_MODEL = "gpt-5.4-mini"
 
@@ -36,10 +27,8 @@ class Config:
     accela_test_username: str | None = None
     accela_test_password: str | None = None
     max_steps: int = 25
-    # Reasoning effort for the primary model (none|low|medium|high|xhigh|max);
-    # ACA wizards need planning, so the default is above "none".
     reasoning_effort: str | None = None
-    # Seconds before a model call is abandoned, and how many times to retry.
+    # seconds before a model call is abandoned, and how many times to retry
     model_timeout_seconds: float = 120.0
     model_max_retries: int = 2
 
@@ -75,7 +64,7 @@ def _non_negative_int(value: str | None, default: int) -> int:
 
 
 def load_config(env: Mapping[str, str] | None = None) -> Config:
-    """Load settings from ``env`` or the process environment."""
+    """load settings from ``env`` or the process environment"""
     values = env if env is not None else os.environ
     return Config(
         agent_model=values.get("LICET_AGENT_MODEL", DEFAULT_AGENT_MODEL),

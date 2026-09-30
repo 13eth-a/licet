@@ -1,13 +1,4 @@
-"""Recon phase 2: open a Null Island back-office record (READ-ONLY).
-
-Maps the record detail layout — status, workflow, inspection history,
-and any ACA/public-access flags — so we know exactly what these test
-records contain and why anonymous ACA search doesn't see them.
-
-Nothing is modified: this only clicks record links and read tabs.
-
-Run:  .venv/bin/python scripts/ni_backoffice_recon2.py
-"""
+"""recon phase 2: open a null island back-office record (read-only)"""
 
 from __future__ import annotations
 
@@ -21,7 +12,7 @@ load_dotenv()
 
 AV_URL = "https://nullisland-test-av.accela.com/"
 USER, PASSWORD = "developer", "accela"
-TARGET_RECORD = "BLD26-00465"  # Permit Issuance per dashboard
+TARGET_RECORD = "BLD26-00465"
 SHOTS = os.path.join("logs", "ni_backoffice")
 
 
@@ -43,7 +34,6 @@ async def dump_frames(page, label: str) -> None:
     out(f"url: {page.url}")
     for i, fr in enumerate(page.frames):
         out(f"   frame[{i}] url={fr.url[:140]}")
-    # texts visible anywhere in the frame tree
     for i, fr in enumerate(page.frames):
         try:
             texts = await fr.eval_on_selector_all(
@@ -58,7 +48,7 @@ async def dump_frames(page, label: str) -> None:
             if uniq:
                 out(f"   frame[{i}] texts: {uniq[:70]}")
         except Exception:
-            continue  # about:blank / detached frame
+            continue
 
 
 async def find_first_visible(page, selectors: list[str]):
@@ -113,8 +103,6 @@ async def main() -> int:
         out("Logged in.")
         await shoot(page, f"{stamp}_10_logged_in")
 
-        # 1. click the target record on the dashboard (recent-records list is
-        #    Angular-rendered and lazy — give it a long window).
         rec_sel = f"text={TARGET_RECORD}"
         on_dashboard = True
         try:
@@ -133,7 +121,6 @@ async def main() -> int:
                 await page.wait_for_timeout(8000)
             await dump_frames(page, "after Record nav")
             await shoot(page, f"{stamp}_11_record_nav")
-            # search input may be in the SPA shell or a JSP frame
             s = None
             for scope in [page, *page.frames]:
                 try:
@@ -170,7 +157,6 @@ async def main() -> int:
                 await dump_frames(page, "empty results")
                 return 1
 
-        # click the first VISIBLE match (the SPA keeps hidden template nodes)
         scope = page if on_dashboard else None
         clicked = False
         if scope is not None:
@@ -211,8 +197,6 @@ async def main() -> int:
                 continue
         out("   [dump] per-frame HTML saved")
 
-        # 2. look for an Inspections tab/section and open it (read-only)
-        #    try the main document and each child frame (JSP portlets live in iframes)
         insp = await find_first_visible(
             page,
             [

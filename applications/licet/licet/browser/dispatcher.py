@@ -1,30 +1,4 @@
-"""The single choke point between the planner and the browser.
-
-This is where Phase 0 review §1 gets fixed for real. The planner emits generic
-verbs (`click`, `type`, `select`), but risk is a property of *what the click
-means* (`submit_application`, `enter_payment_details`). So every call goes
-through:
-
-1. **resolve** — map the call onto a semantic action, in priority order:
-   explicit `intent` → dangerous target text → a benign read label → the
-   flow's commit point. Unresolvable calls are blocked, not guessed.
-
-   The order matters in both directions. Dangerous text is checked before the
-   commit-point rule so that a "Make a Payment" link on the review step is not
-   mistaken for the submission; the commit-point rule then catches the wizard's
-   generic `Continue` control, which no text heuristic would identify.
-2. **authorize** — `licet/safety/guard.py` consults `risk_levels`; anything
-   consequential is held (recording `pending_approval`, which trips
-   APPROVAL_REQUIRED) and never reaches the browser until a human grants it.
-3. **execute** — only then does the client act.
-4. **record** — update flow position, successes, failures and steps so
-   `stop_conditions` and the run log see real state.
-
-Because the guard runs here rather than in the planner's good intentions, the
-NI apply wizard's commit point — a single `Continue` on `CapConfirm` that
-issues a record with no payment gate — is an application submission and is
-held, even though the model only asked to `click`.
-"""
+"""the single choke point between the planner and the browser"""
 
 from __future__ import annotations
 
@@ -46,7 +20,6 @@ from licet.safety.risk_levels import (
     classify,
 )
 
-# Tool calls that are inherently one semantic action.
 TOOL_DEFAULT_ACTIONS: dict[str, str] = {
     "navigate": "navigate",
     "read_page": "read_record",
@@ -54,21 +27,16 @@ TOOL_DEFAULT_ACTIONS: dict[str, str] = {
     "wait": "wait",
 }
 
-# Actions whose own success flag is not trusted: the dispatcher re-reads the
-# portal instead of the planner having to remember to, matching
-# `docs/architecture.md`'s "Verify Outcome" stage. Scheduling is included
-# explicitly (it is AUTOMATIC, not CONFIRMATION_REQUIRED); everything else
-# consequential enough to require approval is verified too, so this set stays
-# in sync with `risk_levels` automatically.
+# actions whose own success flag is not trusted: the dispatcher re-reads the portal instead of the planner
+# having to remember to, matching `docs/architecture.md`'s "verify outcome" stage
 VERIFY_AFTER_ACTIONS: frozenset[str] = frozenset(
     {"schedule_inspection", "reschedule_inspection"}
     | {action for action in KNOWN_ACTIONS if classify(action) is RiskLevel.CONFIRMATION_REQUIRED}
 )
 
-# Read-only UI labels that look risky to a substring match but are not. Matched
-# case-insensitively against the whole target text.
+# read-only ui labels that look risky to a substring match but are not
 BENIGN_TARGETS: dict[str, str] = {
-    "inspections": "read_record",  # Phase 3 targeted retrieval: read-only section label
+    "inspections": "read_record",
     "payments": "read_record",
     "payment": "read_record",
     "fees": "read_record",
@@ -84,8 +52,7 @@ BENIGN_TARGETS: dict[str, str] = {
     "logout": "logout",
 }
 
-# Dangerous phrases -> semantic action. Deliberately phrase-level (not bare
-# "pay", which would match the benign "Payments" section link).
+# dangerous phrases -> semantic action
 DANGEROUS_PHRASES: tuple[tuple[str, str], ...] = (
     ("withdraw", "withdraw_application"),
     ("cancel", "cancel_inspection"),
@@ -120,10 +87,10 @@ class ToolCall:
 
 @dataclass(frozen=True)
 class Resolution:
-    """What a tool call means, and how we decided."""
+    """what a tool call means, and how we decided"""
 
     action: str | None
-    provenance: str  # intent | commit_point | benign_target | target_text | tool_default | unresolved
+    provenance: str
     context: str
 
     def as_dict(self) -> dict[str, Any]:
@@ -134,7 +101,6 @@ class Resolution:
         }
 
 
-# Ordering used to decide which of two readings of one call is authoritative.
 _RISK_ORDER: dict[RiskLevel, int] = {
     RiskLevel.AUTOMATIC: 0,
     RiskLevel.CONFIRMATION_REQUIRED: 1,
@@ -147,27 +113,16 @@ def _risk_rank(action: str | None) -> int:
 
 
 def _target_resolution(call: ToolCall, state: AgentState, on_commit_step: bool, flow: Any) -> Resolution | None:
-    """What the control being operated *is*, read from its own text.
-
-    Nothing here comes from the caller's `intent`: the target text, the chosen
-    option value and the flow's commit point are properties of the page. This is
-    the half of classification a model cannot relabel.
-    """
+    """what the control being operated *is*, read from its own text"""
     if call.name not in {"click", "type", "select"}:
         return None
     target = str(call.args.get("target") or "").strip().lower()
-    # 1. dangerous target text (target and/or the chosen option value) —
-    #    checked before the commit-point rule so a payment/cancel link on a
-    #    commit page is not misread as the submission
     haystack = f"{target} {str(call.args.get('value') or '').lower()}"
     for phrase, action in DANGEROUS_PHRASES:
         if re.search(rf"\b{re.escape(phrase)}\b", haystack):
             return Resolution(action, "target_text", f"target text contains '{phrase}'")
-    # 2. benign read labels
     if target in BENIGN_TARGETS:
         return Resolution(BENIGN_TARGETS[target], "benign_target", f"'{target}' is a read-only section")
-    # 3. the flow's commit point: the wizard's generic Continue control, which
-    #    issues the record on NI with no payment gate
     if on_commit_step:
         return Resolution(flow.commit_action, "commit_point",
                           f"{flow.name} step '{state.flow_step}' is its commit point")
@@ -175,9 +130,9 @@ def _target_resolution(call: ToolCall, state: AgentState, on_commit_step: bool, 
 
 
 def resolve_action(call: ToolCall, state: AgentState) -> Resolution:
-    # A tool that does not exist is a different error from an action that cannot
-    # be classified: telling a model to "supply intent=" on a tool name it
-    # invented is advice it cannot follow (found by the planner's retry test).
+    # a tool that does not exist is a different error from an action that cannot be classified: telling a
+    # model to "supply intent=" on a tool name it invented is advice it cannot follow (found by the
+    # planner's retry test)
     if call.name not in TOOL_NAMES:
         return Resolution(
             None,
@@ -194,9 +149,8 @@ def resolve_action(call: ToolCall, state: AgentState) -> Resolution:
             return Resolution(
                 None, "unresolved", f"intent '{intent}' is not a classified action"
             )
-        # A commit step cannot be satisfied by an intent that does not
-        # acknowledge the commit: otherwise `intent="read_record"` on the review
-        # step would submit the application under a harmless label.
+        # a commit step cannot be satisfied by an intent that does not acknowledge the commit: otherwise
+        # `intent="read_record"` on the review step would submit the application under a harmless label
         if on_commit_step and intent not in COMMIT_ACKNOWLEDGING_ACTIONS:
             return Resolution(
                 flow.commit_action,
@@ -204,10 +158,8 @@ def resolve_action(call: ToolCall, state: AgentState) -> Resolution:
                 f"{flow.name} step '{state.flow_step}' commits, and intent "
                 f"'{intent}' does not acknowledge that",
             )
-        # An intent may refine an ambiguous control, but it may never *lower* what
-        # the control's own text says it does. The model supplies both the target
-        # and the intent, so without this a commit could be relabelled as a read
-        # and pass the guard as an automatic action.
+        # an intent may refine an ambiguous control, but it may never *lower* what the control's own text
+        # says it does
         from_target = _target_resolution(call, state, on_commit_step, flow)
         if from_target is not None and _risk_rank(from_target.action) > _risk_rank(intent):
             return Resolution(
@@ -241,7 +193,7 @@ def _key_args(args: dict[str, Any]) -> dict[str, str]:
 
 
 class ToolDispatcher:
-    """Guard + execute + record. The only path from the planner to the browser."""
+    """guard + execute + record"""
 
     def __init__(
         self,
@@ -252,9 +204,6 @@ class ToolDispatcher:
     ) -> None:
         self.client = client
         self.authorize_fn = authorize_fn
-        # Phase 0 checklist: "set up logging immediately". A logger here means
-        # every step the agent actually takes is recorded by the only code path
-        # that can take one, instead of by each caller's good intentions.
         self.logger = logger
 
     async def execute(
@@ -276,8 +225,6 @@ class ToolDispatcher:
 
         if not auth.allowed:
             state.record_failure(call.name, auth.reason, args=key_args)
-            # An unclassified action is a caller error; a held action is a
-            # safety decision. Keep the two distinguishable in the log.
             kind = (
                 BrowserError.AUTH_REQUIRED
                 if auth.decision is GuardDecision.REQUIRE_APPROVAL
@@ -311,8 +258,7 @@ class ToolDispatcher:
             state.record_success(call.name, args=key_args)
             state.record_step(f"{call.name} {call.args.get('target') or call.args.get('url') or ''}".strip())
             if auth.approved:
-                # consume the grant so APPROVAL_REQUIRED does not fire on the
-                # action we just performed
+                # consume the grant so approval_required does not fire on the action we just performed
                 state.clear_approval()
             failure_screenshot = None
         else:
@@ -322,10 +268,7 @@ class ToolDispatcher:
                 else result.error.message if result.error else "unknown tool failure"
             )
             state.record_failure(call.name, message, args=key_args)
-            # Capture the failure state for the run log. Best-effort: a
-            # screenshot failure must never mask the real error, and this only
-            # fires on actual browser failures (never on blocked/held actions,
-            # which return before this point), so it stays rare by construction.
+            # capture the failure state for the run log
             try:
                 failure_screenshot = await self.client.screenshot()
             except Exception:  # noqa: BLE001
@@ -333,8 +276,6 @@ class ToolDispatcher:
 
         outcome = {
             **result.as_dict(),
-            # Stable cross-provider envelope. ``data`` remains the adapter
-            # payload, while these fields are what traces and harnesses consume.
             "action": call.name,
             "observation": str((result.data or {}).get("text") or ""),
             "blocked": False,
@@ -345,9 +286,7 @@ class ToolDispatcher:
         if verification is not None:
             outcome["verification"] = verification.as_dict()
             if not verification.ok:
-                # A state-changing action is not a success merely because the
-                # provider accepted the click. If the mandatory re-read fails,
-                # keep the planner from assuming the transition happened.
+                # a state-changing action is not a success merely because the provider accepted the click
                 verification_error = verification.error or ToolError(
                     BrowserError.UNKNOWN, "post-action verification failed"
                 )
@@ -366,7 +305,7 @@ class ToolDispatcher:
     def _log(
         self, state: AgentState, call: ToolCall, outcome: dict[str, Any]
     ) -> None:
-        """Record one step: what was asked, what it meant, what happened."""
+        """record one step: what was asked, what it meant, what happened"""
         if self.logger is None:
             return
         error = (outcome.get("error") or {}).get("message")
@@ -384,9 +323,8 @@ class ToolDispatcher:
                     "url": outcome.get("url"),
                     "error": outcome.get("error"),
                     "authorization": outcome.get("authorization"),
-                    # SolariClient's bounded post-action verifier lives inside
-                    # ToolResult.data; retain only its compact diagnostics, not
-                    # the DOM snapshot or full provider payload.
+                    # solariclient's bounded post-action verifier lives inside toolresult.data; retain
+                    # only its compact diagnostics, not the dom snapshot or full provider payload
                     "action_verification": (outcome.get("data") or {}).get("verification"),
                     "failure_screenshot": outcome.get("screenshot_path"),
                     "verified": "verification" in outcome,
@@ -406,7 +344,7 @@ class ToolDispatcher:
         latency_ms: float | None = None,
         stop_condition: str | None = None,
     ) -> None:
-        """Close out a run with its verdict (and any stop condition)."""
+        """close out a run with its verdict (and any stop condition)"""
         if self.logger is None:
             return
         self.logger.log(
@@ -468,19 +406,8 @@ class ToolDispatcher:
         )
 
     def _sync_position(self, state: AgentState, result: ToolResult) -> None:
-        """Keep flow position in state — URLs alone cannot express it.
-
-        The client's content-derived position wins: inside the scheduling dialog
-        every step shares one URL, so URL-only tracking would report
-        `select_record` through the whole wizard and the commit-point rule could
-        never fire. Falling back to the URL keeps the non-`read_page` verbs
-        (navigate, click) updating position as before.
-        """
-        # The URL of the page actually being driven. The guard decides whether a
-        # state-changing action may run from `state.current_url`, so the only
-        # component that reads the page must record it: without this, every call
-        # the adapter made looked like an unknown environment, which is why the
-        # environment rule could not be applied at the primitive layer.
+        """keep flow position in state — urls alone cannot express it"""
+        # the url of the page actually being driven
         url = result.url or (result.data or {}).get("url")
         if url:
             state.current_url = str(url)
@@ -492,17 +419,15 @@ class ToolDispatcher:
         if position is None:
             return
         if _is_regression(state, position):
-            # A click inside the scheduling dialog cannot refine the step (every
-            # step shares `CapDetail.aspx?IsToShowInspection=yes`, which only
-            # says `select_record`), so a URL-only position must not overwrite
-            # the content-derived one. Otherwise the flow position would bounce
-            # back to the first step after every click.
+            # a click inside the scheduling dialog cannot refine the step (every step shares
+            # `capdetail.aspx?istoshowinspection=yes`, which only says `select_record`), so a url-only
+            # position must not overwrite the content-derived one
             return
         state.enter_flow(position.flow, position.step, position.page_number)
 
 
 def _is_regression(state: AgentState, position: accela.FlowPosition) -> bool:
-    """True when applying `position` would move an existing flow backwards."""
+    """true when applying `position` would move an existing flow backwards"""
     flow = accela.FLOWS.get(state.flow_name or "")
     if flow is None or flow.name != position.flow:
         return False

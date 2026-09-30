@@ -1,16 +1,4 @@
-"""Is anything actually bookable? — read-only availability sweep.
-
-Walks the real stack to the wizard's calendar for each record and reports what
-the calendar offers. The flagship demo ("book the earliest available inspection
-next week") depends entirely on this, and if every day cell is inactive the goal
-is unachievable on this environment — something the agent must be able to say
-instead of hunting the calendar forever.
-
-Nothing is confirmed or scheduled: the script never clicks a day, a time or a
-Continue, and leaves by navigating away.
-
-Run:  .venv/bin/python scripts/ni_calendar_probe.py [--records ID,ID] [--click-day]
-"""
+"""is anything actually bookable? — read-only availability sweep"""
 
 from __future__ import annotations
 
@@ -82,7 +70,7 @@ class Sweep:
         return saved
 
     async def walk_to_calendar(self, dispatcher, record: str) -> dict:
-        """Select a type and continue; stop at the calendar."""
+        """select a type and continue; stop at the calendar"""
         await self.act(
             dispatcher,
             {"name": "navigate", "args": {"url": accela.INSPECTION_ENTRY_URL}},

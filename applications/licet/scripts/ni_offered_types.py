@@ -1,14 +1,4 @@
-"""Read-only: dump the FULL scheduling-wizard inspection-type grid for records.
-
-The wizard's type grid paginates at 10 rows, so `read_page`'s parsed
-`inspection_types` only ever shows page 1. This probe walks a record to the
-wizard's first step and saves the popup frame's complete HTML so every offered
-type (and any second page) can be enumerated offline. It never selects a type,
-a date or a time, and never clicks the commit.
-
-Run:
-    .venv/bin/python scripts/ni_offered_types.py --records BLD26-00480,BLD26-00481
-"""
+"""read-only: dump the full scheduling-wizard inspection-type grid for records"""
 from __future__ import annotations
 
 import asyncio
@@ -119,8 +109,8 @@ async def main() -> int:
                 found = accela.parse_inspection_types(accela.parse_fields(html))
                 names = [option.name for option in found]
 
-            # The grid paginates at 10 rows; walk any extra pages so every
-            # offered type is enumerated, not just page 1.
+            # the grid paginates at 10 rows; walk any extra pages so every offered type is enumerated, not
+            # just page 1
             if grid_frame is not None:
                 for page_no in range(2, 5):
                     try:

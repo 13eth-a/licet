@@ -1,6 +1,4 @@
-"""Read-only architecture counterexamples. No browser, network, or model calls.
-Exit 1 means at least one Phase 6 safety invariant remains violated.
-"""
+"""read-only architecture counterexamples"""
 from __future__ import annotations
 import argparse
 from copy import deepcopy
@@ -43,10 +41,9 @@ def review():
                             inspection_type='Rough Electrical', inspection_id='I-1',
                             existing_date='2026-09-25', record_key='agency:A')
     observed = RecordIdentity('P-1', 'agency:A', 'Rough Electrical', 'I-1', '2026-09-25')
-    # Re-targeted after the response: the approval is now taken from the engine's
-    # own issuance path and the copy is taken *before* the first use, so the
-    # check cannot be satisfied by the object's `used` flag. The invariant under
-    # test -- a copy cannot authorize a second execution -- is unchanged.
+    # re-targeted after the response: the approval is now taken from the engine's own issuance path and
+    # the copy is taken *before* the first use, so the check cannot be satisfied by the object's `used`
+    # flag
     engine = PolicyEngine(environment=Environment.SANDBOX)
     approval = engine.decide(action, observed_identity=observed).confirmation
     other = replace(action, existing_date='2026-09-27', record_key='agency:B')
@@ -66,8 +63,8 @@ def review():
                               existing_inspection_id='I-1', record_key='agency:A')
     before = InspectionSnapshot('P-1', 'I-1', 'Rough Electrical', 'Cancelled', record_key='agency:A')
     foreign = replace(before, inspection_id='I-2', record_key='agency:B')
-    # Re-targeted after the response: verification now also compares the
-    # appointment the action named, so the probe passes the action in.
+    # re-targeted after the response: verification now also compares the appointment the action named, so
+    # the probe passes the action in
     matched = InspectionActionExecutor._matches('cancel', before, foreign, cancel)
     check('independent verification rejects foreign inspection and record', not matched, f'matched={matched}')
     ledger = MutationLedger()
@@ -75,7 +72,7 @@ def review():
     second = ledger.begin(action)
     check('duplicate reservation cannot claim second mutation slot', first.allowed and not second.allowed,
           f'first={first.allowed}, second={second.allowed}')
-    # Positive controls ensure this probe does not simply expect every action denied.
+    # positive controls ensure this probe does not simply expect every action denied
     engine = PolicyEngine(environment=Environment.LIVE_READ_ONLY)
     check('positive control: live reads remain allowed', engine.decide('READ_FEES').allowed, 'READ_FEES')
     check('positive control: central live mutation blocked', not engine.decide(action).allowed, 'CANCEL_INSPECTION')

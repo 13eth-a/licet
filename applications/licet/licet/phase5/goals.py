@@ -1,4 +1,4 @@
-"""Conservative goal parsing: preserve restrictions, abstain on unknown actions."""
+"""conservative goal parsing: preserve restrictions, abstain on unknown actions"""
 import re
 from datetime import date, timedelta
 from licet.phase5.state import Goal
@@ -20,24 +20,17 @@ def parse_goal(text: str, *, reference: date | None = None) -> Goal:
             prohibited.add(operation_name)
     if no_changes:
         prohibited.update(("schedule", "reschedule", "cancel"))
-    # Remove restrictions before detecting the requested positive operation.
+    # remove restrictions before detecting the requested positive operation
     positive = re.split(r"\b(?:without|but|do not|don't|never)\b", low)[0]
     operation = "reschedule" if re.search(r"\breschedule\b", positive) else "cancel" if re.search(r"\bcancel\b", positive) else "schedule"
-    # "Book" is the everyday citizen word for scheduling a portal inspection
-    # (PROMPT-003); treating it as the same explicit operation keeps
-    # autonomous=True for "Book the inspection" while all other verbs still
-    # require their own explicit mention. Prohibitions above only match
-    # schedule/reschedule/cancel spellings, so "book" adds no new ban.
     explicit = bool(re.search(r"\b(?:book|schedule|reschedule|cancel)\b", positive))
     broad = any(x in positive for x in (
         "get ready", "ready for", "do everything possible", "fix whatever",
         "handle the outstanding inspection", "permit moving", "as close to approval",
         "as close as possible", "safe progress"))
     autonomous = explicit or broad
-    # A request that contradicts its own prohibition has no single reading; it is
-    # reported as CONSTRAINT_CONFLICT rather than silently interpreted either way
-    # (Phase 6 checklist). `detect_constraint_conflict` is the shared definition,
-    # so the run and the policy layer cannot disagree about the same sentence.
+    # a request that contradicts its own prohibition has no single reading; it is reported as
+    # constraint_conflict rather than silently interpreted either way (phase 6 checklist)
     clarification = detect_constraint_conflict(text)
     autonomous = autonomous and not no_changes
     record = re.search(r"\bpermit\s+([A-Z]+\d*[\w]*-\d[\w-]*|\d{5,})\b", text, re.I)
@@ -51,10 +44,8 @@ def parse_goal(text: str, *, reference: date | None = None) -> Goal:
     instruction = temporal.group() if temporal else "earliest available" if "earliest available" in low else None
     dates = normalize_date_constraints(instruction, reference=reference)
     end = dates.end - timedelta(days=1) if instruction and instruction.lower().startswith("before ") and dates.end else dates.end
-    # A leading "read only:" is the *grant* (an inquiry permission), not an
-    # extra restriction on a mutation (PROMPT-006). Scan for restriction words
-    # in the goal with that qualifier removed so "Read only: what is blocking
-    # permit P-1?" is an answerable read instead of a clarification loop.
+    # a leading "read only:" is the *grant* (an inquiry permission), not an extra restriction on a
+    # mutation (prompt-006)
     restricted = re.sub(r"^\s*read[- ]only\s*[:,]?\s*", "", low)
     if re.search(r"\b(?:except|unless|only|avoid|no later|no earlier)\b|\d{4}-\d{2}-\d{2}", restricted):
         clarification = "Resolve the additional restriction before mutation"

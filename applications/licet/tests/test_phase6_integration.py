@@ -1,20 +1,4 @@
-"""Phase 2-6 flagship integration, executed against fake I/O.
-
-The checklist's own task, end to end:
-
-> "Find the permit at 123 Main Street, figure out what's blocking it, and do
-> everything you safely can without spending money."
-
-Driven through the real Phase 2 lookup (address mode), the real Phase 3
-retrieval/reasoning, the real Phase 4 executor + policy engine and the real
-Phase 5 planner. The only fake is the browser client and the portal; every gate
-is the production one.
-
-The sandbox leg must locate the record by address, analyze its state, schedule
-the next inspection and verify the final state — while never paying. The live
-leg runs the same task against a live-read-only portal and must prepare but not
-execute: zero submissions.
-"""
+"""phase 2-6 flagship integration, executed against fake i/o"""
 from __future__ import annotations
 
 import asyncio
@@ -56,7 +40,7 @@ GOAL = (
 
 
 class Portal:
-    """Scripted inspection portal that identifies its own environment."""
+    """scripted inspection portal that identifies its own environment"""
 
     def __init__(self, environment: Environment) -> None:
         self.environment = environment
@@ -104,8 +88,6 @@ async def _flagship(environment: Environment):
         )
 
     def preflight(world):
-        # Scheduling this inspection is free; the outstanding fee is a separate
-        # blocker and a payment action, which the no-spend constraint forbids.
         return Preflight(RECORD_KEY, world.snapshot_id, operation_key(world), True, (DATE,), 0, False)
 
     capabilities = LicetCapabilities(lookup=lookup, retrieval=retrieval,
@@ -119,21 +101,17 @@ async def _flagship(environment: Environment):
 def test_flagship_task_completes_in_a_sandbox_without_paying():
     run, portal = asyncio.run(_flagship(Environment.SANDBOX))
 
-    # Phase 2: the record was located by address and independently verified.
     assert run.world.permit_verified
     assert run.world.record_key == RECORD_KEY
-    # Phase 3: state read and blockers interpreted.
     assert run.world.permit is not None and run.world.reasoning is not None
-    # Phase 4/5: the next inspection was scheduled and the final state re-read.
     assert run.status is Status.SUCCESS, run.report()
     assert len(portal.submits) == 1
     assert portal.submits[0].action_type == "schedule"
     assert run.world.verified_inspection is not None
     assert run.world.verified_inspection.record_key == run.world.record_key
 
-    # The no-spend constraint: no payment action was ever part of the run, and a
-    # payment proposal is refused by the same instruction the run was started
-    # with — the $74.50 fee remains unpaid.
+    # the no-spend constraint: no payment action was ever part of the run, and a payment proposal is
+    # refused by the same instruction the run was started with — the $74.50 fee remains unpaid
     assert all("pay" not in action.action_type for action in portal.submits)
     engine = PolicyEngine(environment=Environment.SANDBOX,
                           constraints=UserConstraints.from_text(GOAL))
@@ -149,8 +127,8 @@ def test_flagship_task_on_a_live_portal_prepares_but_does_not_execute():
     assert run.status is not Status.SUCCESS
     assert run.world.result is None or not run.world.result.success
 
-    # The proposed action would have been blocked by the environment gate, not by
-    # a missing plan: the run prepared the scheduling action and stopped.
+    # the proposed action would have been blocked by the environment gate, not by a missing plan: the run
+    # prepared the scheduling action and stopped
     engine = PolicyEngine(environment=Environment.LIVE_READ_ONLY)
     decision = engine.decide(ProposedAction("SCHEDULE_INSPECTION", permit_id=NUMBER,
                                             target=TYPE, inspection_type=TYPE))

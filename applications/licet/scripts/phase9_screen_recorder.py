@@ -1,4 +1,4 @@
-"""Read-only continuous Chrome screencast; never sends browser input."""
+"""read-only continuous chrome screencast; never sends browser input"""
 import asyncio
 import base64
 import json

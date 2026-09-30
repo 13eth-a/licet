@@ -1,15 +1,4 @@
-"""Phase 7 portal-weirdness tests (portal integration).
-
-The checklist's portal integration lane: Accela states that are not plan failures but portal
-behaviour — unexplained redirects, session expiry (redirect *and* modal),
-partial AJAX rendering, stale/empty result tables, unexpected modals, popups
-and new tabs, postback-wizard position. Every classifier here runs on plain
-text/URL observations, so all of it is offline and deterministic.
-
-The planner-integration tests pin the adversarial review-handoff fix: the loop key is the
-*settled* page identity, not a live render token and not a URL that never
-changes inside a postback wizard.
-"""
+"""phase 7 portal-weirdness tests (portal integration)"""
 
 from __future__ import annotations
 
@@ -46,9 +35,6 @@ HOME = "https://aca-test.accela.com/nullisland/default.aspx"
 SEARCH = accela.search_url()
 
 
-# --- classification: the Accela states the portal integration lane must recognise ----------
-
-
 def test_async_section_still_loading_is_flagged_not_evidence():
     state = PortalState.from_observation(
         {"url": DETAIL, "text": "Inspections | Loading... | Payments", "loading": ["loading..."]}
@@ -61,7 +47,7 @@ def test_async_section_still_loading_is_flagged_not_evidence():
 
 
 def test_empty_table_then_rows_is_inflight_then_settled():
-    """The checklist's wording: rows are empty for 2 seconds, then populate."""
+    """the checklist's wording: rows are empty for 2 seconds, then populate"""
     pending = PortalState.from_observation(
         {"url": DETAIL, "text": "Inspections grid: No data available in table"}
     )
@@ -78,13 +64,12 @@ def test_empty_table_then_rows_is_inflight_then_settled():
 
 
 def test_stale_result_table_is_never_a_fact():
-    """A grid that rendered empty must not become \"no inspections\"."""
+    """a grid that rendered empty must not become \"no inspections\""""
     from licet.browser.accela import declares_no_inspections, detect_empty_table
 
     text = "Inspections | No data available in table"
-    # The declared-empty vocabulary does not claim the grid is empty...
+    # the declared-empty vocabulary does not claim the grid is empty
     assert not declares_no_inspections(text)
-    # ...the in-flight vocabulary does, and it routes a re-settle.
     assert detect_empty_table(text)
     assert PortalFinding.EMPTY_TABLE_PENDING_ROWS in PortalState.from_observation(
         {"url": DETAIL, "text": text}
@@ -102,7 +87,7 @@ def test_session_expiry_as_redirect_is_terminal():
 
 
 def test_session_expiry_as_modal_is_terminal_without_redirect():
-    """Session death does not always navigate; the modal wording is caught."""
+    """session death does not always navigate; the modal wording is caught"""
     state = PortalState.from_observation(
         {"url": DETAIL, "text": "Warning: your session is about to expire. Do you want to stay logged in?"}
     )
@@ -136,7 +121,7 @@ def test_portal_home_redirect_is_detected_and_routed():
     assert PortalFinding.PORTAL_HOME_REDIRECT in state.findings
     route = route_recovery(state)
     assert route.strategy == "RECOVER_FROM_HOME" and not route.terminal
-    # The search page is a legitimate page, not "home".
+    # the search page is a legitimate page, not "home"
     assert PortalFinding.PORTAL_HOME_REDIRECT not in PortalState.from_observation(
         {"url": SEARCH, "text": "search for permits"}
     ).findings
@@ -159,14 +144,14 @@ def test_popup_open_is_reported():
 
 
 def test_wrong_page_is_relational_not_absolute():
-    """Wrong-page needs the record the run verified to compare against."""
+    """wrong-page needs the record the run verified to compare against"""
     other = "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&capID1=REC26&capID2=00000&capID3=00099"
     state = PortalState.from_observation(
         {"url": other, "text": "Record Detail", "expected_record_number": "REC26/00000/00014"}
     )
     assert PortalFinding.WRONG_PAGE in state.findings
     assert route_recovery(state).strategy == "RETURN_TO_RECORD"
-    # The right record is not wrong, even with the flag set.
+    # the right record is not wrong, even with the flag set
     right = PortalState.from_observation(
         {"url": DETAIL, "text": "Record Detail", "expected_record_number": "REC26/00000/00014"}
     )
@@ -174,25 +159,22 @@ def test_wrong_page_is_relational_not_absolute():
 
 
 def test_finding_worst_first_ordering_session_beats_modal():
-    """A dead session with a dialog on top must stop, not close the dialog."""
+    """a dead session with a dialog on top must stop, not close the dialog"""
     state = PortalState.from_observation(
         {"url": DETAIL, "text": "session has expired — warning dialog", "notices": ["session has expired"]}
     )
     assert route_recovery(state).strategy == "STOP"
 
 
-# --- settled page identity: the adversarial review-handoff fix -------------------------
-
-
 def test_identity_is_stable_across_text_churn_and_render_tokens():
-    """The same settled page yields the same key whatever the text says."""
+    """the same settled page yields the same key whatever the text says"""
     a = settled_browser_state({"url": DETAIL, "text": "Loading... spinner 17:42:03.114"})
     b = settled_browser_state({"url": DETAIL, "text": "Rough Electrical | Failed"})
     assert PageIdentity.from_observation(a).key() == PageIdentity.from_observation(b).key()
 
 
 def test_wizard_step_change_changes_the_key_even_though_the_url_does_not():
-    """ACA's postback wizard shares one URL across every step."""
+    """aca's postback wizard shares one url across every step"""
     step1 = PageIdentity.from_observation(
         {"url": DETAIL, "text": "Available Inspection Types (13)", "flow": {"flow": "schedule_inspection", "step": "select_type"}}
     )
@@ -204,7 +186,7 @@ def test_wizard_step_change_changes_the_key_even_though_the_url_does_not():
 
 
 def test_display_label_churn_does_not_change_record_identity():
-    """000000014 and BLD26-00472 are spellings, not identities: capIDs are."""
+    """000000014 and bld26-00472 are spellings, not identities: capids are"""
     ref = accela.parse_ref_from_url(DETAIL)
     assert ref["capID1"] == "REC26"
     identity = PageIdentity.from_observation({"url": DETAIL, "text": "Record BLD26-00472"})
@@ -223,15 +205,13 @@ def test_identity_from_world_falls_back_to_path_not_query():
 
 
 def test_loop_detection_survives_a_live_render_token():
-    """The regression the adversarial review handoff named: a transient string must not
-    make every loop occurrence unique."""
+    """the regression the adversarial review handoff named: a transient string must not make every loop occurrence unique"""
     controller = RecoveryController(budgets=RecoveryBudgets(max_no_progress=99))
-    # Legacy caller shape: raw page text as the page-state string.
     for text in ("Loading... 17:42:03", "Loading... 17:42:04", "Loading... 17:42:05"):
         controller.loops.observe("READ_INSPECTIONS", text, KEY)
     assert not controller.loops.observe("READ_INSPECTIONS", "Loading... 17:42:06", KEY)
 
-    # Settled caller shape: the same settled identity every time.
+    # settled caller shape: the same settled identity every time
     controller2 = RecoveryController()
     settled = identity_from_world(World(browser_state={"active_section": "summary", "url": DETAIL}))
     assert not controller2.loop_observed("READ_INSPECTIONS", settled, KEY)
@@ -245,9 +225,6 @@ def test_transient_identity_audit_names_the_sources():
     assert all({"state", "transient_signal", "mitigation"} <= set(entry) for entry in audit)
 
 
-# --- checkpoint fingerprints join the same identity --------------------------
-
-
 def test_checkpoint_fingerprint_adapts_to_page_identity():
     from licet.phase7.recovery import PageFingerprint
 
@@ -257,9 +234,6 @@ def test_checkpoint_fingerprint_adapts_to_page_identity():
     assert identity.url_path == "/NULLISLAND/Cap/CapDetail.aspx"
     assert identity.record_number == "REC26/00000/00014"
     assert identity.key() == "/NULLISLAND/Cap/CapDetail.aspx|REC26/00000/00014|-|-"
-
-
-# --- read_page integration: the real observation shape -----------------------
 
 
 class _FakeFrame:
@@ -329,11 +303,8 @@ def test_read_page_flags_the_empty_grid_and_the_home_redirect():
     assert "portal_home_redirect" in data["portal_findings"]
 
 
-# --- planner integration: routes downgrade, never retry ----------------------
-
-
 class _PortalScripted(ScriptedCapabilities):
-    """A scripted capability that also writes browser_state like the runner."""
+    """a scripted capability that also writes browser_state like the runner"""
 
     def __init__(self, browser_state, **kwargs):
         super().__init__(**kwargs)
@@ -346,8 +317,7 @@ class _PortalScripted(ScriptedCapabilities):
 
 
 def test_planner_session_modal_downgrades_a_read_failure_to_a_stop():
-    """A read fails while the page shows a session modal: the run must stop
-    (AUTH_REQUIRED shape) rather than retry or replan through a dead session."""
+    """a read fails while the page shows a session modal: the run must stop (auth_required shape) rather than retry or replan through a dead session"""
     cap = _PortalScripted(
         {"url": DETAIL, "text": "your session is about to expire"},
         failure=Action.READ_PERMIT_STATE,
@@ -358,9 +328,8 @@ def test_planner_session_modal_downgrades_a_read_failure_to_a_stop():
     route_event = next(t for t in result.trace if t.get("event") == "PORTAL_RECOVERY_ROUTE")
     assert route_event["route"]["terminal"] is True
     assert route_event["route"]["strategy"] == "STOP"
-    # The terminal route was recorded and the observation downgraded (the
-    # fixture *returns* a failed observation, so there is no FAILURE event —
-    # the FAILed step trace entry carries the message instead).
+    # the terminal route was recorded and the observation downgraded (the fixture *returns* a failed
+    # observation, so there is no failure event — the failed step trace entry carries the message instead)
     step_event = next(t for t in result.trace if t.get("action") == Action.READ_PERMIT_STATE.value)
     assert step_event["message"] == (
         "session expiry rendered as a modal: re-authentication is a user action, "
@@ -369,8 +338,7 @@ def test_planner_session_modal_downgrades_a_read_failure_to_a_stop():
 
 
 def test_planner_unsettled_page_is_not_treated_as_a_hard_failure():
-    """A read fails on a still-rendering page: the observation is marked
-    evidence-free (message carries the settle route) instead of terminal."""
+    """a read fails on a still-rendering page: the observation is marked evidence-free (message carries the settle route) instead of terminal"""
     from licet.phase5.state import Action
 
     class _LoadingCap(_PortalScripted):
@@ -403,14 +371,14 @@ def test_planner_portal_home_redirect_routes_recovery_without_mutation():
 
 
 def test_planner_mutation_failure_is_never_portal_routed():
-    """Mutations reconcile upstream; the portal router must not touch them."""
+    """mutations reconcile upstream; the portal router must not touch them"""
     from licet.phase5.state import Action
 
     cap = _PortalScripted(
         {"url": DETAIL, "text": "your session is about to expire"},
     )
-    # With no `failure` action configured the run succeeds; assert the route
-    # machinery did not fire on the mutation's success path.
+    # with no `failure` action configured the run succeeds; assert the route machinery did not fire on the
+    # mutation's success path
     result = asyncio.run(GoalPlanner(cap).run(goal()))
     assert not [t for t in result.trace if t.get("event") == "PORTAL_RECOVERY_ROUTE"]
 
@@ -428,14 +396,14 @@ def test_route_from_result_round_trips_strategies():
         assert route.finding is finding and not route.terminal
     stop = route_from_result(RecoveryResult(False, "STOP", error="session expired"))
     assert stop.terminal and stop.finding is PortalFinding.SESSION_EXPIRED
-    # Controller-internal strategies do not invent a portal route.
+    # controller-internal strategies do not invent a portal route
     assert route_from_result(RecoveryResult(False, "RECONCILE_MUTATION_STATE")) is None
 
 
 def test_settled_browser_state_excludes_live_render_tokens():
     st = settled_browser_state({"url": DETAIL, "text": "Loading... 17:42:03.114 spinner"})
     assert "text" not in st
-    assert st["unsettled"] is False or st["unsettled"] is True  # shape check
+    assert st["unsettled"] is False or st["unsettled"] is True
     assert st["findings"] == [] or isinstance(st["findings"], list)
 
 

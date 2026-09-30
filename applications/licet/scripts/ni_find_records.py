@@ -1,15 +1,4 @@
-"""One-off Solari exploration: discover usable test records on Null Island.
-
-Null Island (aca-test.accela.com/nullisland) is Accela's official sandbox
-(developer.accela.com/docs/construct-appSandbox.html), but its data inventory
-is unknown — naive "Main" searches returned 0 rows (2026-09-18). This script
-sweeps the portal's modules with progressively looser searches, extracts
-capID1/2/3 triples from result rows, and opens the first hit to capture
-ground truth (status/address) for licet/eval/records.py.
-
-Run:  .venv/bin/python scripts/ni_find_records.py
-Read-only: nothing is scheduled or submitted; searches only.
-"""
+"""one-off solari exploration: discover usable test records on null island"""
 
 from __future__ import annotations
 
@@ -24,8 +13,8 @@ load_dotenv()
 
 BASE = "https://aca-test.accela.com/nullisland"
 MODULES = ["Building", "Enforcement"]
-# Result rows on ACA grids are postback links, not capID hrefs — count any
-# anchor inside the results area and look for text markers instead.
+# result rows on aca grids are postback links, not capid hrefs — count any anchor inside the results area
+# and look for text markers instead
 START = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSStartDate"
 END = "#ctl00_PlaceHolderMain_generalSearchForm_txtGSEndDate"
 STREET = 'input[id$="txtGSStreetName"]'
@@ -157,7 +146,6 @@ async def main() -> int:
                     await page.screenshot(path=f"logs/solari_verify/ni_{tag}.png")
                     with open(f"logs/solari_verify/ni_{tag}.html", "w") as f:
                         f.write(content)
-                    # excerpt of the results region for eyeballing
                     i = body.lower().find("search result")
                     print("   excerpt:", repr(body[max(0, i - 50): i + 400]))
                     break
@@ -171,7 +159,6 @@ async def main() -> int:
         print("the public-user account (My Records) or asking Accela for seed data.")
         return 1
 
-    # Open the first hit and capture ground truth for eval records.
     (module, label), ids = next(iter(found.items()))
     c1, c2, c3 = ids[0]
     record_url = (

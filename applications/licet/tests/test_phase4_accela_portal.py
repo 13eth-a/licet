@@ -1,16 +1,4 @@
-"""Phase 4 adapter tests: the Accela portal adapter through the real guard.
-
-The adapter (`licet/phase4/accela_portal.py`) must drive the portal only via
-`ToolDispatcher`, so every test here runs the *real* dispatcher and safety
-guard over a scripted `SolariClient`-shaped fake — the same stack the live
-portal sees. The fake is a state machine (detail -> types -> calendar ->
-times -> confirm -> result) because the real portal advances page state on
-commit clicks and the dispatcher's post-action verification re-reads observe
-the *new* page. Fixtures mirror the verified captures
-(`logs/ni_backoffice/schedule/*_calendar_f10.html` markup, the type grid
-`gvInspectionType_ctlNN_rdInspectionType`, popup Continue with
-`href_disabled`) so the adapter is pinned to observed ACA markup.
-"""
+"""phase 4 adapter tests: the accela portal adapter through the real guard"""
 from __future__ import annotations
 
 import asyncio
@@ -30,7 +18,7 @@ RECORD_URL = (
     "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
     "&TabName=Building&capID1=REC26&capID2=00000&capID3=000QD&agencyCode=NULLISLAND&IsToShowInspection="
 )
-WIZARD_URL = RECORD_URL  # the wizard never changes the URL (postback popup)
+WIZARD_URL = RECORD_URL  # the wizard never changes the url (postback popup)
 
 
 def make_action(**kwargs):
@@ -68,12 +56,7 @@ class FakeFrame:
 
 
 class FakeClient:
-    """A state-machine fake of the ACA scheduling surface.
-
-    States: detail -> types -> calendar -> times -> confirm -> result. Commit
-    clicks advance the state; every read renders the *current* state, so the
-    dispatcher's verification re-reads see the new page like a real postback.
-    """
+    """a state-machine fake of the aca scheduling surface"""
 
     STATE_DETAIL = "detail"
     STATE_TYPES = "types"
@@ -121,7 +104,6 @@ class FakeClient:
         self.navigations: list[str] = []
         self.reads = 0
 
-    # --- state rendering -----------------------------------------------------
 
     def _header(self):
         if self.wrong_record:
@@ -133,8 +115,8 @@ class FakeClient:
         loading = ["loading..."] if self.loading else []
         if self.state == self.STATE_DETAIL:
             link = "" if self.no_scheduling_link else "Schedule an Inspection"
-            # The section content appears only after a section postback opened
-            # it (the summary alone does not carry the declared-empty marker).
+            # the section content appears only after a section postback opened it (the summary alone does
+            # not carry the declared-empty marker)
             empty = "\nYou have not added any inspections" if (self.detail_empty_marker or self.section_opened) else ""
             text = f"{header}\nInspections{empty}\n{link}".rstrip()
             if self.detail_scheduled_row:
@@ -176,7 +158,6 @@ class FakeClient:
             text = f"{header}\n{self.result_text}"
         return page_payload(url=self.page.url, text=text, loading=loading)
 
-    # --- client surface --------------------------------------------------------
 
     async def read_page(self, *, include=None, max_text=4000):
         self.reads += 1
@@ -199,13 +180,13 @@ class FakeClient:
         ):
             self.state = self.STATE_TYPES
         elif self.state == self.STATE_TYPES and "rdinspectiontype" in text:
-            pass  # radio choice; the wizard stays until Continue
+            pass
         elif self.state == self.STATE_TYPES and text == "continue":
             self.state = self.STATE_CALENDAR
         elif self.state == self.STATE_CALENDAR and 'text="' in text:
             self.state = self.STATE_TIMES
         elif self.state == self.STATE_TIMES and text in self.times.lower():
-            pass  # time range chosen
+            pass
         elif self.state == self.STATE_TIMES and text == "continue":
             self.state = self.STATE_CONFIRM
         elif self.state == self.STATE_CONFIRM and text == "continue":
@@ -232,9 +213,6 @@ def dispatcher_over(client) -> ToolDispatcher:
 
 def run(coro):
     return asyncio.run(coro)
-
-
-# --- pure helpers in accela.py -------------------------------------------------
 
 
 def test_parse_confirmation_number_standard():
@@ -280,9 +258,6 @@ def test_active_day_selector_scopes_to_table_and_day():
     assert 'text="24"' in selector
 
 
-# --- read path ------------------------------------------------------------------
-
-
 def test_read_builds_snapshot_from_declared_empty_section():
     client = FakeClient(types=("Rough", "Electrical Final"))
     portal = AccelaInspectionPortal(dispatcher_over(client))
@@ -299,8 +274,8 @@ def test_read_marks_type_eligible_only_when_offered():
 
 
 def test_read_navigates_to_record_when_needed():
-    # Navigation requires the *verified* record ref (Phase 2's output): the
-    # adapter never guesses a deep link from a displayed id alone.
+    # navigation requires the *verified* record ref (phase 2's output): the adapter never guesses a deep
+    # link from a displayed id alone
     client = FakeClient(url="https://aca-test.accela.com/nullisland/Cap/MyRecordsCap.aspx")
     ref = {"capID1": "REC26", "capID2": "00000", "capID3": "000QD", "module": "Building", "agency_code": "NULLISLAND"}
     portal = AccelaInspectionPortal(dispatcher_over(client), record_ref=ref)
@@ -325,18 +300,15 @@ def test_read_wrong_record_fails_closed():
 
 
 def test_read_loading_section_never_becomes_fact():
-    # A mid-load read must degrade to unknown, not "not scheduled": the fake
-    # keeps the section permanently loading so both reads report it.
+    # a mid-load read must degrade to unknown, not "not scheduled": the fake keeps the section permanently
+    # loading so both reads report it
     portal = AccelaInspectionPortal(dispatcher_over(FakeClient(loading=True)))
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
     assert snapshot.status.startswith("Unknown")
 
 
 def test_read_falls_back_when_the_inspections_label_is_dead_but_rendered():
-    """portal integration Phase 9, live 2026-09-25: Null Island's detail page renders the
-    'Inspections' anchor only as a hidden wrapper, so the exact-label click
-    fails `not_actionable`. The read must fall back to the visible label and
-    still produce a declared-empty snapshot — not an Unknown."""
+    """portal integration phase 9, live 2026-09-25: null island's detail page renders the 'inspections' anchor only as a hidden wrapper, so the exact-label click fails `not_actionable`"""
     client = FakeClient(types=("Rough", "Electrical Final"), detail_types=False, detail_empty_marker=False)
     original_click = client.click
 
@@ -358,16 +330,13 @@ def test_read_falls_back_when_the_inspections_label_is_dead_but_rendered():
     client.click = hidden_wrapper_click  # type: ignore[method-assign]
     portal = AccelaInspectionPortal(dispatcher_over(client))
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
-    # the fallback label was attempted through the real dispatcher
     texts = [str(click.get("text") or "").lower() for click in client.clicks]
     assert "inspection history" in texts
     assert snapshot.status == "Not Scheduled"
 
 
 def test_read_blocked_click_still_never_triggers_the_fallback():
-    """A guard-blocked (not not_actionable) click must not open the fallback
-    route: blocked means the guard held the action, and a hold is a decision,
-    not a selector problem."""
+    """a guard-blocked (not not_actionable) click must not open the fallback route: blocked means the guard held the action, and a hold is a decision, not a selector problem"""
     client = FakeClient(types=("Rough", "Electrical Final"), detail_empty_marker=False)
     original_click = client.click
 
@@ -382,8 +351,8 @@ def test_read_blocked_click_still_never_triggers_the_fallback():
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
     texts = [str(click.get("text") or "").lower() for click in client.clicks]
     assert "inspection history" not in texts
-    # The failure is not `not_actionable`, so no fallback; and a failed section
-    # open never invents "Not Scheduled" — the answer stays explicitly unknown.
+    # the failure is not `not_actionable`, so no fallback; and a failed section open never invents "not
+    # scheduled" — the answer stays explicitly unknown
     assert snapshot.status.startswith("Unknown")
 
 
@@ -393,9 +362,6 @@ def test_read_parses_scheduled_row():
     snapshot = portal.read_inspection_state("BLD26-00469", "Electrical Final")
     assert snapshot.is_scheduled
     assert snapshot.scheduled_date == "2026-09-24"
-
-
-# --- submit path: refusal shapes -------------------------------------------------
 
 
 def test_submit_cancel_refuses_rather_than_improvises():
@@ -454,9 +420,6 @@ def test_submit_no_confirmation_and_no_row_is_uncertain():
         run(portal.submit_inspection_action_async(make_action(), portal_type="Electrical Final", selected_date="2026-09-24"))
 
 
-# --- submit path: full wizard walk ------------------------------------------------
-
-
 def test_submit_wizard_walk_carries_acknowledging_intents():
     client = FakeClient()
     portal = AccelaInspectionPortal(dispatcher_over(client))
@@ -464,15 +427,14 @@ def test_submit_wizard_walk_carries_acknowledging_intents():
         portal.submit_inspection_action_async(make_action(), portal_type="Electrical Final", selected_date="2026-09-24")
     )
     assert confirmation == "CNF-77K9"
-    # every click went through the dispatcher transcript
     assert client.clicks, "adapter must click through the dispatcher, not around it"
     joined = " | ".join(item["target"] or "" for item in client.clicks)
     assert "lnkInspectionSchedule" in joined
-    assert "rdInspectionType" in joined  # type chosen by control id
-    assert 'text="24"' in joined  # the requested day
-    assert "8:00AM - 10:00AM" in joined  # first listed time slot
-    # The first two Continue controls only advance wizard pages; the distinct
-    # confirmation-step Continue acknowledges the scheduling commit.
+    assert "rdInspectionType" in joined
+    assert 'text="24"' in joined
+    assert "8:00AM - 10:00AM" in joined
+    # the first two continue controls only advance wizard pages; the distinct confirmation-step continue
+    # acknowledges the scheduling commit
     continue_steps = [
         step
         for step in portal.steps
@@ -482,9 +444,6 @@ def test_submit_wizard_walk_carries_acknowledging_intents():
     assert [step["call"]["args"].get("intent") for step in continue_steps] == [
         "navigate", "navigate", "schedule_inspection",
     ]
-
-
-# --- full-stack: adapter through the executor -------------------------------------
 
 
 def test_executor_with_adapter_schedules_and_verifies():
@@ -503,13 +462,12 @@ def test_executor_with_adapter_schedules_and_verifies():
     audits = executor.audits
     assert audits and audits[0].previous_state.status == "Not Scheduled"
     assert audits[0].verified_final_state.is_scheduled
-    # the audit's verified final state came from the portal's own re-read
     assert audits[0].verified_final_state.scheduled_date == "2026-09-24"
 
 
 def test_executor_with_adapter_stops_on_unverified_submission():
-    # The portal prints no confirmation and the re-read still shows nothing
-    # scheduled: UNVERIFIED, never success.
+    # the portal prints no confirmation and the re-read still shows nothing scheduled: unverified, never
+    # success
     client = FakeClient(result_text="Processing complete.")
     portal = AccelaInspectionPortal(dispatcher_over(client))
     executor = InspectionActionExecutor(portal)

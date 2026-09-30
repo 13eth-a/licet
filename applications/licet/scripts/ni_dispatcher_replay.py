@@ -1,19 +1,4 @@
-"""Replay the licet dispatcher against a live Solari session — READ-ONLY.
-
-This is the reconciliation the Phase 0 review asked for: it drives the real
-package (`SolariSession` → `SolariClient` → `ToolDispatcher` → `AgentState`),
-not raw Playwright, and it imports `licet` rather than re-deriving portal
-knowledge in a standalone script.
-
-Flow, all read-only:
-  navigate portal -> login (SSO iframe) -> My Records -> open a record by
-  clicking its number -> read the record detail -> negative error-taxonomy
-  check. Nothing is submitted, scheduled, paid, cancelled or attested; the one
-  consequential click it attempts is expected to be *held by the guard* before
-  it ever reaches the browser.
-
-Run:  .venv/bin/python scripts/ni_dispatcher_replay.py
-"""
+"""replay the licet dispatcher against a live solari session — read-only"""
 
 from __future__ import annotations
 
@@ -36,7 +21,7 @@ from licet.eval.records import KNOWN_RECORDS  # noqa: E402
 from licet.safety.guard import deny_approval  # noqa: E402
 
 OUTDIR = Path("logs/ni_backoffice")
-TARGET_RECORD = "BLD26-00472"  # Right of Way Use Permit, created 2026-09-20
+TARGET_RECORD = "BLD26-00472"
 
 
 def out(message: str) -> None:
@@ -55,7 +40,7 @@ def _record_fixture(permit_id: str):
 
 
 class Replay:
-    """Collects check results so a partial failure is still informative."""
+    """collects check results so a partial failure is still informative"""
 
     def __init__(self) -> None:
         self.checks: list[dict] = []
@@ -84,7 +69,6 @@ async def main() -> int:
         dispatcher = ToolDispatcher(client)
         out(f"live client ready: {client.page.url[:80]}")
 
-        # 1. navigate to the portal
         home = f"{accela.PORTAL_ROOT}/Default.aspx"
         outcome = await dispatcher.execute({"name": "navigate", "args": {"url": home}}, state)
         replay.check(
@@ -93,7 +77,6 @@ async def main() -> int:
             f"{outcome.get('url')} err={outcome['error'] and outcome['error']['kind']}",
         )
 
-        # 2. read the logged-out page (fields/frames/notices)
         outcome = await dispatcher.execute({"name": "read_page", "args": {}}, state)
         data = outcome.get("data") or {}
         replay.check(
@@ -102,7 +85,6 @@ async def main() -> int:
             f"frames={len(data.get('frames') or [])} fields={len(data.get('fields') or [])}",
         )
 
-        # 3. login through the CivicId SSO iframe
         login = await client.login(
             os.environ.get("ACCELA_TEST_USERNAME", "").strip(),
             os.environ.get("ACCELA_TEST_PASSWORD", "").strip(),
@@ -114,7 +96,6 @@ async def main() -> int:
         )
         report["checks"] = replay.checks
 
-        # 4. My Records: the verified read path
         outcome = await dispatcher.execute(
             {"name": "navigate", "args": {"url": accela.MY_RECORDS_URL}}, state
         )
@@ -139,9 +120,6 @@ async def main() -> int:
             f"{len(text)} chars of visible text",
         )
 
-        # 5. open the record by clicking its number. The contract requires an
-        #    explicit intent for this: a grid link is neither a known read
-        #    label nor a commit point.
         outcome = await dispatcher.execute(
             {
                 "name": "click",
@@ -167,7 +145,6 @@ async def main() -> int:
             out(f"  falling back to the deep link: {fallback}")
             await dispatcher.execute({"name": "navigate", "args": {"url": fallback}}, state)
 
-        # 6. the record detail read path
         outcome = await dispatcher.execute({"name": "read_page", "args": {}}, state)
         data = outcome.get("data") or {}
         flow = (data.get("flow") or {}).get("flow")
@@ -203,8 +180,6 @@ async def main() -> int:
         )
         replay.check("screenshot captured", outcome["success"], str(shot))
 
-        # 7. the guard in the live loop: a consequential click must be held
-        #    before it reaches the browser (no approval here, so it stays held).
         blocked = await dispatcher.execute(
             {
                 "name": "click",
@@ -225,7 +200,6 @@ async def main() -> int:
         )
         deny_approval(state)
 
-        # 8. the error taxonomy, live: the double-prefixed URL shape that bit us
         bad = f"{accela.PORTAL_ROOT}/NULLISLAND/Cap/CapDetail.aspx"
         outcome = await dispatcher.execute({"name": "navigate", "args": {"url": bad}}, state)
         replay.check(

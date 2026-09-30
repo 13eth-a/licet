@@ -1,1 +1,1 @@
-"""Package init for licet.logging."""
+"""package init for licet.logging"""

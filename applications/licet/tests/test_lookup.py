@@ -128,20 +128,16 @@ def test_record_search_plan_is_narrow_and_single_attempt():
 
 def test_record_search_actions_use_runtime_search_controls():
     actions = search_actions(build_search_plan(PermitLookupRequest(record_number="BLD-1"))[0])
-    # The permit-number input sits on NI's default search form (live-verified),
-    # so no search-mode postback is issued — typing goes straight to the field.
     assert actions[0]["name"] == "type"
     assert 'txtGSPermitNumber' in actions[0]["args"]["target"]
     assert actions[-1]["args"]["target"] == "Search"
 
 
 def test_address_actions_select_mode_then_fill_both_id_families():
-    """NI's address mode swaps in txtAPO_* controls and drops txtGS* entirely
-    (live-verified), so each field targets both families by id suffix."""
+    """ni's address mode swaps in txtapo_* controls and drops txtgs* entirely (live-verified), so each field targets both families by id suffix"""
     attempt = build_search_plan(PermitLookupRequest(street_number="123", street_name="main"))[0]
     actions = search_actions(attempt)
     assert actions[0]["name"] == "select"
-    # The mode value is the logical key; the executor resolves the observed label.
     assert actions[0]["args"]["value"] == "address"
     targets = [action["args"].get("target") for action in actions]
     assert 'input[id$="txtAPO_Search_by_Address_StreetNumber_ChildControl0"], input[id$="txtGSNumber_ChildControl0"]' in targets
@@ -235,7 +231,7 @@ def test_low_confidence_single_partial_match_is_not_selected():
         [SearchResult(record_number="BLD-1", address="999 Main Street")],
     )
     assert result.status is LookupStatus.AMBIGUOUS
-    # A single candidate below the floor is low confidence, not "too many".
+    # a single candidate below the floor is low confidence, not "too many"
     assert result.error_code is LookupErrorCode.AMBIGUOUS_RECORD
 
 
@@ -324,11 +320,9 @@ def test_result_table_parser_handles_disabled_next():
 
 
 def test_results_page_classification_distinguishes_three_verdicts():
-    # Explicit zero-results wording: the search executed and found nothing.
     assert classify_results_page("No records found for your search.") == "zero_results"
-    # A rendered grid header is results, even without parsed rows.
     assert classify_results_page("Record Number | Record Type | Address") == "results"
-    # Neither: the search may not have executed at all — never "no records".
+    # neither: the search may not have executed at all — never "no records"
     assert classify_results_page("An unexpected error occurred.") == "parse_failed"
 
 
@@ -387,6 +381,5 @@ def test_active_permit_state_is_persisted_without_researching():
 
 def test_lookup_result_rejects_found_without_selection():
     with pytest.raises(ValueError):
-        # pydantic wraps the model validator error
         from licet.lookup import LookupResult
         LookupResult(status=LookupStatus.CANDIDATE, confidence=1.0)

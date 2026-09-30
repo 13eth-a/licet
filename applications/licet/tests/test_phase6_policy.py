@@ -114,8 +114,8 @@ def test_confirmation_expires():
 
 
 def test_confirmation_consumed_once():
-    # The approval names the same record the action does: matching is exact, so a
-    # request that omits the record key does not authorize an action that has one.
+    # the approval names the same record the action does: matching is exact, so a request that omits the
+    # record key does not authorize an action that has one
     request = ConfirmationRequest("CANCEL_INSPECTION", "P-1", "Rough Electrical", "cancel",
                                   inspection_id="I-1", record_key="R-1")
     cancel = action("CANCEL_INSPECTION", inspection_id="I-1")

@@ -1,9 +1,4 @@
-"""Phase 3 permit understanding runtime.
-
-This package is deliberately read-only: it converts section observations into
-structured state and deterministic evidence-backed conclusions. It never emits
-browser mutations.
-"""
+"""phase 3 permit understanding runtime"""
 
 from licet.phase3.errors import Phase3Error, Phase3ErrorCode
 from licet.phase3.extract import extract_partial_state, merge_partial_states

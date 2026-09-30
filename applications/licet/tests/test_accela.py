@@ -1,6 +1,5 @@
 from licet.browser import accela
 
-# --- flow position ---------------------------------------------------------
 
 APPLY_URLS = [
     (
@@ -32,8 +31,8 @@ def test_locate_apply_wizard_steps():
         assert position.step == expected_step, url
 
 
-# The scheduling wizard shares one URL for every step, so the popup's own
-# wording is the only way to know where we are (captured live 2026-09-20).
+# the scheduling wizard shares one url for every step, so the popup's own wording is the only way to know
+# where we are (captured live 2026-09-20)
 SCHEDULING_URL = (
     "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
     "&TabName=Building&capID1=REC26&capID2=00000&capID3=000QC"
@@ -57,7 +56,7 @@ def test_locate_refines_the_scheduling_step_from_page_text():
 
 
 def test_locate_stops_at_select_record_without_text():
-    """URL-only callers (the guard) must keep working unchanged."""
+    """url-only callers (the guard) must keep working unchanged"""
     position = accela.locate(SCHEDULING_URL)
 
     assert (position.flow, position.step) == ("schedule_inspection", "select_record")
@@ -79,12 +78,9 @@ def test_locate_other_pages():
 
 
 def test_apply_flow_commit_point_is_a_submission():
-    """A Continue click on the review step issues the record on NI."""
+    """a continue click on the review step issues the record on ni"""
     assert accela.APPLY_FLOW.commit_step == "review"
     assert accela.APPLY_FLOW.commit_action == "submit_application"
-
-
-# --- deep links (real records created 2026-09-20) --------------------------
 
 
 def test_detail_url_matches_the_verified_shape():
@@ -98,8 +94,6 @@ def test_detail_url_matches_the_verified_shape():
     # site-absolute, not agency-relative: prefixing the agency path 404s
     assert "/nullisland/NULLISLAND/" not in url
 
-
-# --- parsing ---------------------------------------------------------------
 
 ROW_USE_ERROR_PANEL = """
 <span id="ErrorList1"><div class="ACA_Message_Error">
@@ -159,7 +153,7 @@ def test_parse_fields_exposes_label_required_masked_and_options():
 
     start = fields["Schedule Start Date"]
     assert start.required is True
-    assert start.masked is True  # MaskedEdit: fill() is ignored
+    assert start.masked is True
     assert start.kind == "text"
 
     assert fields["Zip"].masked is True
@@ -167,7 +161,7 @@ def test_parse_fields_exposes_label_required_masked_and_options():
     # selects are keyed by their own label/fieldname, not by their options
     select = next(field for field in accela.parse_fields(ROW_USE_FIELDS) if field.kind == "select")
     assert select.required is True
-    assert select.postback is True  # ACA dropdowns auto-postback
+    assert select.postback is True
     assert "Search by Address" in select.options
     assert select.value == "Search by Address"
 
@@ -186,11 +180,6 @@ def test_detect_notices_and_postback_detection():
     assert not accela.has_postback_history("<html><body>plain</body></html>")
 
 
-# --- scheduling wizard: inspection types (captured live 2026-09-20) ---------
-
-# The grid renders each type as a radio whose label text carries the
-# `(required)` / `(optional)` marker; `rdInspectionType` ids are per-row and the
-# section heading holds the total, which spans pages (`< Prev 1 2 Next >`).
 TYPE_GRID_HTML = """
 <table id="ctl00_phPopup_gvInspectionType">
 <tr>
@@ -227,7 +216,7 @@ def test_parse_inspection_types_reads_names_and_required_marker():
     ]
     # the marker is the only signal for whether the rest can be skipped
     assert [option.required for option in options] == [True, False, True]
-    assert options[0].value == "84043150"  # ACA's own type id, not the row id
+    assert options[0].value == "84043150"  # aca's own type id, not the row id
     assert options[0].control_id == "ctl00_phPopup_gvInspectionType_ctl02_rdInspectionType"
 
 
@@ -238,7 +227,7 @@ def test_parse_inspection_types_ignores_the_collections_radio():
 
 
 def test_parse_inspection_types_accepts_serialised_fields():
-    """read_page hands back dicts, and the names must survive that trip."""
+    """read_page hands back dicts, and the names must survive that trip"""
     serialised = [f.as_dict() for f in accela.parse_fields(TYPE_GRID_HTML)]
 
     assert accela.parse_inspection_types(serialised) == accela.parse_inspection_types(
@@ -247,7 +236,7 @@ def test_parse_inspection_types_accepts_serialised_fields():
 
 
 def test_parse_inspection_types_falls_back_to_the_label_marker():
-    """If ACA ever renders the grid under a different prefix, the marker saves us."""
+    """if aca ever renders the grid under a different prefix, the marker saves us"""
     html = (
         '<label for="ctl00_Other_ctl02_rdType">Rough (optional)</label>'
         '<input type="radio" id="ctl00_Other_ctl02_rdType" value="73" />'
@@ -263,18 +252,14 @@ def test_parse_inspection_types_is_empty_without_a_wizard():
 
 
 def test_inspection_type_total_spans_the_paginated_grid():
-    """Page 1 shows 10 rows of Commercial Alteration's 18 — never trust the rows."""
+    """page 1 shows 10 rows of commercial alteration's 18 — never trust the rows"""
     assert accela.inspection_type_total(TYPE_GRID_TEXT) == 18
     assert accela.inspection_type_total("Available Inspection Types (0)") == 0
     assert accela.inspection_type_total("no heading here") is None
 
 
-# --- the appointment calendar (captured live 2026-09-20) --------------------
-
-# Verbatim shapes from the Null Island popup: day cells are <td>, not anchors,
-# and an unbookable day says so in both class and title. Every cell on this
-# sandbox came back inactive, which is why "book the earliest slot" is not
-# achievable there.
+# verbatim shapes from the null island popup: day cells are <td>, not anchors, and an unbookable day says
+# so in both class and title
 CALENDAR_HTML = """
 <table role="presentation" class="InspectionWizardPageWidth"><tbody><tr valign="top">
 <td class="ACA_Calendar_Cell">
@@ -310,7 +295,7 @@ def test_parse_calendar_splits_active_and_inactive_days_per_month():
 
 
 def test_parse_calendar_reports_a_fully_unavailable_month():
-    """The sandbox case: nothing bookable, so the goal is unachievable, not slow."""
+    """the sandbox case: nothing bookable, so the goal is unachievable, not slow"""
     html = CALENDAR_HTML.replace("CalendarDay ACA_LinkButton CalendarDayAvailable", "CalendarDayInactive ACA_LinkButton")
 
     months = accela.parse_calendar(html)
@@ -329,7 +314,7 @@ def test_selectable_times_is_empty_until_a_day_is_picked():
 
 
 def test_popup_continue_disabled_detects_the_stashed_postback():
-    """ACA hides the real postback in `href_disabled`; force-clicking would fire it."""
+    """aca hides the real postback in `href_disabled`; force-clicking would fire it"""
     assert accela.popup_continue_disabled(CALENDAR_HTML) is True
     enabled = CALENDAR_HTML.replace(' disabled="disabled"', "")
     assert accela.popup_continue_disabled(enabled) is False
@@ -369,9 +354,6 @@ def test_parse_ref_accepts_case_variants_and_url_encoded_values():
     }
 
 
-# --- Phase 2: search-form knowledge as data ----------------------------------
-
-
 SEARCH_FORM_HTML = """
 <select id="ctl00_PlaceHolderMain_ddlSearchType" fieldname="Search Type">
   <option value="GS" selected="selected">Permit Number</option>
@@ -398,7 +380,7 @@ def test_search_mode_option_matches_agency_wording_case_insensitively():
     assert accela.search_mode_option(labels, "address") == "Search by Address"
     assert accela.search_mode_option(labels, "parcel") == "Search by Parcel"
     assert accela.search_mode_option(labels, "record_number") == "Permit Number"
-    # No such mode on this agency: say so, do not guess.
+    # no such mode on this agency: say so, do not guess
     assert accela.search_mode_option(labels, "applicant") is None
 
 
@@ -409,7 +391,6 @@ def test_resolve_search_field_finds_the_rendered_family():
     )
     gs_fields = accela.parse_fields(SEARCH_FORM_HTML)
     assert accela.resolve_search_field(gs_fields, "record_number").endswith("txtGSPermitNumber")
-    # Absent on this form (mode swapped it away) is an honest None.
     assert accela.resolve_search_field(APO_FORM_HTML and fields, "parcel_number") is None
 
 

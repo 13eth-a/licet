@@ -1,41 +1,4 @@
-"""Batch-apply Licet eval record types on the NI citizen portal (final).
-
-Consolidates every ACA apply-flow lesson learned 2026-09-19/20:
-
-  entry     CapApplyDisclaimer.aspx?module=Building&TabName=Building
-            &FilterName=PMT_GENERAL (agree checkbox + btnNextStep)
-  type      CapType.aspx — radio values ARE the cap types; check() fires
-            SelectNode (never call it twice — it toggles)
-  form      CapEdit.aspx — required: Street No / Street Name / Zip
-            (masked ##### needs real keystrokes, fill() is ignored)
-  parcels   ParcelEdit_btnSearch opens a result-list dialog: pick row radio
-            (ucParcelList_gv_CB_0) then a[title='Select']
-  sections  Required list sections ("Please add one record" / "at least one
-            record") expose Add New-family buttons; ALL ACA popups render
-            ctl00_phPopup_* controls in their own iframe overlay
-            (dvACADialogLayer) and save via ctl00_phPopup_btnSave (contact)
-            or ctl00_phPopup_btnSaveAndClose (LP). Selects inside popups are
-            AutoPostBacks that re-render the dialog — fill in rounds.
-  capture   The Record Issuance page prints "Your Record Number is <ID>".
-            NOTE: altID formats differ per agency config (Sign-Temp gave
-            BLD26-00467, Commercial Alteration gave 000000014) — always
-            parse the template sentence, never a fixed pattern.
-
-The disclaimer's agree checkbox is a legal attestation, so this script never
-clicks it. The run pauses there and the operator ticks the box themselves; the
-wizard resumes once they have. See `licet/safety/attestation_handoff.py`.
-
-That handoff only works if the operator can see the browser, so this script
-drives a LOCAL headed Chrome, not Solari's remote cloud browser (which has no
-live view — see `licet/browser/apply_browser.py`). Set
-`LICET_APPLY_BROWSER=solari` only for non-interactive reproduction, where the
-disclaimer step will simply time out.
-
-Run:  .venv/bin/python scripts/ni_apply_batch.py [key ...]
-
-Keys: comm_alt res_add comm_elec new_sfr solar row_use comm_demo res_mech
-      res_alt res_elec res_new comm_new fence comm_plumb comm_reroof
-"""
+"""batch-apply licet eval record types on the ni citizen portal (final)"""
 from __future__ import annotations
 
 import asyncio
@@ -65,7 +28,6 @@ USER = os.environ.get("ACCELA_TEST_USERNAME", "").strip()
 PWD = os.environ.get("ACCELA_TEST_PASSWORD", "").strip()
 CHECKPOINT = OUTDIR / "apply_batch_results.json"
 
-# (cap type radio value, key, description, street no, street name, zip)
 APPS = [
     ("Building/Commercial/Alteration/NA", "comm_alt",
      "Licet eval application - commercial alteration for testing",
@@ -85,19 +47,14 @@ APPS = [
     ("Building/Right of Way/NA/NA", "row_use",
      "Licet eval application - right of way use permit for testing",
      "91", "Commerce Ave", "00001"),
-    # 2026-09-26 capacity experiment: the two record types whose existing
-    # (seeded) records drew "Blitzz Remote" inspections. Created to test whether
-    # that inspection type has a non-empty calendar for an owned record.
     ("Building/Commercial/Demolition/NA", "comm_demo",
      "Licet eval application - commercial demolition for testing",
      "93", "Commerce Ave", "00001"),
     ("Building/Residential/Mechanical/NA", "res_mech",
      "Licet eval application - residential mechanical for testing",
      "95", "Commerce Ave", "00001"),
-    # 2026-09-29: further record types, confirmed present in the live citizen
-    # catalog (logs/ni_backoffice/inventory/*_catalog.json) and added to widen
-    # the availability search. Created only when the operator clicks the
-    # disclaimer's agree checkbox themselves (see the handoff below).
+    # 2026-09-29: further record types, confirmed present in the live citizen catalog
+    # (logs/ni_backoffice/inventory/*_catalog.json) and added to widen the availability search
     ("Building/Residential/Alteration/NA", "res_alt",
      "Licet eval application - residential alteration for testing",
      "97", "Commerce Ave", "00001"),
@@ -123,13 +80,11 @@ APPS = [
 
 RECORD_NO_RE = re.compile(r"Record Number is\s*([A-Za-z0-9\-]+)")
 
-# app-specific info field values (matched by control-id substring)
 APP_SPEC_VALS = (
     ("txtjobvalue", "25000"),
     ("jobcost", "18000"),
-    ("txt_0_0", "500"),   # Commercial Electrical: New Floor Area (sqft)
-    ("txt_0_2", "15000"),  # Commercial Electrical: Estimated Cost ($)
-    # Solar: modules / inverters / roof area / % covered
+    ("txt_0_0", "500"),
+    ("txt_0_2", "15000"),
     ("txt_0_1", "12"),
     ("txt_0_3", "4"),
     ("txt_0_4", "4"),
@@ -137,21 +92,13 @@ APP_SPEC_VALS = (
     ("txt_0_6", "45"),
 )
 
-# --- generic required-field handling --------------------------------------
-# ACA's per-type AppSpec sections add required fields with arbitrary id
-# suffixes (row_use's "PROJECT DATES" were ..._txt_3_0/..._txt_3_1, while
-# Commercial Electrical used ..._txt_0_0/_0_2 and Solar _0_1.._0_6), so we
-# never key off ids for these: ACA marks required controls with
-# aria-required='true' / title='Required' (masked ones also carry
-# MaskedEditError) and exposes the human label in fieldname/placeholder.
 DATE_TOKENS = ("mm/dd/yyyy", "mm/dd/yy")
-START_DAYS, END_DAYS = 7, 37  # schedule start / estimated completion
+START_DAYS, END_DAYS = 7, 37
 NUMBER_VALS = (
     (("sqft", "square", "area"), "500"),
     (("cost", "value", "amount", "fee"), "25000"),
 )
 
-# value heuristics for popup text/email fields, matched by id substring
 POPUP_VALS = (
     ("firstname", "Eval"), ("lastname", "User"),
     ("organization", "Licet Eval Testing LLC"),
@@ -170,12 +117,10 @@ POPUP_VALS = (
     ("provider", "Licet Eval Testing LLC"),
     ("course", "Eval Course 101"),
     ("hours", "8"),
-    ("phone1", ""), ("phone2", ""), ("phone3", ""),  # leave phones empty
+    ("phone1", ""), ("phone2", ""), ("phone3", ""),
 )
-# label preferences for popup selects (first that exists wins)
 SELECT_LABEL_PREFS = ("Applicant", "Individual", "General Contractor",
                       "Contractor", "Business")
-# selects whose change triggers an AutoPostBack re-render
 POSTBACK_HINTS = ("contacttype", "typeflag", "ddlcontacttype",
                   "licensetype", "provider")
 
@@ -184,22 +129,9 @@ def out(m: str) -> None:
     print(m, flush=True)
 
 
-# The apply flow's disclaimer is a legal attestation. Licet never accepts it:
-# if that box gets ticked, the click is the operator's, in the browser.
-#
-# The run does NOT wait on a human for it. NI ticks its own box and advances on
-# its own, so there is nothing an operator is required to do here, and holding a
-# run open for a click that never comes just stalls it (documented in
-# docs/phase6/portal_boundary_map.md §4). This is a short settle window for the
-# portal to do its own thing, not a request for anyone to act.
+# the apply flow's disclaimer is a legal attestation
 DISCLAIMER_SETTLE_SECONDS = 30.0
 
-# NI renders its agree box already ticked and advances past the disclaimer on
-# its own, so there is no attestation act for the operator to perform — the
-# state is the portal's, not theirs (docs/phase6/portal_boundary_map.md §4).
-# This opt-in lets the run continue over such a control. It does not weaken the
-# prohibition: the agent still never ticks the box, and the handoff still
-# reports that no human acted rather than claiming one did.
 DISCLAIMER_ALLOW_PORTAL_DEFAULT = True
 
 
@@ -267,12 +199,7 @@ def is_required(a: dict) -> bool:
 
 
 def guess_value(a: dict, app_fields: dict[str, str]) -> tuple[str | None, bool]:
-    """Return (value, masked) for a required control, or (None, False).
-
-    Ids are matched only against values we already know (the app's own
-    WorkLocation/DetailInfo fields plus APP_SPEC_VALS); everything else is
-    inferred from what the field actually is.
-    """
+    """return (value, masked) for a required control, or (none, false)"""
     for key in (a["id"], a["name"]):
         if key in app_fields:
             return app_fields[key], False
@@ -298,7 +225,7 @@ def guess_value(a: dict, app_fields: dict[str, str]) -> tuple[str | None, bool]:
 
 
 async def type_field(page, el, val: str, masked: bool) -> None:
-    """MaskedEdit fields ignore fill(); they need real keystrokes."""
+    """maskededit fields ignore fill(); they need real keystrokes"""
     if masked:
         await el.click(timeout=4000)
         await el.press("Control+A")
@@ -309,10 +236,7 @@ async def type_field(page, el, val: str, masked: bool) -> None:
 
 
 async def fill_required_empty(page, app_fields: dict[str, str]) -> int:
-    """Pre-fill empty required text/masked fields on the current page.
-
-    Generic by design — see the DATE_TOKENS/NUMBER_VALS note above.
-    """
+    """pre-fill empty required text/masked fields on the current page"""
     filled = 0
     for f in list(page.frames):
         try:
@@ -348,7 +272,7 @@ async def fill_required_empty(page, app_fields: dict[str, str]) -> int:
 
 async def fill_control_generic(page, cid: str,
                                app_fields: dict[str, str]) -> bool:
-    """Fill a validation-flagged control we have no hardcoded value for."""
+    """fill a validation-flagged control we have no hardcoded value for"""
     for f in list(page.frames):
         try:
             loc = f.locator(f"[id='{cid}']")
@@ -405,7 +329,7 @@ async def login(page) -> None:
 
 
 async def find_popup_frame(page):
-    """The visible ACA popup iframe renders ctl00_phPopup_* controls."""
+    """the visible aca popup iframe renders ctl00_phpopup_* controls"""
     for f in list(page.frames):
         try:
             if await f.locator("[id^='ctl00_phPopup_']").count():
@@ -420,11 +344,7 @@ async def popup_open(page) -> bool:
 
 
 async def fill_popup_round(page) -> int:
-    """One fill pass over the open popup. Returns fields filled.
-
-    Selects first (AutoPostBack re-renders the dialog and wipes text
-    fills), then texts; masked fields get real keystrokes.
-    """
+    """one fill pass over the open popup"""
     dlg = await find_popup_frame(page)
     if dlg is None:
         return -1
@@ -475,13 +395,12 @@ async def fill_popup_round(page) -> int:
             continue
         val = None
         masked = False
-        # longest key first: 'classhours' must win over 'txtclass',
-        # 'conteducationname' over 'educationname'
+        # longest key first: 'classhours' must win over 'txtclass', 'conteducationname' over 'educationname'
         for key, v in sorted(POPUP_VALS, key=lambda kv: -len(kv[0])):
             if key not in nl:
                 continue
             if not v:
-                val = None  # phones: skip entirely
+                val = None
                 break
             val = v
             cls = (await el.get_attribute("class")) or ""
@@ -489,8 +408,8 @@ async def fill_popup_round(page) -> int:
             break
         if val is None:
             continue
-        # skip only if already correct: non-masked with content, or masked
-        # whose digits already match the target
+        # skip only if already correct: non-masked with content, or masked whose digits already match the
+        # target
         if not masked and cur:
             continue
         if masked and cur and re.sub(r"\D", "", cur) == re.sub(r"\D", "", val):
@@ -532,7 +451,7 @@ async def click_popup_save(page) -> bool:
 
 
 async def run_popup_to_close(page, tag: str, rounds: int = 4) -> bool:
-    """Fill+save rounds until the popup closes. True on success."""
+    """fill+save rounds until the popup closes"""
     for r in range(1, rounds + 1):
         if not await popup_open(page):
             out("  popup closed")
@@ -547,7 +466,6 @@ async def run_popup_to_close(page, tag: str, rounds: int = 4) -> bool:
             if not await popup_open(page):
                 out("  popup closed")
                 return True
-            # duplicate-contact confirmation: accept and continue
             for f in list(page.frames):
                 try:
                     t = await asyncio.wait_for(f.locator("body").inner_text(), 4)
@@ -564,7 +482,7 @@ async def run_popup_to_close(page, tag: str, rounds: int = 4) -> bool:
 
 
 async def add_applicant_contact(page, btn_id: str) -> bool:
-    """Open a section's Add New contact dialog and complete it."""
+    """open a section's add new contact dialog and complete it"""
     for f in list(page.frames):
         try:
             if not await f.locator(f"[id='{btn_id}']").count():
@@ -581,23 +499,13 @@ async def add_applicant_contact(page, btn_id: str) -> bool:
 
 
 async def add_licensed_professional(page, btn_id: str) -> bool:
-    """Complete a Licensed Professional section via its Add New dialog.
-
-    (Look Up was tried first in earlier runs — NI's LP account list is
-    empty, so Add New is the reliable path.)
-    """
+    """complete a licensed professional section via its add new dialog"""
     return await add_applicant_contact(page, btn_id)
 
 
 async def process_one_required_section(page,
                                       processed: set[str]) -> bool | None:
-    """Complete the first unseen required list section.
-
-    Returns True/False for whether that section completed, or None when no
-    unprocessed section is left. The three outcomes are distinct on purpose: a
-    section that fails must not be mistaken for "nothing left to do" and end
-    the sweep early.
-    """
+    """complete the first unseen required list section"""
     for f in list(page.frames):
         try:
             for el in await f.locator(
@@ -615,8 +523,8 @@ async def process_one_required_section(page,
                 try:
                     return await add_applicant_contact(page, bid)
                 except Exception as exc:
-                    # Do not swallow this: a section that silently fails to
-                    # save is why the next Continue rejects the page.
+                    # do not swallow this: a section that silently fails to save is why the next continue
+                    # rejects the page
                     out(f"  section {bid[-40:]} failed: "
                         f"{type(exc).__name__}: {str(exc)[:80]}")
                     return False
@@ -627,13 +535,7 @@ async def process_one_required_section(page,
 
 async def process_required_lists(page, processed: set[str],
                                  max_sections: int = 5) -> bool:
-    """Complete every unseen required list section on the current step.
-
-    One step can require several: res_alt's step 2 wanted both an Applicant
-    contact and a Licensed Professional. Completing only the first left the
-    rest for the next pass, so the page never became submittable. Bounded so a
-    section that keeps refusing to save cannot spin here.
-    """
+    """complete every unseen required list section on the current step"""
     handled = False
     for _ in range(max_sections):
         outcome = await process_one_required_section(page, processed)
@@ -646,14 +548,7 @@ async def process_required_lists(page, processed: set[str],
 
 
 async def clear_dialog_overlay(page) -> None:
-    """Hide ACA's leftover dialog layer; it swallows clicks on the action bar.
-
-    A saved ACA popup can leave `dvACADialogLayer` in the DOM — invisible to
-    the eye but still intercepting pointer events — which is what makes
-    Playwright wait forever for the Continue button to become actionable at
-    step 2. This is UI-only: it operates no control and changes no record
-    state.
-    """
+    """hide aca's leftover dialog layer; it swallows clicks on the action bar"""
     for f in list(page.frames):
         try:
             await asyncio.wait_for(f.evaluate(
@@ -664,11 +559,7 @@ async def clear_dialog_overlay(page) -> None:
 
 
 async def wait_no_popup(page, tries: int = 8) -> bool:
-    """Give an open ACA popup a chance to finish and close.
-
-    A dialog that is still up owns the next click, and clicking the page
-    underneath it is exactly what times out, so control clicks wait here first.
-    """
+    """give an open aca popup a chance to finish and close"""
     for _ in range(tries):
         if not await popup_open(page):
             return True
@@ -678,21 +569,7 @@ async def wait_no_popup(page, tries: int = 8) -> bool:
 
 async def click_control(page, sels: str | tuple[str, ...], *,
                         timeout_ms: int = 8000, attempts: int = 3) -> bool:
-    """Click a control, re-resolving it — and its frame — on every attempt.
-
-    ACA replaces the document on step transitions and autopostbacks, which
-    detaches a frame or locator captured a moment earlier; that is the usual
-    reason a click on a plainly visible control times out here. Resolution is
-    therefore redone from scratch each attempt.
-
-    Two other ACA quirks are handled the same way: a saved popup can leave
-    `dvACADialogLayer` in the DOM, invisible but still intercepting pointer
-    events, so it is hidden first; and when a native click still will not land,
-    the element's own click() runs its inline handler (`onclick="return
-    Continue(this)"`) without needing pointer events, so the page's own
-    validation still decides what happens. UI-only: it operates the one control
-    it was asked to and nothing else.
-    """
+    """click a control, re-resolving it — and its frame — on every attempt"""
     selectors = (sels,) if isinstance(sels, str) else sels
     for _ in range(attempts):
         await wait_no_popup(page)
@@ -727,12 +604,12 @@ async def click_control(page, sels: str | tuple[str, ...], *,
 
 
 async def click_continue(page) -> bool:
-    """Click the action bar's Continue once any dialog has settled."""
+    """click the action bar's continue once any dialog has settled"""
     return await click_control(page, CONTINUE_SELS)
 
 
 async def parcel_search_select(page) -> bool:
-    """Fulfil a required Parcel section: search, pick row 1, Select."""
+    """fulfil a required parcel section: search, pick row 1, select"""
     for f in list(page.frames):
         loc = f.locator("[id$='ParcelEdit_btnSearch']").first
         if not await loc.count():
@@ -774,7 +651,7 @@ async def parcel_search_select(page) -> bool:
 
 
 async def missing_required(page) -> list[str]:
-    """Control ids listed in ACA's validation panel (skipTo links)."""
+    """control ids listed in aca's validation panel (skipto links)"""
     import html as _h
     found: list[str] = []
     for f in list(page.frames):
@@ -849,12 +726,7 @@ async def select_first_option(page, cid: str) -> bool:
 
 
 async def check_radio(page, cid: str, value: str = "Yes") -> bool:
-    """Check a radio in the group identified by cid.
-
-    ACA renders radio groups as a fieldset whose member inputs carry the
-    group id plus a numeric suffix (rdo_1_0_0=Yes / rdo_1_0_1=No) and
-    value=Yes/No — select by value, then verify.
-    """
+    """check a radio in the group identified by cid"""
     for f in list(page.frames):
         for sel in (f"input[type='radio'][id^='{cid}_']",
                     f"input[type='radio'][name*='{cid}']"):
@@ -897,11 +769,10 @@ CONTINUE_SELS = (
 
 
 async def run_one_application(page, app: dict) -> str | None:
-    """Full wizard for one type. Returns the issued record id or None."""
+    """full wizard for one type"""
     cap_type, key = app["cap_type"], app["key"]
     processed_buttons: set[str] = set()
 
-    # disclaimer
     await asyncio.wait_for(
         page.goto(f"{CITIZEN}/Cap/CapApplyDisclaimer.aspx"
                   "?module=Building&TabName=Building&FilterName=PMT_GENERAL",
@@ -940,33 +811,27 @@ async def run_one_application(page, app: dict) -> str | None:
             out(f"  RECORD ID CAPTURED: {altid}")
             return altid
 
-        # stall detection: same URL three consecutive steps -> give up
+        # stall detection: same url three consecutive steps -> give up
         stall = stall + 1 if url == prev_url else 0
         if stall >= 3:
             out("  stalled 3 rounds on same page — aborting")
             return None
         prev_url = url
 
-        # required list sections (contacts / LP / education / ...)
         if "CapEdit" in url and ("Please add one record" in body
                                  or "at least one record" in body):
             await process_required_lists(page, processed_buttons)
 
-        # required parcel section (validation points at txtParcelNo)
         if "CapEdit" in url and any("ParcelEdit_txtParcelNo" in c
                                     for c in await missing_required(page)):
             await parcel_search_select(page)
 
-        # pre-fill known type fields every CapEdit step (idempotent)
         if "CapEdit" in url:
             for cid, val in app["fields"].items():
                 await fill_control(page, cid, val)
 
-        # complete any other required-and-empty fields (per-type AppSpec
-        # dates/numbers) so unhand-mapped types still advance
         await fill_required_empty(page, app["fields"])
 
-        # type radio
         if "CapType" in url:
             for f in list(page.frames):
                 loc = f.locator(
@@ -980,8 +845,8 @@ async def run_one_application(page, app: dict) -> str | None:
                     await asyncio.wait_for(page.wait_for_timeout(2000), 8)
                     break
 
-        # validation triage when Continue doesn't advance (checked after
-        # click below via stall counter + missing_required)
+        # validation triage when continue doesn't advance (checked after click below via stall counter +
+        # missing_required)
         missing = await missing_required(page)
         if missing and url == page.url:
             out(f"  validation targets: {[c[-45:] for c in missing]}")
@@ -991,7 +856,6 @@ async def run_one_application(page, app: dict) -> str | None:
                 if "ddl" in cl:
                     handled = await select_first_option(page, cid)
                 elif "rdo" in cl:
-                    # prefer a value-specific attempt, then any member
                     handled = await check_radio(page, cid, "Yes") or \
                         await check_radio(page, cid, "No")
                 else:
@@ -1033,8 +897,6 @@ async def main() -> int:
     if not USER or not PWD:
         out("credentials missing")
         return 2
-    # A headed local browser: the operator has to be able to reach the
-    # disclaimer checkbox themselves.
     browser, close_browser = await open_apply_browser(headless=False, warn=out)
     results = load_checkpoint()
     try:

@@ -63,16 +63,9 @@ def test_parse_owned_page_requires_declared_range_and_matching_row_count():
 
 
 def test_grid_pager_row_is_not_counted_as_a_record():
-    """Live 2026-09-30: ACA's pager rides in the same <table> as the rows.
-
-    A header-driven read counted it as an extra record (its "Record Number"
-    cell is the page number), so a page declaring "Showing 1-10 of 14" parsed as
-    11 rows, failed `record_grid_rows_do_not_match_declared_range`, and aborted
-    the whole capacity query before a single inspection type was checked.
-    """
+    """live 2026-09-30: aca's pager rides in the same <table> as the rows"""
     rows = "".join(record_row(f"BLD26-004{i:02d}", f"000{i}")
                    for i in range(60, 70))
-    # Markup trimmed from the live grid (logs/ni_backoffice/schedule/mydiag_f0.html).
     pager = (
         '<tr class="ACA_Table_Pages ACA_Table_Pages_FontSize" align="center">'
         '<td colspan="12"><table class="aca_pagination"><tbody><tr>'
@@ -325,8 +318,7 @@ def test_inspect_owned_record_only_checks_complete_offered_catalog_and_returns_d
 
 
 def test_inspect_owned_record_type_offset_slices_the_verified_catalog(monkeypatch):
-    """A full 13-type sweep is chunked by skipping the first N offered types;
-    the offset must only slice the verified catalog, never widen it."""
+    """a full 13-type sweep is chunked by skipping the first n offered types; the offset must only slice the verified catalog, never widen it"""
     key = "NULLISLAND/Building/REC26/00000/00014"
     obs = PortalObservation.from_payload({
         "url": accela.detail_url("REC26", "00000", "00014"),
@@ -401,7 +393,6 @@ def test_horizon_month_parses_to_its_last_day_and_drives_the_window_count():
     for bad in ("2028", "2028-13", "", "December 2028"):
         with pytest.raises(ValueError):
             query.parse_horizon_month(bad)
-    # Sep 2026 -> Dec 2027, plus the initial three-month strip's two extra windows.
     assert query.windows_for_horizon(query.date(2027, 12, 31),
                                      today=query.date(2026, 9, 30)) == 17
 
@@ -411,7 +402,7 @@ def test_budgets_derive_the_window_count_from_the_horizon_and_cap_the_reach():
     assert args.horizon_end == query.date(2028, 12, 31)
     assert args.calendar_windows == query.windows_for_horizon(
         query.date(2028, 12, 31), today=query.date.today())
-    # An explicit cap still wins; the old 12-window ceiling is not the limit now.
+    # an explicit cap still wins; the old 12-window ceiling is not the limit now
     assert query._budgets(
         ["--horizon", "2027-12", "--calendar-windows", "20"]).calendar_windows == 20
     with pytest.raises(SystemExit):
@@ -419,8 +410,7 @@ def test_budgets_derive_the_window_count_from_the_horizon_and_cap_the_reach():
 
 
 def test_inspect_owned_record_scans_toward_the_horizon_month(monkeypatch):
-    """The scan must be handed an end month, so "no active date" means the
-    horizon was actually read rather than the window budget running out."""
+    """the scan must be handed an end month, so \"no active date\" means the horizon was actually read rather than the window budget running out"""
     key = "NULLISLAND/Building/REC26/00000/00014"
     obs = PortalObservation.from_payload({
         "url": accela.detail_url("REC26", "00000", "00014"),
@@ -522,30 +512,21 @@ def test_query_rejects_budgets_above_hard_caps(kwargs):
 
 
 def draft_row_html(number: str, record_type: str) -> str:
-    """An unfinished application, shaped after the live 2026-09-30 grid.
-
-    Captured evidence (logs/ni_backoffice/schedule/mydiag_f0.html): the row has
-    an Action cell reading "Resume Application", no anchor, and no cap ids.
-    """
+    """an unfinished application, shaped after the live 2026-09-30 grid"""
     return (f'<tr><td>09/29/2026</td><td><strong><span>{number}</span></strong></td>'
             f'<td>{record_type}</td><td></td><td>United States</td>'
             '<td></td><td>Resume Application</td><td></td></tr>')
 
 
 def draft_page_html(*rows: str) -> str:
-    """Same grid as `page_html` plus the Action column the live grid carries."""
+    """same grid as `page_html` plus the action column the live grid carries"""
     return ('<table><tr><th>Date</th><th>Record Number</th><th>Record Type</th>'
             '<th>Project Name</th><th>Address</th><th>Status</th><th>Action</th>'
             '<th>Expiration Date</th></tr>' + ''.join(rows) + '</table>')
 
 
 def test_incomplete_application_row_requires_every_draft_signal():
-    """Live 2026-09-30: 26TMP-000071/072 reported as a missing record identity.
-
-    That read like a parser failure on a clean account. A draft needs all three
-    signals together; anything less must stay on the fail-closed path so a real
-    record with a parsing problem can never be silently skipped.
-    """
+    """live 2026-09-30: 26tmp-000071/072 reported as a missing record identity"""
     draft = {"Record Number": "26TMP-000072", "Record Type": "Residential Demolition",
              "Action": "Resume Application", "hrefs": []}
     assert query.is_incomplete_application_row(draft)

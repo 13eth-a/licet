@@ -1,4 +1,4 @@
-"""Real Phase 2 lookup, Phase 3 retrieval/reasoning and Phase 4 executor, fake I/O."""
+"""real phase 2 lookup, phase 3 retrieval/reasoning and phase 4 executor, fake i/o"""
 import asyncio
 from dataclasses import replace
 
@@ -17,8 +17,8 @@ from tests.conftest import FakeClient, runner_for, detail_page, search_form, gs_
 
 
 class Portal:
-    # Declares the sandbox explicitly: Phase 6 refuses every mutation from an
-    # unidentified portal, so the integration portal must identify itself.
+    # declares the sandbox explicitly: phase 6 refuses every mutation from an unidentified portal, so the
+    # integration portal must identify itself
     environment = Environment.SANDBOX
 
     def __init__(self, key):
@@ -76,11 +76,7 @@ def test_discovery_understanding_selection_execution_and_verification():
 def test_bld26_empty_history_maps_supported_target_to_read_only_preflight(
     inspection_type, portal_required, should_check,
 ):
-    """Replay BLD26's empty inspection history and the wizard's offer/requirement evidence offline.
-
-    An explicit user target or a complete catalog's unique required marker can
-    identify the next requestable type. A merely offered optional type cannot.
-    """
+    """replay bld26's empty inspection history and the wizard's offer/requirement evidence offline"""
     permit_id = "BLD26-00469"
     key = "NULLISLAND/Building/REC26/00000/000QD"
     snapshot = "bld26-empty-history-snapshot"

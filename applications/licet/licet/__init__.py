@@ -1,1 +1,1 @@
-"""Package init for licet."""
+"""package init for licet"""

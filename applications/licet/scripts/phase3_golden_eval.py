@@ -1,15 +1,5 @@
 #!/usr/bin/env python
-"""Standalone Phase 3 golden + adversarial eval.
-
-Runs offline: it scores the deterministic golden set and the adversarial
-counterexamples through the same scorer the unit tests use, with no Solari key,
-no browser, and no planner. This is the regression path for the model-level
-reasoning stage once it is wired: today it exercises the deterministic baseline
-and the validation/publication gates around the model coordinator.
-
-Outputs a machine-readable report to docs/phase3/golden_report.json and prints a
-one-line summary suitable for CI.
-"""
+"""standalone phase 3 golden + adversarial eval"""
 from __future__ import annotations
 
 import json
@@ -145,20 +135,13 @@ def _score_case_model_result(case, result, question):
     }
 
 
-
-
 def main() -> int:
     os.environ.setdefault("LICET_PHASE3_MODEL_ENABLED", "0")
 
     golden = phase3_eval.score_cases(phase3_fixtures.build_cases())
-    # Extraction is scored separately from reasoning: these run real read_page
-    # payloads through the ACA adapter first, so a per-municipality wording gap
-    # cannot hide behind a reasoning pass (reasoning contract, evaluation rules).
     extraction = phase3_fixtures.run_extraction_fixtures()
 
-    # Also exercise the model path deterministically when the env allows it.
-    # This is the Phase 3 closure check: the model coordinator, payload, coercion,
-    # validation, and publication gates must all pass the same golden set.
+    # also exercise the model path deterministically when the env allows it
     model_enabled = os.environ.get("LICET_PHASE3_MODEL_ENABLED", "0").strip().lower() in {
         "1", "true", "yes",
     }

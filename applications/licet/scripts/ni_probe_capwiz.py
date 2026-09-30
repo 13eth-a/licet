@@ -1,4 +1,4 @@
-"""Probe CapWiz structure for one module: frames, selects, screenshots."""
+"""probe capwiz structure for one module: frames, selects, screenshots"""
 from __future__ import annotations
 
 import asyncio

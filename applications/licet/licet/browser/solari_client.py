@@ -1,28 +1,4 @@
-"""Async, ACA-aware browser client over the Solari (Playwright) page API.
-
-Phase 0 review §2: the old stub was synchronous, single-frame, used `fill()`
-for typing and a plain `click`, and returned `success: bool`. Every one of
-those contradicted something the live portal proved. This module encodes the
-proven behaviours instead (sources noted per constant in `accela.py`):
-
-1. **settle** — wait for the postback *and* re-inject the
-   `#divGlobalLoadingMask` neutralizer, because that hidden overlay keeps
-   intercepting pointer events after every postback.
-2. **click** — resolve across frames, dispatch once, and verify a stable
-   observable transition. A timeout is reconciled by observing, never replayed.
-3. **type** — MaskedEdit fields (`#####`, `MM/DD/YYYY`) ignore `fill()`, so
-   they get real keystrokes and a read-back check.
-4. **select** — resolve the option before dispatch and verify its live value
-   after any auto-postback.
-5. **read_page** — return URL + flow position + field inventory + validation
-   panel + frames/popups + JS notices, because URLs barely change and the
-   validation panel is what tells the planner which field is missing.
-6. **errors** — a taxonomy (`licet/browser/errors.py`) instead of a bool.
-
-The SDK is imported in exactly one place (`SolariSession.start`), and every
-operation below is written against the `PageLike` surface, so the whole client
-can be tested against a fake page with no live session.
-"""
+"""async, aca-aware browser client over the solari (playwright) page api"""
 
 from __future__ import annotations
 
@@ -41,18 +17,16 @@ from licet.browser.errors import BrowserError, ToolError, classify_error, tool_e
 from licet.browser.accela import FlowPosition, FrameInfo
 from licet.config import SOLARI_API_KEY, SOLARI_BASE_URL
 
-# A bare ACA control id: no CSS punctuation, so it needs `#id` / `[id="id"]`
-# rather than being passed to Playwright as-is.
 _BARE_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
 
 
 def _selector_text(value: str) -> str:
-    """Quote text for Playwright's selector extensions safely."""
+    """quote text for playwright's selector extensions safely"""
     return (value or "").replace("\\", "\\\\").replace("'", "\\'")
 
 
 def _safe_diagnostic(value: str | None, *, limit: int = 240) -> str | None:
-    """Bound free-form browser diagnostics and redact URLs/credential values."""
+    """bound free-form browser diagnostics and redact urls/credential values"""
     if not value:
         return value
     value = re.sub(r"https?://[^\s'\"<>]+", "[url]", value)
@@ -68,10 +42,10 @@ DEFAULT_INCLUDES = ("text", "form", "errors", "frames", "notices")
 ALLOWED_INCLUDES = frozenset((*DEFAULT_INCLUDES, "html"))
 
 
-# Observe live DOM properties: serialized HTML does not include current values,
-# checked state, or native select state. Focus alone is not a click outcome.
+# observe live dom properties: serialized html does not include current values, checked state, or native
+# select state
 def _safe_diagnostic(value: str | None, *, limit: int = 240) -> str | None:
-    """Bound free-form browser diagnostics and redact URLs/credential values."""
+    """bound free-form browser diagnostics and redact urls/credential values"""
     if not value:
         return value
     value = re.sub(r"https?://[^\s'\"<>]+", "[url]", value)
@@ -108,11 +82,7 @@ _ACTION_STATE_JS = r"""() => {
 
 
 class PageLike(Protocol):
-    """The subset of the Playwright page API this client uses.
-
-    Documented as a Protocol so both the real SDK page and the test fake are
-    checked against the same surface.
-    """
+    """the subset of the playwright page api this client uses"""
 
     url: str
     frames: Sequence[Any]
@@ -130,16 +100,12 @@ class PageLike(Protocol):
 
 @dataclass(frozen=True)
 class Target:
-    """How to find an element: semantic first, selector as a last resort.
-
-    ACA ids are ~60-char `ctl00_PlaceHolderMain_...` values that differ per
-    agency; every script ended up resolving by `fieldname` / label / text.
-    """
+    """how to find an element: semantic first, selector as a last resort"""
 
     selector: str | None = None
     text: str | None = None
     label: str | None = None
-    frame: str | None = None  # frame URL marker, e.g. "login-panel"
+    frame: str | None = None
 
     @classmethod
     def from_args(cls, args: dict[str, Any]) -> Target:
@@ -161,13 +127,7 @@ class Target:
         return "unset"
 
     def candidates(self) -> list[str]:
-        """Playwright selectors to try, exact/most semantic first.
-
-        Exact text comes before `has-text` on purpose: `has-text` also matches
-        *ancestors*, so a wrapper containing the label can be matched (and be
-        invisible) instead of the control itself — which is how a live
-        "Attachments" click first failed.
-        """
+        """playwright selectors to try, exact/most semantic first"""
         candidates: list[str] = []
         if self.label:
             label = _selector_text(self.label)
@@ -175,8 +135,6 @@ class Target:
                 f"[fieldname='{label}']",
                 f"[aria-label='{label}']",
                 f"#{self.label}" if _BARE_ID_RE.match(self.label) else f'[id="{label}"]',
-                # ACA radios/checkboxes are labelled and the input itself can be
-                # hidden, so the label is a legitimate click target
                 f"label:text-is('{label}')",
                 f"label:has-text('{label}')",
             ]
@@ -194,10 +152,7 @@ class Target:
             ]
         if self.selector:
             selector = self.selector.strip()
-            # Callers hand us bare ACA control ids far more often than CSS.
-            # `ctl00_phPopup_gvInspectionType_ctl08_rdInspectionType` is not a
-            # selector, and resolving it as one silently matched nothing while
-            # the field inventory listed the very same id (live, 2026-09-20).
+            # callers hand us bare aca control ids far more often than css
             if _BARE_ID_RE.match(selector):
                 candidates += [f"#{selector}", f'[id="{selector}"]']
             candidates.append(selector)
@@ -206,13 +161,7 @@ class Target:
 
 @dataclass
 class TargetDiagnostics:
-    """Why a target did not resolve — the difference the planner needs.
-
-    "no such control" and "the control is there but not actionable" are
-    different problems (ACA renders dead nav items, and section views can hide
-    links that exist on the summary), so a bare NOT_FOUND would send the
-    planner down the wrong recovery path.
-    """
+    """why a target did not resolve — the difference the planner needs"""
 
     searched: list[str] = field(default_factory=list)
     hidden: list[str] = field(default_factory=list)
@@ -262,7 +211,7 @@ class ToolResult:
 
 
 class SolariClient:
-    """Per-page operations. Constructed around an injected `PageLike`."""
+    """per-page operations"""
 
     def __init__(
         self,
@@ -283,7 +232,6 @@ class SolariClient:
         self.verification_timeout_ms = max(0, verification_timeout_ms)
         self.verification_poll_ms = max(1, verification_poll_ms)
 
-    # --- plumbing -----------------------------------------------------------
 
     def _url(self) -> str | None:
         return getattr(self.page, "url", None)
@@ -293,7 +241,7 @@ class SolariClient:
         return frames or [self.page]
 
     async def _neutralize_mask(self) -> None:
-        """Hide the overlay that eats clicks; best-effort per frame."""
+        """hide the overlay that eats clicks; best-effort per frame"""
         for frame in self._frames():
             try:
                 await frame.evaluate(accela.MASK_NEUTRALIZER_JS)
@@ -301,7 +249,7 @@ class SolariClient:
                 continue
 
     async def settle(self) -> None:
-        """Wait for an ACA postback to finish, then restore clickability."""
+        """wait for an aca postback to finish, then restore clickability"""
         try:
             await self.page.wait_for_load_state("load")
         except Exception:
@@ -323,11 +271,7 @@ class SolariClient:
     async def _resolve(
         self, target: Target
     ) -> tuple[Any | None, Any | None, int, TargetDiagnostics]:
-        """Return (frame, locator, match_count, diagnostics) for the target.
-
-        Frames are searched with any caller-supplied marker first, because the
-        login form and every ACA dialog live in their own iframe.
-        """
+        """return (frame, locator, match_count, diagnostics) for the target"""
         frames = self._frames()
         preferred = await self._find_frame(target.frame)
         if target.frame and preferred is None:
@@ -338,9 +282,7 @@ class SolariClient:
             diagnostics.absent.append(f"frame containing {target.frame!r}")
             return None, None, 0, diagnostics
         if preferred is not None:
-            # An explicit frame is a constraint, not merely a search hint. This
-            # prevents a missing popup/login iframe from accidentally resolving
-            # a similarly named control in the parent document.
+            # an explicit frame is a constraint, not merely a search hint
             frames = [preferred] if target.frame else [preferred, *[f for f in frames if f is not preferred]]
         diagnostics = TargetDiagnostics(
             searched=list(target.candidates()),
@@ -358,8 +300,7 @@ class SolariClient:
                         diagnostics.absent.append(selector)
                     continue
                 if count > 1:
-                    # ACA keeps hidden copies of controls in the DOM. Only
-                    # visible matches compete as actionable targets.
+                    # aca keeps hidden copies of controls in the dom
                     try:
                         visible_locator = locator.filter(visible=True)
                         visible_count = await visible_locator.count()
@@ -410,7 +351,6 @@ class SolariClient:
         except Exception:
             return ""
 
-    # --- operations ---------------------------------------------------------
 
     async def navigate(self, url: str) -> ToolResult:
         last: ToolError | None = None
@@ -421,10 +361,7 @@ class SolariClient:
                 )
                 await self.settle()
                 html = await self._content()
-                # An ACA error page is a successful HTTP navigation, so check.
                 lowered_html = html.lower()
-                # ACA's 404-like page is often plain WebForms markup without an
-                # "Error" heading; the stable phrase is the sentence itself.
                 if "does not exist" in lowered_html and "file" in lowered_html:
                     return ToolResult(
                         ok=False,
@@ -435,9 +372,7 @@ class SolariClient:
                             f"ACA error page at {url} (check the URL shape, not just the host)",
                         ),
                     )
-                # Login/session notices are JS-dialog text and do not redirect.
-                # Surface them as a recoverable auth failure instead of claiming
-                # that navigation succeeded on a page the user cannot use.
+                # login/session notices are js-dialog text and do not redirect
                 if "login" not in (self._url() or "").lower():
                     visible = await _page_text(self.page)
                     notices = accela.detect_notices(visible)
@@ -464,8 +399,7 @@ class SolariClient:
     async def _action_state(self) -> dict[str, Any]:
         frames = self._frames()
         async def observe(frame):
-            # Solari uses Patchright, whose default isolated world cannot see
-            # the page's ASP.NET runtime. Plain Playwright has no such keyword.
+            # solari uses patchright, whose default isolated world cannot see the page's asp.net runtime
             options = {"isolated_context": False} if "isolated_context" in inspect.signature(frame.evaluate).parameters else {}
             return await frame.evaluate(_ACTION_STATE_JS, **options)
 
@@ -486,11 +420,7 @@ class SolariClient:
         predicate: Callable[[], Awaitable[bool]] | None = None,
         postback_frame: Any = None,
     ) -> dict[str, Any]:
-        """Bounded observation only; never dispatch an action from recovery.
-
-        Require two matching, non-loading samples. A DOM change demonstrates
-        an interaction, not successful completion of a business transaction.
-        """
+        """bounded observation only; never dispatch an action from recovery"""
         started = time.monotonic()
         deadline = started + self.verification_timeout_ms / 1000
         samples = 0
@@ -551,8 +481,8 @@ class SolariClient:
             except Exception as exc:
                 timed_out = isinstance(exc, TimeoutError) and time.monotonic() >= deadline
                 observation_timed_out = observation_timed_out or timed_out
-                # Preserve the last concrete observer exception when the
-                # enclosing verification deadline subsequently expires.
+                # preserve the last concrete observer exception when the enclosing verification deadline
+                # subsequently expires
                 if not timed_out or observation_error is None:
                     observation_error = str(exc) or type(exc).__name__
                     observation_error_type = type(exc).__name__
@@ -642,7 +572,7 @@ class SolariClient:
             _, current, _, _ = await self._resolve(target)
             if current is None:
                 return False
-            # Do not turn a read failure into a matching empty string.
+            # do not turn a read failure into a matching empty string
             got = await current.input_value()
             if masked and _digits(value):
                 return _digits(got) == _digits(value)
@@ -668,8 +598,8 @@ class SolariClient:
                 return ToolResult(ok=False, url=self._url(), error=ToolError(
                     kind, "Requested option is absent, disabled, or ambiguous"))
             selected_value = candidates[0]["value"]
-            # Dispatch by the observed label/value once; never try the other
-            # selector after a timeout that may already have fired a postback.
+            # dispatch by the observed label/value once; never try the other selector after a timeout that
+            # may already have fired a postback
             choice = {"label": value} if candidates[0]["label"] == value else {"value": value}
             onchange = (await locator.get_attribute("onchange")) or ""
             expects_postback = "__dopostback" in onchange.lower() or "webform_dopostback" in onchange.lower()
@@ -710,12 +640,7 @@ class SolariClient:
         timeout_ms: int = 15000,
         poll_ms: int = 700,
     ) -> ToolResult:
-        """Poll until `present` appears or `absent` disappears.
-
-        ACA sections load over AJAX after the `load` event — the record detail's
-        Inspections section renders "Loading..." first — so postback settling is
-        not enough to know a section has finished rendering.
-        """
+        """poll until `present` appears or `absent` disappears"""
         elapsed = 0
         while True:
             body = await _page_text(self.page)
@@ -753,7 +678,7 @@ class SolariClient:
     async def read_page(
         self, *, include: Sequence[str] | None = None, max_text: int = 4000
     ) -> ToolResult:
-        """Everything the planner needs to know where it is and what is missing."""
+        """everything the planner needs to know where it is and what is missing"""
         wants = set(include or DEFAULT_INCLUDES)
         unknown = wants - ALLOWED_INCLUDES
         if unknown:
@@ -798,37 +723,23 @@ class SolariClient:
             if "form" in wants:
                 fields += [f.as_dict() for f in accela.parse_fields(html)]
                 if accela.CALENDAR_CONTAINER_ID in html:
-                    # "Can this even be scheduled?" is answered by the calendar,
-                    # where every cell can be inactive (sandbox, 2026-09-20).
                     calendar += accela.parse_calendar(html)
                     selectable_times = accela.selectable_times_text(html) or selectable_times
             if "errors" in wants:
                 errors += [e.as_dict() for e in accela.parse_validation_errors(html)]
-            # Per-appointment action controls (cancel/reschedule/edit) are the
-            # only identity the citizen portal gives an existing inspection row,
-            # so they are parsed here from the *full* HTML — a frame slice small
-            # enough for the payload, from a page too big to ship (Phase 6
-            # appointment-identity map; see accela.parse_inspection_row_controls).
             if html:
                 row_controls += accela.parse_inspection_row_controls(html)
             if "html" in wants:
                 frames[-1]["html"] = html[:5000]
 
         visible = "\n".join(texts)
-        # The URL alone stops at the wizard's first step (CapDetail barely
-        # changes per step), so the visible text refines it.
         position: FlowPosition | None = accela.locate(self._url() or "", visible)
         data: dict[str, Any] = {
-            # The URL belongs in the data too, not only on the result: the
-            # schema extractor derives a record's stable identity (capID1/2/3)
-            # from the page URL, and a `data` that cannot say where it came from
-            # made every extracted record carry `ref=None` (found by the
-            # planner's permit-parsing test).
             "url": self._url(),
             "text": visible[:max_text],
             "truncated": len(visible) > max_text,
-            # A half-rendered AJAX section reads as "You have not added any
-            # inspections"; flag it so that is never reported as fact.
+            # a half-rendered ajax section reads as "you have not added any inspections"; flag it so that
+            # is never reported as fact
             "loading": accela.detect_loading(visible),
             "flow": (
                 {"flow": position.flow, "step": position.step, "page": position.page_number}
@@ -836,8 +747,8 @@ class SolariClient:
                 else None
             ),
             "fields": fields,
-            # the scheduling wizard's choices, parsed here because "what
-            # inspection can I book?" is a question the planner asks every time
+            # the scheduling wizard's choices, parsed here because "what inspection can i book?" is a
+            # question the planner asks every time
             "inspection_types": [
                 option.as_dict() for option in accela.parse_inspection_types(fields)
             ],
@@ -852,11 +763,6 @@ class SolariClient:
             "popup_open": any(frame["popup"] for frame in frames),
             "notices": accela.detect_notices(visible),
         }
-        # Phase 7 (portal integration): what ACA just did, as findings over the settled page,
-        # plus the derived page identity (URL path + capID record identity) so
-        # the recovery layer's loop key is built from settled state rather
-        # than a live render token. Appended after the literal so the loading
-        # and notice values above can be reused without self-reference.
         popup_open = any(frame["popup"] for frame in frames)
         data["portal_findings"] = list(
             accela.detect_weirdness(
@@ -889,10 +795,7 @@ class SolariClient:
         return ToolResult(ok=True, url=self._url(), data={"path": path})
 
     async def login(self, username: str, password: str) -> ToolResult:
-        """CivicId SSO login — the credential form is an iframe, not page HTML.
-
-        Credentials are deliberately never echoed into the result or the log.
-        """
+        """civicid sso login — the credential form is an iframe, not page html"""
         nav = await self.navigate(accela.LOGIN_URL)
         if not nav.ok:
             return nav
@@ -930,12 +833,7 @@ class SolariClient:
         )
 
     async def _await_login(self, *, attempts: int = 8, poll_ms: int = 700) -> tuple[str, str]:
-        """Wait for the post-login landing page rather than for one URL change.
-
-        The SSO postback can keep the URL on Login.aspx after the credentials
-        are accepted, so `settle()` alone reports a false failure — the live
-        planner run on 2026-09-20 was authenticated and still warned.
-        """
+        """wait for the post-login landing page rather than for one url change"""
         url = self._url() or ""
         text = ""
         for attempt in range(attempts):
@@ -953,7 +851,7 @@ class SolariClient:
         return url, text
 
     async def authenticate(self) -> ToolResult:
-        """Log in with the configured test account (no credentials in results)."""
+        """log in with the configured test account (no credentials in results)"""
         from licet.config import ACCELA_TEST_PASSWORD, ACCELA_TEST_USERNAME
 
         if not ACCELA_TEST_USERNAME or not ACCELA_TEST_PASSWORD:
@@ -999,15 +897,7 @@ async def _page_text(page: Any) -> str:
 
 
 class SolariSession:
-    """Thin boundary around the real Solari SDK (the only SDK import).
-
-    Verified against the installed SDK: `Solari.launch` is keyword-only and
-    takes `profile_id` (snake_case, not the `profileId` the older docs
-    claimed), plus `recording`. A profile only sets `storageState`, so it must
-    be passed at launch or every run starts anonymous while *looking* logged in
-    — which matters for the public-user scheduling account. Session recording
-    is per-session and worth enabling for eval replays.
-    """
+    """thin boundary around the real solari sdk (the only sdk import)"""
 
     def __init__(
         self,
@@ -1028,7 +918,7 @@ class SolariSession:
         self._browser: Any = None
 
     async def start(self) -> Any:
-        from solari_browser import Solari  # imported here so tests need no SDK
+        from solari_browser import Solari
 
         self._solari = Solari(api_key=self.api_key)
         self._browser = await self._solari.launch(**self.launch_options)

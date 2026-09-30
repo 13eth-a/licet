@@ -1,19 +1,4 @@
-"""Phase 6 — portal integration lane: the portal mutation-boundary map and appointment identity.
-
-Locks the portal-side safety knowledge to the layers that enforce it:
-
-- `accela.MUTATION_BOUNDARIES` agrees with the risk catalogue (`risk_levels`)
-  and the policy engine's tiers — the map cannot drift away from the gates.
-- The scheduling wizard's navigation steps never classify as mutating; the
-  popup Continue on the confirm step is the one scheduling commit.
-- `parse_inspection_row_controls` reads cancel/reschedule/edit controls from
-  the inspections HTML and refuses to misread read-only links.
-- The phase4 adapter binds an appointment id only from an unambiguous read and
-  fails closed (no id) otherwise — the portal-data half of
-  TARGET_INSPECTION_UNIDENTIFIED.
-
-No browser, no live portal: every fixture is captured-shape HTML/payloads.
-"""
+"""phase 6 — portal integration lane: the portal mutation-boundary map and appointment identity"""
 from __future__ import annotations
 
 import asyncio
@@ -34,8 +19,6 @@ from licet.safety.policy import (
     normalize_action,
 )
 
-# --- the boundary map agrees with the enforcement layers ---------------------
-
 
 def _entries(action: str):
     return [e for e in accela.MUTATION_BOUNDARIES if e["action"] == action]
@@ -49,7 +32,7 @@ def test_every_boundary_action_is_a_known_action():
 
 
 def test_boundary_risk_matches_the_risk_catalogue():
-    """The map's tiers must be exactly the catalogue's tiers (no drift)."""
+    """the map's tiers must be exactly the catalogue's tiers (no drift)"""
     tier_of = {
         "read_only": ActionRisk.READ_ONLY,
         "reversible": ActionRisk.REVERSIBLE,
@@ -66,15 +49,14 @@ def test_boundary_risk_matches_the_risk_catalogue():
      "accept_legal_attestation", "submit_application", "upload_document"],
 )
 def test_mutating_boundaries_are_state_changing_actions(action):
-    """The guard's environment rule keys on STATE_CHANGING_ACTIONS: every map
-    entry that mutates must be in it, so a live host refuses it too."""
+    """the guard's environment rule keys on state_changing_actions: every map entry that mutates must be in it, so a live host refuses it too"""
     entries = [e for e in _entries(action) if e["mutates"]]
     assert entries, action
     assert risk_levels.changes_state(action)
 
 
 def test_scheduling_wizard_navigation_does_not_mutate():
-    """The invariant architecture review asked for: reaching the gate cannot book."""
+    """the invariant architecture review asked for: reaching the gate cannot book"""
     mutating = [e for e in accela.MUTATION_BOUNDARIES
                 if e["flow"] == "schedule_inspection" and e["mutates"]]
     assert len(mutating) == 1
@@ -85,13 +67,11 @@ def test_scheduling_wizard_navigation_does_not_mutate():
 def test_attestation_is_prohibited_and_payments_consequential():
     assert _entries("accept_legal_attestation")[0]["risk"] == "prohibited"
     assert _entries("enter_payment_details")[0]["risk"] == "consequential"
-    # the attestation tier itself has no approval path
     assert risk_levels.classify("accept_legal_attestation") is risk_levels.RiskLevel.PROHIBITED
 
 
 def test_unmapped_entries_declare_no_control():
-    """An unmapped flow must not pretend to a control id the sandbox never
-    rendered — that honesty is what the guard's fail-closed answer relies on."""
+    """an unmapped flow must not pretend to a control id the sandbox never rendered — that honesty is what the guard's fail-closed answer relies on"""
     for entry in accela.MUTATION_BOUNDARIES:
         if "UNMAPPED" in str(entry["evidence"]):
             assert entry["control"] is None, entry
@@ -103,9 +83,6 @@ def test_scheduling_commit_control_is_the_popup_continue():
     assert entry["control"] == accela.POPUP_CONTINUE_ID
 
 
-# --- the policy engine consumes the same map (spot checks, real engine) ------
-
-
 def _engine(env: Environment) -> PolicyEngine:
     return PolicyEngine(environment=env, constraints=UserConstraints())
 
@@ -114,7 +91,7 @@ def test_map_and_engine_agree_on_scheduling_in_sandbox():
     engine = _engine(Environment.SANDBOX)
     decision = engine.decide(ProposedAction("SCHEDULE_INSPECTION", permit_id="P-1", target="X"),
                              verify_record=False)
-    assert decision.allowed  # reversible tier: the wizard path may run
+    assert decision.allowed
 
 
 def test_map_and_engine_agree_on_live_and_attestation():
@@ -125,9 +102,6 @@ def test_map_and_engine_agree_on_live_and_attestation():
     att = sandbox.decide(ProposedAction("ACCEPT_LEGAL_ATTESTATION", permit_id="P-1", target="X"),
                          verify_record=False)
     assert not att.allowed and att.reason == "PROHIBITED_ACTION"
-
-
-# --- parse_inspection_row_controls -------------------------------------------
 
 
 def test_parse_row_controls_postback_and_anchor_idioms():
@@ -169,9 +143,6 @@ def test_parse_row_controls_empty_html_is_no_controls():
     assert accela.parse_inspection_row_controls(None) == []
 
 
-# --- the adapter binds appointment identity conservatively -------------------
-
-
 class _FakePage:
     url = (
         "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building"
@@ -187,7 +158,7 @@ class _FakePage:
 
 
 class _RowControlClient:
-    """read_page double that ships `inspection_row_controls` like the real one."""
+    """read_page double that ships `inspection_row_controls` like the real one"""
 
     def __init__(self, text, controls):
         self.page = _FakePage()
@@ -242,11 +213,10 @@ def test_adapter_binds_appointment_id_from_row_control():
     snap = _read(portal, type_="Rough Electrical")
     assert snap.inspection_id == "gv$ctl02$lnkCancel"
     assert snap.status == "Scheduled"
-    assert snap.record_key  # capID identity from the URL
+    assert snap.record_key
 
 
 def test_adapter_refuses_to_bind_on_ambiguous_reads():
-    # two scheduled rows, one control: which row owns it? None may claim it.
     text = _detail_text([
         "Rough Electrical | Scheduled | 09/25/2026",
         "Final Electrical | Scheduled | 09/28/2026",
@@ -257,8 +227,7 @@ def test_adapter_refuses_to_bind_on_ambiguous_reads():
 
 
 def test_adapter_refuses_to_bind_without_controls():
-    """No HTML controls parsed → no id → targeted mutation would be refused
-    by policy (TARGET_INSPECTION_UNIDENTIFIED). Fail-closed, not guessed."""
+    """no html controls parsed → no id → targeted mutation would be refused by policy (target_inspection_unidentified)"""
     text = _detail_text(["Rough Electrical | Scheduled | 09/25/2026"])
     portal = _portal(_RowControlClient(text, []))
     snap = _read(portal, type_="Rough Electrical")
@@ -266,8 +235,7 @@ def test_adapter_refuses_to_bind_without_controls():
 
 
 def test_engine_refuses_targeted_mutation_without_appointment_id():
-    """The end-to-end reason the parser exists: the real engine stops an
-    id-less cancel even in a sandbox with every other condition satisfied."""
+    """the end-to-end reason the parser exists: the real engine stops an id-less cancel even in a sandbox with every other condition satisfied"""
     engine = _engine(Environment.SANDBOX)
     decision = engine.decide(ProposedAction(
         "CANCEL_INSPECTION", permit_id="BLD26-00467", target="Rough Electrical",
@@ -283,9 +251,8 @@ def test_engine_allows_targeted_mutation_with_the_bound_id():
         "CANCEL_INSPECTION", permit_id="BLD26-00467", target="Rough Electrical",
         inspection_type="Rough Electrical", inspection_id="gv$ctl02$lnkCancel",
     )
-    # The observed identity is the adapter's snapshot: it asserts the same
-    # appointment id the read bound, so the approval scope and the observation
-    # check the same target (the P2 fail-closed rule).
+    # the observed identity is the adapter's snapshot: it asserts the same appointment id the read bound,
+    # so the approval scope and the observation check the same target (the p2 fail-closed rule)
     decision = engine.decide(action, observed_identity=RecordIdentity(
         permit_id="BLD26-00467", inspection_type="Rough Electrical",
         inspection_id="gv$ctl02$lnkCancel",
@@ -293,5 +260,4 @@ def test_engine_allows_targeted_mutation_with_the_bound_id():
     # consequential tier: not auto-allowed; it must demand a scoped confirmation
     assert decision.requires_confirmation
     assert decision.confirmation is not None
-    # and that confirmation binds the appointment id it was issued for
     assert decision.confirmation.inspection_id == "gv$ctl02$lnkCancel"

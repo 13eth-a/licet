@@ -1,11 +1,11 @@
-"""Evidence-bounded presentation helpers for plan-only acceptance reports."""
+"""evidence-bounded presentation helpers for plan-only acceptance reports"""
 from __future__ import annotations
 
 from typing import Any
 
 
 def live_plan_only_summary(report: dict[str, Any]) -> dict[str, Any]:
-    """Summarize independently recorded read-only progress without overclaiming."""
+    """summarize independently recorded read-only progress without overclaiming"""
     trace = report.get("trace", [])
     preflight = report.get("preflight", {})
     details = preflight.get("details", {})
@@ -55,7 +55,7 @@ def live_plan_only_summary(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def format_live_plan_only_summary(summary: dict[str, Any]) -> str:
-    """Render the concise terminal acceptance trace."""
+    """render the concise terminal acceptance trace"""
     lines = [f"Goal: {summary['goal']}"]
     if summary["permit_verified"]:
         lines.append(f"✓ Permit verified: {summary['permit_id']}")
