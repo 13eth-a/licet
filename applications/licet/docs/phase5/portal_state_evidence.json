@@ -1,0 +1,109 @@
+{
+  "cases": [
+    {
+      "case": "H02",
+      "label": "MM/DD/YYYY dates reach the ISO-only ordering logic",
+      "legacy": [
+        "09/18/2026",
+        "09/20/2026",
+        "unknown"
+      ],
+      "current": [
+        "2026-09-18",
+        "2026-09-20",
+        "later"
+      ],
+      "passed": true
+    },
+    {
+      "case": "H02b",
+      "label": "text-path inspection row keeps its date",
+      "legacy": [
+        null
+      ],
+      "current": [
+        "2026-05-20"
+      ],
+      "passed": true
+    },
+    {
+      "case": "H06",
+      "label": "outcome in the status column is not lost",
+      "legacy": [],
+      "current": [
+        "failed_inspection"
+      ],
+      "passed": true
+    },
+    {
+      "case": "H01",
+      "label": "legend line does not fabricate an inspection row",
+      "legacy": [
+        "Rough Electrical",
+        "Completed"
+      ],
+      "current": [
+        "Rough Electrical"
+      ],
+      "passed": true
+    },
+    {
+      "case": "H05",
+      "label": "declared-empty marker beside rows degrades coverage",
+      "legacy": "complete",
+      "current": "partial",
+      "passed": true
+    },
+    {
+      "case": "H03",
+      "label": "'In Collection' wording reads unpaid",
+      "legacy": [
+        null,
+        null
+      ],
+      "current": [
+        false,
+        true
+      ],
+      "passed": true
+    },
+    {
+      "case": "H04",
+      "label": "'Due Date' header does not defeat the fees table",
+      "legacy": [
+        {
+          "description": "Plan Check Fee | 09/30/2026",
+          "amount": "$74.50"
+        }
+      ],
+      "current": [
+        {
+          "description": "Plan Check Fee",
+          "amount": "$74.50"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "case": "H07",
+      "label": "planner completion gate on extracted (not injected) state",
+      "legacy": [
+        "A Rough Electrical pass exists, but attempt order is not established by the available evidence (missing or tied dates); the earlier failure cannot be resolved safely."
+      ],
+      "current": [
+        "A Rough Electrical pass exists, but both attempts' scopes are not shown, so whether the pass addresses the failed attempt is not established; the earlier failure cannot be resolved safely."
+      ],
+      "passed": true
+    },
+    {
+      "case": "C1",
+      "label": "positive control: scope + dates resolve the failure",
+      "legacy": "n/a (pre-review failed this too)",
+      "current": true,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "total": 9,
+  "failures": 0
+}

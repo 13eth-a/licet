@@ -1,0 +1,16 @@
+{
+  "scope": "seeded simulated portal I/O, real Phase 2\u20137 runtime; not live validation",
+  "runs": 26,
+  "completed": 18,
+  "stopped_safely": 8,
+  "unexpected_failures": 0,
+  "false_recoveries": 0,
+  "duplicate_mutations": 0,
+  "recovery_success_rate": 0.8888888888888888,
+  "unrecoverable_run_rate": 0.3076923076923077,
+  "browser_retry_success_rate": 0.8,
+  "planner_replan_success_rate": null,
+  "additional_browser_actions": 40,
+  "average_recovery_steps": 0.7692307692307693,
+  "loop_rate": 0.0
+}

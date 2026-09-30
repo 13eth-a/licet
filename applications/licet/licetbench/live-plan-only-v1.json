@@ -1,0 +1,53 @@
+{
+  "case_id": "LIVE_PLAN_ONLY_ACCEPTANCE",
+  "captured_from": "logs/ni_backoffice/phase5/2026-09-26_semantic_flagship_live_verification_latest.json",
+  "captured_on": "2026-09-26",
+  "portal_host": "aca-test.accela.com",
+  "classified_environment": "sandbox",
+  "scope": "plan-only read; no mutation was authorized or attempted",
+  "goal": "Get permit 000000014 ready for its next inspection without paying anything or signing anything.",
+  "permit": {
+    "display_id": "000000014",
+    "record_key": "NULLISLAND/Building/REC26/00000/000QB",
+    "verified": true
+  },
+  "catalog": {
+    "complete": true,
+    "declared_count": 18,
+    "observed_count": 18,
+    "pages_read": 2,
+    "required_inspection": "Brycer Inspection History"
+  },
+  "availability": {
+    "calendar_read": true,
+    "identity_verified": true,
+    "available_dates": [],
+    "availability_status": "none_in_observed_calendar",
+    "calendar_months": [
+      {"month": "Sep 2026", "active_day_count": 0, "inactive_day_count": 30},
+      {"month": "Oct 2026", "active_day_count": 0, "inactive_day_count": 31},
+      {"month": "Nov 2026", "active_day_count": 0, "inactive_day_count": 30}
+    ]
+  },
+  "unresolved": {
+    "cost": {"status": "unknown", "reason": "portal does not render scheduling cost"},
+    "signature_requirement": {"status": "unknown", "reason": "portal does not render signature requirement"}
+  },
+  "planner": {
+    "status": "PARTIAL_SUCCESS",
+    "error": "NO_SAFE_ACTIONS",
+    "remaining_goal": ["inspection_scheduled"],
+    "mutations_attempted": 0,
+    "mutations_verified": 0
+  },
+  "observed_actions": [
+    "FIND_PERMIT",
+    "READ_PERMIT_STATE",
+    "DETERMINE_BLOCKERS",
+    "READ_INSPECTIONS",
+    "DETERMINE_BLOCKERS",
+    "DETERMINE_NEXT_INSPECTION",
+    "CHECK_INSPECTION_AVAILABILITY"
+  ],
+  "recorded_stop_reason_at_capture": "one evidence-supported target; policy and pre-action verification still required"
+}

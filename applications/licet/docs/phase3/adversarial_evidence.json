@@ -1,0 +1,218 @@
+{
+  "current": {
+    "passed": 46,
+    "total": 46,
+    "blockers_emitted": 40,
+    "unsupported_blocker_count": 0,
+    "unsupported_blocker_rate": 0.0,
+    "false_ready_count": 0,
+    "confirmed_gates_emitted": 4,
+    "gate_false_positives": 0,
+    "misclassified_blockers": 0,
+    "contradiction_cases": 4,
+    "contradictions_surfaced": 4,
+    "contradiction_recall": 1.0,
+    "abstentions": 11
+  },
+  "counterexamples": {
+    "A01": {
+      "case_id": "A01-negated-payment-gate",
+      "finding": "negated payment wording became a confirmed gate",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A02": {
+      "case_id": "A02-gate-stage-from-wording",
+      "finding": "gate stage assumed to be issuance",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A03": {
+      "case_id": "A03-released-hold-is-not-a-gate",
+      "finding": "resolved condition read as an active gate",
+      "current": {
+        "passed": true,
+        "answerability": "needs_data",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A04": {
+      "case_id": "A04-later-failure-not-resolved",
+      "finding": "earlier pass resolved a later failure",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A05": {
+      "case_id": "A05-clean-pass-with-negative-comment",
+      "finding": "clean pass flagged as a correction conflict",
+      "current": {
+        "passed": true,
+        "answerability": "partial",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A06": {
+      "case_id": "A06-history-not-expired",
+      "finding": "'not expired' history read as an expiration event",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A07": {
+      "case_id": "A07-fee-payment-state-unknown",
+      "finding": "unknown payment state asserted as unpaid",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A08": {
+      "case_id": "A08-balance-not-amount",
+      "finding": "raw amount text overrode the parsed balance",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A09": {
+      "case_id": "A09-stale-fee-observation",
+      "finding": "stale fee observation silently kept",
+      "current": {
+        "passed": true,
+        "answerability": "conflicting",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A10": {
+      "case_id": "A10-zero-balance-not-blocker",
+      "finding": "zero balance reported as an outstanding amount",
+      "current": {
+        "passed": true,
+        "answerability": "answered",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    },
+    "A11": {
+      "case_id": "A11-required-document-pending",
+      "finding": "'pending' required document reported as missing",
+      "current": {
+        "passed": true,
+        "answerability": "needs_data",
+        "problems": {
+          "missing_blockers": [],
+          "unsupported_blockers": [],
+          "misclassified_blockers": [],
+          "forbidden_classifications": [],
+          "missing_mentions": [],
+          "fabricated_claims": [],
+          "flag_problems": []
+        }
+      },
+      "baseline": null
+    }
+  },
+  "baseline_directory": null
+}

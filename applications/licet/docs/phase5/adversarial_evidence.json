@@ -1,0 +1,157 @@
+{
+  "mode": "deterministic predicate + end-to-end, no browser or model",
+  "counterexamples": [
+    {
+      "case_id": "F1",
+      "fact": "blockers_identified",
+      "finding": "an interpretation from a previous snapshot established blockers",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F2",
+      "fact": "blockers_identified",
+      "finding": "a self-contradicting interpretation established blockers",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F3",
+      "fact": "blockers_identified",
+      "finding": "an interpretation that still needs a section established blockers",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F4",
+      "fact": "blockers_identified",
+      "finding": "an interpretation whose uncertainty blocks the answer established blockers",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F5",
+      "fact": "blockers_identified",
+      "finding": "an answer to a different question established blockers",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F6",
+      "fact": "next_inspection_identified",
+      "finding": "a proposal bound to another record established next-inspection",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F7",
+      "fact": "next_inspection_identified",
+      "finding": "a stale proposal established next-inspection",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "F8",
+      "fact": "permit_approved",
+      "finding": "approval on another record established permit approval",
+      "legacy_establishes": true,
+      "current_establishes": false
+    },
+    {
+      "case_id": "C1",
+      "fact": "blockers_identified",
+      "finding": "positive control: sound reasoning still establishes blockers",
+      "legacy_establishes": true,
+      "current_establishes": true
+    }
+  ],
+  "end_to_end": [
+    {
+      "name": "E1",
+      "finding": "stale reasoner cannot complete a vague goal",
+      "goal": "Fix my permit.",
+      "status": "BLOCKED",
+      "remaining_goal": [
+        "blockers_identified"
+      ],
+      "mutations": 0,
+      "passed": true
+    },
+    {
+      "name": "E2",
+      "finding": "contradicting reasoner cannot complete a vague goal",
+      "goal": "Fix my permit.",
+      "status": "BLOCKED",
+      "remaining_goal": [
+        "blockers_identified"
+      ],
+      "mutations": 0,
+      "passed": true
+    },
+    {
+      "name": "E3",
+      "finding": "reasoner demanding an unread section cannot complete a vague goal",
+      "goal": "Fix my permit.",
+      "status": "BLOCKED",
+      "remaining_goal": [
+        "blockers_identified"
+      ],
+      "mutations": 0,
+      "passed": true
+    },
+    {
+      "name": "E4",
+      "finding": "blocks-answer uncertainty cannot complete a vague goal",
+      "goal": "Fix my permit.",
+      "status": "BLOCKED",
+      "remaining_goal": [
+        "blockers_identified"
+      ],
+      "mutations": 0,
+      "passed": true
+    },
+    {
+      "name": "E5",
+      "finding": "an answer to another question cannot complete a vague goal",
+      "goal": "Fix my permit.",
+      "status": "BLOCKED",
+      "remaining_goal": [
+        "blockers_identified"
+      ],
+      "mutations": 0,
+      "passed": true
+    },
+    {
+      "name": "E6",
+      "finding": "flagship goal still succeeds once",
+      "goal": "Find the permit at 123 Main Street, get it ready for its next inspection now.",
+      "status": "SUCCESS",
+      "remaining_goal": [],
+      "mutations": 1,
+      "passed": true
+    }
+  ],
+  "broader_goals": [
+    {
+      "goal": "Get this permit moving.",
+      "autonomous": true,
+      "vague": false,
+      "success_conditions": [
+        "permit_verified",
+        "next_inspection_identified",
+        "inspection_scheduled"
+      ]
+    },
+    {
+      "goal": "Get me as close to approval as possible.",
+      "autonomous": true,
+      "vague": false,
+      "success_conditions": [
+        "permit_verified",
+        "next_inspection_identified",
+        "inspection_scheduled"
+      ]
+    }
+  ],
+  "failing": []
+}

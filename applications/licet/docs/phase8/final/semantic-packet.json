@@ -1,0 +1,1225 @@
+{
+  "scope": "structured ground truth and generated answers for secondary semantic review",
+  "cases": [
+    {
+      "case_id": "S01",
+      "question": "What is the current status?",
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "answer_digest": "0c4d75a6d728417ac5d4ec23bc2be18cd21be1ce54bcc746248dd4a170ed25df",
+      "ground_truth_digest": "ac659f7e044c51767ac47704a54c558b3dc019401c02d788c631c65f8a57bf1f",
+      "ground_truth": {
+        "evidence": {
+          "record_number": "BLD-GOLD-001",
+          "record_type": "Commercial Alteration",
+          "address": "1 Flagship Way",
+          "status": "Issued",
+          "status_normalized": "ISSUED",
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F001",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": "Completed",
+              "result": "Corrections Required",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": "2026-09-18",
+              "inspector": null,
+              "comments": "Enclose exposed junction box.",
+              "inspection_id": "A",
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "raw_status": "Completed",
+              "raw_result": "Corrections Required",
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": "FAILED"
+            }
+          ],
+          "fees": [
+            {
+              "description": "Permit balance",
+              "amount": 74.5,
+              "amount_text": "$74.50",
+              "paid": false,
+              "due": true,
+              "balance": null,
+              "gate_text": null,
+              "evidence_ids": [
+                "ev_da0d1d940c0b"
+              ]
+            }
+          ],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_8ed650b407cb": {
+              "id": "ev_8ed650b407cb",
+              "section": "overview",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F001"
+            },
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F001"
+            },
+            "ev_da0d1d940c0b": {
+              "id": "ev_da0d1d940c0b",
+              "section": "fees",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F001"
+            }
+          },
+          "coverage": {
+            "overview": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "fees": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [
+            {
+              "field": "record_number",
+              "value": "BLD-GOLD-001",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "BLD-GOLD-001"
+            },
+            {
+              "field": "record_type",
+              "value": "Commercial Alteration",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Commercial Alteration"
+            },
+            {
+              "field": "status",
+              "value": "Issued",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Issued"
+            },
+            {
+              "field": "address",
+              "value": "1 Flagship Way",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "1 Flagship Way"
+            }
+          ],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [],
+          "forbidden_blocker_types": [],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "S02-submitted",
+      "question": "What is the status of golden-002?",
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Submitted.",
+      "answer_digest": "0d0bd37b95d7c2affad37923a5b7f9483d469aa6e4cb3e9ed05200960e75ce72",
+      "ground_truth_digest": "b9eda6ffbbfbb802a2b6f8b939b75b169b164c16cd41c2d3be47bcc33c489e92",
+      "ground_truth": {
+        "evidence": {
+          "record_number": "BLD-GOLD-002",
+          "record_type": null,
+          "address": null,
+          "status": "Submitted",
+          "status_normalized": "SUBMITTED",
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": "2020-01-01",
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_8ed650b407cb": {
+              "id": "ev_8ed650b407cb",
+              "section": "overview",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "overview": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [
+            {
+              "field": "record_number",
+              "value": "BLD-GOLD-002",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "BLD-GOLD-002"
+            },
+            {
+              "field": "status",
+              "value": "Submitted",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Submitted"
+            },
+            {
+              "field": "expiration_date",
+              "value": "2020-01-01",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "2020-01-01"
+            }
+          ],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [],
+          "forbidden_blocker_types": [],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "S04-completed-no-result",
+      "question": "Did the final inspection pass?",
+      "answer": "Facts reported by the portal:\n- Inspection Final — completed\n\nUncertainties:\n- The outcome of the completed Final attempt is not shown in the record.",
+      "answer_digest": "a0694539a4b11976479d03c81e25d5fc897effb17192f4ad7e9fa97ec34ebd6a",
+      "ground_truth_digest": "577542ac0a0375a1e4c1a27c28cd92914ef24cc00de66862158d3f484ca51cda",
+      "ground_truth": {
+        "evidence": {
+          "record_number": null,
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "status_normalized": null,
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [
+            {
+              "type": "Final",
+              "status": "Completed",
+              "result": null,
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Completed",
+              "raw_result": null,
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": null
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [],
+          "forbidden_blocker_types": [],
+          "answerability": "partial",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "S05-negative-wording",
+      "question": "What is blocking approval?",
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — pending\n- Inspection Frame — failed\n\nWhat is in the way:\n- Frame inspection did not pass (result: Not Approved) (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Frame correction — Address the cited Frame correction\n- Possible: Request reinspection: Frame — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "answer_digest": "146983b8ad8d5e51ce65c6db75158e01d94a5821bc43607dbddc2cf87ff97bf4",
+      "ground_truth_digest": "a4f335fd56f1259fb31a26147e1123b014ed0e18f999c5b2e837f825e14878bf",
+      "ground_truth": {
+        "evidence": {
+          "record_number": null,
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "status_normalized": null,
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": "Not Scheduled",
+              "result": null,
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Not Scheduled",
+              "raw_result": null,
+              "lifecycle_normalized": "PENDING",
+              "result_normalized": null
+            },
+            {
+              "type": "Frame",
+              "status": null,
+              "result": "Not Approved",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": null,
+              "raw_result": "Not Approved",
+              "lifecycle_normalized": null,
+              "result_normalized": "FAILED"
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [
+            "failed_inspection"
+          ],
+          "forbidden_blocker_types": [
+            "expired_permit"
+          ],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "S03-expired-event",
+      "question": "What is the status?",
+      "answer": "The record contains conflicting evidence, so a single confident answer is not possible:\n\nFacts reported by the portal (some are disputed; see Uncertainties):\n- The portal reports permit status Issued.\n\nUncertainties:\n- Conflicting record evidence: overview reports the permit Issued while history records an explicit expiration event; no renewal evidence resolves them (possible stale overview)",
+      "answer_digest": "466fce0acf3a9897f3da2544276e16f07d03754183b05073c1e6b0d116716a72",
+      "ground_truth_digest": "5105fb379f6470f30758789dfb7bd8fa7f14cd5d9a40c0411dcb718d035237bf",
+      "ground_truth": {
+        "evidence": {
+          "record_number": "BLD-GOLD-004",
+          "record_type": null,
+          "address": null,
+          "status": "Issued",
+          "status_normalized": "ISSUED",
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F004",
+          "inspections": [],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [
+            {
+              "event": "Permit expired",
+              "date": "2026-09-20",
+              "status": null,
+              "details": "explicit expiration event",
+              "evidence_ids": [
+                "ev_d8add6c846fe"
+              ]
+            }
+          ],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_8ed650b407cb": {
+              "id": "ev_8ed650b407cb",
+              "section": "overview",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F004"
+            },
+            "ev_d8add6c846fe": {
+              "id": "ev_d8add6c846fe",
+              "section": "history",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F004"
+            }
+          },
+          "coverage": {
+            "overview": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "history": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [
+            {
+              "field": "record_number",
+              "value": "BLD-GOLD-004",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "BLD-GOLD-004"
+            },
+            {
+              "field": "status",
+              "value": "Issued",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Issued"
+            }
+          ],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [],
+          "forbidden_blocker_types": [],
+          "answerability": "conflicting",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "H01-later-pass-same-scope",
+      "question": "What is blocking approval?",
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "answer_digest": "08a2e6365b142f2b14534c65c98b96ba9d236b1c0c9dd855f20533d1866e935f",
+      "ground_truth_digest": "d2baf2d996d7d46afc7a7304448f629ff454c25eb2d89ef73d614817c43ca8ac",
+      "ground_truth": {
+        "evidence": {
+          "record_number": "BLD-GOLD-003",
+          "record_type": null,
+          "address": null,
+          "status": "Issued",
+          "status_normalized": "ISSUED",
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F003",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": "Completed",
+              "result": "Corrections Required",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": "2026-09-18",
+              "inspector": null,
+              "comments": null,
+              "inspection_id": "A",
+              "scope": "Unit A",
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Completed",
+              "raw_result": "Corrections Required",
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": "FAILED"
+            },
+            {
+              "type": "Rough Electrical",
+              "status": "Completed",
+              "result": "Passed",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": "2026-09-20",
+              "inspector": null,
+              "comments": null,
+              "inspection_id": "B",
+              "scope": "Unit A",
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Completed",
+              "raw_result": "Passed",
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": "PASSED"
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_8ed650b407cb": {
+              "id": "ev_8ed650b407cb",
+              "section": "overview",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F003"
+            },
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F003"
+            }
+          },
+          "coverage": {
+            "overview": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [
+            {
+              "field": "record_number",
+              "value": "BLD-GOLD-003",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "BLD-GOLD-003"
+            },
+            {
+              "field": "status",
+              "value": "Issued",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Issued"
+            }
+          ],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [],
+          "forbidden_blocker_types": [
+            "failed_inspection"
+          ],
+          "answerability": "partial",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "H02-scheduled-followup",
+      "question": "What should happen next?",
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Inspection Rough Electrical — scheduled\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n\nUncertainties:\n- A Rough Electrical attempt is already scheduled; whether it addresses the failed attempt is not established.\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "answer_digest": "1cb2bbf959c68cb229516bdf3d545f2fa22227fc76e049367757d1d2dfe7b212",
+      "ground_truth_digest": "df60116e368b42b1f4d034c4f4d9023f980b6270fe486169a4c246907075951f",
+      "ground_truth": {
+        "evidence": {
+          "record_number": "BLD-GOLD-005",
+          "record_type": null,
+          "address": null,
+          "status": "Issued",
+          "status_normalized": "ISSUED",
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F005",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": "Completed",
+              "result": "Corrections Required",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": "2026-09-18",
+              "inspector": null,
+              "comments": null,
+              "inspection_id": "A",
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Completed",
+              "raw_result": "Corrections Required",
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": "FAILED"
+            },
+            {
+              "type": "Rough Electrical",
+              "status": "Scheduled",
+              "result": null,
+              "requested_date": null,
+              "scheduled_date": "2026-09-25",
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": "B",
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Scheduled",
+              "raw_result": null,
+              "lifecycle_normalized": "SCHEDULED",
+              "result_normalized": null
+            }
+          ],
+          "fees": [
+            {
+              "description": "Permit balance",
+              "amount": 74.5,
+              "amount_text": "$74.50",
+              "paid": false,
+              "due": true,
+              "balance": null,
+              "gate_text": null,
+              "evidence_ids": [
+                "ev_da0d1d940c0b"
+              ]
+            }
+          ],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_8ed650b407cb": {
+              "id": "ev_8ed650b407cb",
+              "section": "overview",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F005"
+            },
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F005"
+            },
+            "ev_da0d1d940c0b": {
+              "id": "ev_da0d1d940c0b",
+              "section": "fees",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F005"
+            }
+          },
+          "coverage": {
+            "overview": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            },
+            "fees": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [
+            {
+              "field": "record_number",
+              "value": "BLD-GOLD-005",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "BLD-GOLD-005"
+            },
+            {
+              "field": "status",
+              "value": "Issued",
+              "kind": "FACT",
+              "evidence_ids": [
+                "ev_8ed650b407cb"
+              ],
+              "confidence": "medium",
+              "entity_id": null,
+              "raw_value": "Issued"
+            }
+          ],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [
+            "unpaid_fee"
+          ],
+          "forbidden_blocker_types": [],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "H04-different-unit",
+      "question": "What is blocking approval?",
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n- Inspection Rough Electrical — passed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "answer_digest": "28aabf853c294e8e968bfe2da05e7c0e371c54f4a8618349d6ad7f5b0c058e90",
+      "ground_truth_digest": "85b9f648082ec0d40997f6003cf7d838934b4b8335b7c6662c5146c9bffbf3e6",
+      "ground_truth": {
+        "evidence": {
+          "record_number": null,
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "status_normalized": null,
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": null,
+              "result": "Failed",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": "Unit A",
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": null,
+              "raw_result": "Failed",
+              "lifecycle_normalized": null,
+              "result_normalized": "FAILED"
+            },
+            {
+              "type": "Rough Electrical",
+              "status": null,
+              "result": "Passed",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": "Unit B",
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": null,
+              "raw_result": "Passed",
+              "lifecycle_normalized": null,
+              "result_normalized": "PASSED"
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [
+            "failed_inspection"
+          ],
+          "forbidden_blocker_types": [],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "H05-unknown-ordering",
+      "question": "What is blocking approval?",
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n- Inspection Rough Electrical — passed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nUncertainties:\n- Multiple Rough Electrical attempts exist, but attempt order is not established; which outcome is the latest is not established by the available evidence.\n- A Rough Electrical pass exists, but attempt order is not established by the available evidence (missing or tied dates); the earlier failure cannot be resolved safely.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "answer_digest": "6009bd42394b5d227e8b1726a1723f0a9e24092cfb366e8770e623c487a4e0cb",
+      "ground_truth_digest": "cd16cf9ed4564e8aaa576659ad257016ae4e07da17f9cc76c3b67c0e42c72330",
+      "ground_truth": {
+        "evidence": {
+          "record_number": null,
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "status_normalized": null,
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": null,
+              "result": "Failed",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": null,
+              "raw_result": "Failed",
+              "lifecycle_normalized": null,
+              "result_normalized": "FAILED"
+            },
+            {
+              "type": "Rough Electrical",
+              "status": null,
+              "result": "Passed",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": null,
+              "raw_result": "Passed",
+              "lifecycle_normalized": null,
+              "result_normalized": "PASSED"
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [
+            "failed_inspection"
+          ],
+          "forbidden_blocker_types": [],
+          "answerability": "partial",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    },
+    {
+      "case_id": "H03-cancelled-followup",
+      "question": "What should happen next?",
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Inspection Rough Electrical — cancelled\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "answer_digest": "e5e4163f4aa9f8840b838886160dd7654d52ba1ae52562985203a425a45eaa93",
+      "ground_truth_digest": "0cdb3510542b92ae788b1b331d63d5c5d931e664a5f0f63168173a26e18457cb",
+      "ground_truth": {
+        "evidence": {
+          "record_number": null,
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "status_normalized": null,
+          "application_date": null,
+          "issued_date": null,
+          "expiration_date": null,
+          "applicant": null,
+          "contact": null,
+          "parcel_number": null,
+          "description": null,
+          "record_key": "NULLISLAND/Building/REC26/00000/9F002",
+          "inspections": [
+            {
+              "type": "Rough Electrical",
+              "status": "Completed",
+              "result": "Corrections Required",
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Completed",
+              "raw_result": "Corrections Required",
+              "lifecycle_normalized": "COMPLETED",
+              "result_normalized": "FAILED"
+            },
+            {
+              "type": "Rough Electrical",
+              "status": "Cancelled",
+              "result": null,
+              "requested_date": null,
+              "scheduled_date": null,
+              "completed_date": null,
+              "inspector": null,
+              "comments": null,
+              "inspection_id": null,
+              "scope": null,
+              "evidence_ids": [
+                "ev_9b3109688f46"
+              ],
+              "comment_evidence_ids": [],
+              "raw_status": "Cancelled",
+              "raw_result": null,
+              "lifecycle_normalized": "CANCELLED",
+              "result_normalized": null
+            }
+          ],
+          "fees": [],
+          "documents": [],
+          "conditions": [],
+          "history": [],
+          "comments": [],
+          "outstanding_requirements": [],
+          "evidence": {
+            "ev_9b3109688f46": {
+              "id": "ev_9b3109688f46",
+              "section": "inspections",
+              "raw_text": "",
+              "source_url": null,
+              "observed_at": null,
+              "effective_at": null,
+              "confidence": "medium",
+              "record_key": "NULLISLAND/Building/REC26/00000/9F002"
+            }
+          },
+          "coverage": {
+            "inspections": {
+              "status": "complete",
+              "complete_through": null,
+              "pages_seen": 0,
+              "total_pages": null,
+              "note": null
+            }
+          },
+          "facts": [],
+          "contradictions": [],
+          "rejected_observations": []
+        },
+        "expected": {
+          "blocker_types": [
+            "failed_inspection"
+          ],
+          "forbidden_blocker_types": [],
+          "answerability": "answered",
+          "classifications": [],
+          "forbidden_classifications": []
+        }
+      },
+      "deterministic_pass": true
+    }
+  ]
+}

@@ -1,0 +1,1971 @@
+{
+  "generated_utc": "2026-09-21T19:15:14.227773+00:00",
+  "scope": "offline Phase 2 review",
+  "source_sha256": {
+    "licet/lookup.py": "2bf6a841a23bb74b552f9224f523884bfe04ca0e6aaa78c582774a92315e817c",
+    "licet/lookup_runner.py": "4c4b2d7497b5289bc7cb8b9be40efaa8a99d4f123bcf117aed5f7c8a93bf6b75",
+    "licet/schema/extract.py": "4b9f91a9cc4d608ba9642b45f700c19c7b98d9bf21aa92fc18880d4bf9c56f9d",
+    "licet/agent/state.py": "f3d924cf6cfed9839c42b022fc73b9a5503f5cb328257c0e9c40f7821601f798",
+    "tests/conftest.py": "b64f8e1c64c9dd93fa4ad466df9885696355e54f3dcdcea57ef07c2d378038ba"
+  },
+  "source_changed_during_probe": false,
+  "total": 43,
+  "passed": 43,
+  "failed": 0,
+  "checks": [
+    {
+      "id": "P01_live_record_format",
+      "expected": {
+        "record_number": "BLD26-00472",
+        "zip_code": null,
+        "strategy": "record_number"
+      },
+      "actual": {
+        "record_number": "BLD26-00472",
+        "raw_text": "Find permit BLD26-00472",
+        "source_spans": {
+          "record_number": [
+            [
+              12,
+              23
+            ]
+          ]
+        },
+        "strategy": "record_number"
+      },
+      "passed": true,
+      "inputs": "Find permit BLD26-00472"
+    },
+    {
+      "id": "P02_labeled_short_numeric",
+      "expected": {
+        "record_number": "12345",
+        "zip_code": null,
+        "strategy": "record_number"
+      },
+      "actual": {
+        "record_number": "12345",
+        "raw_text": "permit 12345",
+        "source_spans": {
+          "record_number": [
+            [
+              7,
+              12
+            ]
+          ]
+        },
+        "strategy": "record_number"
+      },
+      "passed": true,
+      "inputs": "permit 12345"
+    },
+    {
+      "id": "P03_record_not_zip",
+      "expected": {
+        "record_number": "BLD-2026-00123",
+        "zip_code": null,
+        "strategy": "record_number"
+      },
+      "actual": {
+        "record_number": "BLD-2026-00123",
+        "raw_text": "Find permit BLD-2026-00123",
+        "source_spans": {
+          "record_number": [
+            [
+              12,
+              26
+            ]
+          ]
+        },
+        "strategy": "record_number"
+      },
+      "passed": true,
+      "inputs": "Find permit BLD-2026-00123"
+    },
+    {
+      "id": "P04_numeric_parcel_not_record",
+      "expected": {
+        "parcel_number": "123456789",
+        "record_number": null,
+        "strategy": "parcel_number"
+      },
+      "actual": {
+        "parcel_number": "123456789",
+        "raw_text": "Find record for parcel 123456789",
+        "source_spans": {
+          "parcel_number": [
+            [
+              23,
+              32
+            ]
+          ]
+        },
+        "strategy": "parcel_number"
+      },
+      "passed": true,
+      "inputs": "Find record for parcel 123456789"
+    },
+    {
+      "id": "P05_explicit_zip_wins",
+      "expected": {
+        "record_number": "BLD-2026-00123",
+        "zip_code": "57104",
+        "strategy": "record_number"
+      },
+      "actual": {
+        "record_number": "BLD-2026-00123",
+        "zip_code": "57104",
+        "raw_text": "Find permit BLD-2026-00123 in ZIP 57104",
+        "source_spans": {
+          "zip_code": [
+            [
+              34,
+              39
+            ]
+          ],
+          "record_number": [
+            [
+              12,
+              26
+            ]
+          ]
+        },
+        "strategy": "record_number"
+      },
+      "passed": true,
+      "inputs": "Find permit BLD-2026-00123 in ZIP 57104"
+    },
+    {
+      "id": "P06_leading_zero_record",
+      "expected": {
+        "record_number": "000000014",
+        "strategy": "record_number"
+      },
+      "actual": {
+        "record_number": "000000014",
+        "raw_text": "Find permit 000000014",
+        "source_spans": {
+          "record_number": [
+            [
+              12,
+              21
+            ]
+          ]
+        },
+        "strategy": "record_number"
+      },
+      "passed": true,
+      "inputs": "Find permit 000000014"
+    },
+    {
+      "id": "P07_exact_address_control",
+      "expected": {
+        "street_number": "123",
+        "street_name": "main st",
+        "strategy": "full_address"
+      },
+      "actual": {
+        "street_number": "123",
+        "street_name": "main st",
+        "raw_text": "Find the permit at 123 Main Street",
+        "source_spans": {
+          "street_number": [
+            [
+              19,
+              34
+            ]
+          ],
+          "street_name": [
+            [
+              19,
+              34
+            ]
+          ]
+        },
+        "strategy": "full_address"
+      },
+      "passed": true,
+      "inputs": "Find the permit at 123 Main Street"
+    },
+    {
+      "id": "P08_type_address_control",
+      "expected": {
+        "street_number": "800",
+        "street_name": "state",
+        "permit_type": "Commercial Alteration",
+        "strategy": "full_address"
+      },
+      "actual": {
+        "street_number": "800",
+        "street_name": "state",
+        "permit_type": "Commercial Alteration",
+        "raw_text": "commercial alteration for 800 state",
+        "source_spans": {
+          "permit_type": [
+            [
+              0,
+              21
+            ]
+          ],
+          "street_number": [
+            [
+              26,
+              35
+            ]
+          ],
+          "street_name": [
+            [
+              26,
+              35
+            ]
+          ]
+        },
+        "strategy": "full_address"
+      },
+      "passed": true,
+      "inputs": "commercial alteration for 800 state"
+    },
+    {
+      "id": "P09_direction_control",
+      "expected": {
+        "street_number": "1200",
+        "street_name": "e main",
+        "strategy": "full_address"
+      },
+      "actual": {
+        "street_number": "1200",
+        "street_name": "e main",
+        "raw_text": "building record at 1200 e main",
+        "source_spans": {
+          "street_number": [
+            [
+              19,
+              30
+            ]
+          ],
+          "street_name": [
+            [
+              19,
+              30
+            ]
+          ]
+        },
+        "strategy": "full_address"
+      },
+      "passed": true,
+      "inputs": "building record at 1200 e main"
+    },
+    {
+      "id": "P10_parcel_delimiter_spacing",
+      "expected": {
+        "parcel_number": "421833",
+        "record_number": null,
+        "strategy": "parcel_number"
+      },
+      "actual": {
+        "parcel_number": "421833",
+        "raw_text": "Find parcel 42 - 18 - 33",
+        "source_spans": {
+          "parcel_number": [
+            [
+              12,
+              24
+            ]
+          ]
+        },
+        "strategy": "parcel_number"
+      },
+      "passed": true,
+      "inputs": "Find parcel 42 - 18 - 33"
+    },
+    {
+      "id": "P11_postal_city_not_street",
+      "expected": {
+        "street_number": "123",
+        "street_name": "main st",
+        "zip_code": "62704",
+        "strategy": "full_address"
+      },
+      "actual": {
+        "street_number": "123",
+        "street_name": "main st",
+        "zip_code": "62704",
+        "city": "springfield",
+        "state": "IL",
+        "raw_text": "Find the permit at 123 Main St, Springfield, IL 62704",
+        "source_spans": {
+          "street_number": [
+            [
+              19,
+              53
+            ]
+          ],
+          "street_name": [
+            [
+              19,
+              53
+            ]
+          ],
+          "city": [
+            [
+              19,
+              53
+            ]
+          ],
+          "state": [
+            [
+              19,
+              53
+            ]
+          ],
+          "zip_code": [
+            [
+              19,
+              53
+            ]
+          ]
+        },
+        "strategy": "full_address"
+      },
+      "passed": true,
+      "inputs": "Find the permit at 123 Main St, Springfield, IL 62704"
+    },
+    {
+      "id": "P12_fractional_house_number",
+      "expected": {
+        "street_number": "1200 1/2",
+        "street_name": "e main st",
+        "strategy": "full_address"
+      },
+      "actual": {
+        "street_number": "1200 1/2",
+        "street_name": "e main st",
+        "raw_text": "Find permit at 1200 1/2 E Main St",
+        "source_spans": {
+          "street_number": [
+            [
+              15,
+              33
+            ]
+          ],
+          "street_name": [
+            [
+              15,
+              33
+            ]
+          ]
+        },
+        "strategy": "full_address"
+      },
+      "passed": true,
+      "inputs": "Find permit at 1200 1/2 E Main St"
+    },
+    {
+      "id": "P13_partial_street_control",
+      "expected": {
+        "street_name": "main st",
+        "street_number": null,
+        "strategy": "partial_address"
+      },
+      "actual": {
+        "street_name": "main st",
+        "raw_text": "Find permits on Main Street",
+        "source_spans": {
+          "street_name": [
+            [
+              16,
+              27
+            ]
+          ]
+        },
+        "strategy": "partial_address"
+      },
+      "passed": true,
+      "inputs": "Find permits on Main Street"
+    },
+    {
+      "id": "P14_negated_record",
+      "expected": "clarify/reject; P14 may resolve the positive ID",
+      "actual": {
+        "rejected": "invalid_lookup_input: clarify exclusions or alternatives"
+      },
+      "passed": true,
+      "inputs": "Do not use BLD-2026-00123; find BLD-2026-00124"
+    },
+    {
+      "id": "P15_alternative_records",
+      "expected": "clarify/reject; P14 may resolve the positive ID",
+      "actual": {
+        "rejected": "invalid_lookup_input: clarify exclusions or alternatives"
+      },
+      "passed": true,
+      "inputs": "Find BLD-2026-00123 or BLD-2026-00124"
+    },
+    {
+      "id": "P16_multiple_addresses",
+      "expected": "clarify/reject; P14 may resolve the positive ID",
+      "actual": {
+        "rejected": "invalid_lookup_input: clarify exclusions or alternatives"
+      },
+      "passed": true,
+      "inputs": "Find the permit at 123 Main St or at 456 Oak St"
+    },
+    {
+      "id": "P17_unsupported_reasoning_control",
+      "expected": "clarify/reject; P14 may resolve the positive ID",
+      "actual": {
+        "rejected": "invalid_lookup_input: no supported lookup fields found"
+      },
+      "passed": true,
+      "inputs": "What inspections should happen next?"
+    },
+    {
+      "id": "P18_unresolved_reference_control",
+      "expected": "clarify/reject; P14 may resolve the positive ID",
+      "actual": {
+        "rejected": "invalid_lookup_input: resolve the referenced property or record"
+      },
+      "passed": true,
+      "inputs": "Find the permit at this address"
+    },
+    {
+      "id": "P19_unit_retained",
+      "expected": "preserve unit=4, or reject unsupported constraint",
+      "actual": {
+        "street_number": "123",
+        "street_name": "main st",
+        "unit": "4",
+        "raw_text": "Find the permit at 123 Main St Apt 4",
+        "source_spans": {
+          "street_number": [
+            [
+              19,
+              36
+            ]
+          ],
+          "street_name": [
+            [
+              19,
+              36
+            ]
+          ],
+          "unit": [
+            [
+              19,
+              36
+            ]
+          ]
+        }
+      },
+      "passed": true,
+      "inputs": "Find the permit at 123 Main St Apt 4"
+    },
+    {
+      "id": "P20_status_retained",
+      "expected": "preserve status=issued, or reject unsupported constraint",
+      "actual": {
+        "street_number": "123",
+        "street_name": "main st",
+        "status": "issued",
+        "raw_text": "Find the issued permit at 123 Main St",
+        "source_spans": {
+          "status": [
+            [
+              9,
+              15
+            ]
+          ],
+          "street_number": [
+            [
+              26,
+              37
+            ]
+          ],
+          "street_name": [
+            [
+              26,
+              37
+            ]
+          ]
+        }
+      },
+      "passed": true,
+      "inputs": "Find the issued permit at 123 Main St"
+    },
+    {
+      "id": "R01_exact_id_control",
+      "expected": {
+        "selected": "BLD-1"
+      },
+      "actual": {
+        "status": "CANDIDATE",
+        "confidence": 1.0,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": null,
+            "address": null,
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 1.0,
+            "match_reasons": [
+              "exact record number"
+            ],
+            "constraints": {
+              "record_number": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": {
+          "record_number": "BLD-1",
+          "record_type": null,
+          "address": null,
+          "status": null,
+          "applicant": null,
+          "parcel_number": null,
+          "href_or_target": null,
+          "row_id": null,
+          "score": 1.0,
+          "match_reasons": [
+            "exact record number"
+          ],
+          "constraints": {
+            "record_number": "MATCH"
+          },
+          "source_page": 1,
+          "source_url": null,
+          "evidence": {}
+        },
+        "error_code": null,
+        "message": null,
+        "method": "record_number",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "record_number": "BLD-1"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R02_conflicting_record_id",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "record_number": "CONTRADICTION",
+              "street_number": "MATCH",
+              "street_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "record_number",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "record_number": "BLD-1"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R03_conflicting_type",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "ELE-2",
+            "record_type": "Electrical",
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "permit_type": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "permit_type": "Commercial Alteration"
+        },
+        "candidates": [
+          {
+            "record_number": "ELE-2",
+            "address": "123 Main St",
+            "record_type": "Electrical"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R04_wrong_street_compensated",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": "Commercial Alteration",
+            "address": "123 Other St 57104",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "ZIP",
+              "permit type"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "CONTRADICTION",
+              "zip_code": "MATCH",
+              "permit_type": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "zip_code": "57104",
+          "permit_type": "Commercial Alteration"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Other St 57104",
+            "record_type": "Commercial Alteration"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R05_unit_is_not_house_number",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "999 Main St Apt 123",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.4,
+            "match_reasons": [
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "CONTRADICTION",
+              "street_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "999 Main St Apt 123"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R06_wrong_unit",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St Apt 5",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "unit": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st apt 4"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St Apt 5"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R07_wrong_zip",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St 90210",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "zip_code": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "zip_code": "57104"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St 90210"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R08_wrong_parcel",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": "99-99-99",
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "parcel_number": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "parcel_number",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "parcel_number": "42-18-33"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St",
+            "parcel_number": "99-99-99"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R09_wrong_applicant",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": "John Roe",
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "applicant_name": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "applicant_name": "Jane Doe"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St",
+            "applicant": "John Roe"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R10_same_address_tie_control",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.8,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          {
+            "record_number": "ELE-3",
+            "record_type": null,
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "address": "123 Main St"
+          },
+          {
+            "record_number": "BLD-2",
+            "address": "123 Main St"
+          },
+          {
+            "record_number": "ELE-3",
+            "address": "123 Main St"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R11_type_disambiguation_control",
+      "expected": {
+        "selected": "BLD-1"
+      },
+      "actual": {
+        "status": "CANDIDATE",
+        "confidence": 1.0,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": "Commercial Alteration",
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 1.0,
+            "match_reasons": [
+              "street number",
+              "street name",
+              "permit type"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "permit_type": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          {
+            "record_number": "ELE-2",
+            "record_type": "Electrical",
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "permit_type": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": {
+          "record_number": "BLD-1",
+          "record_type": "Commercial Alteration",
+          "address": "123 Main St",
+          "status": null,
+          "applicant": null,
+          "parcel_number": null,
+          "href_or_target": null,
+          "row_id": null,
+          "score": 1.0,
+          "match_reasons": [
+            "street number",
+            "street name",
+            "permit type"
+          ],
+          "constraints": {
+            "street_number": "MATCH",
+            "street_name": "MATCH",
+            "permit_type": "MATCH"
+          },
+          "source_page": 1,
+          "source_url": null,
+          "evidence": {}
+        },
+        "error_code": null,
+        "message": null,
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "permit_type": "Commercial Alteration"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "address": "123 Main St",
+            "record_type": "Commercial Alteration"
+          },
+          {
+            "record_number": "ELE-2",
+            "address": "123 Main St",
+            "record_type": "Electrical"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R12_parcel_is_not_record_identity",
+      "expected": {
+        "selected": "BLD-1"
+      },
+      "actual": {
+        "status": "CANDIDATE",
+        "confidence": 1.0,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": "Commercial Alteration",
+            "address": null,
+            "status": null,
+            "applicant": null,
+            "parcel_number": "42-18-33",
+            "href_or_target": null,
+            "row_id": null,
+            "score": 1.0,
+            "match_reasons": [
+              "exact parcel",
+              "permit type"
+            ],
+            "constraints": {
+              "parcel_number": "MATCH",
+              "permit_type": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          {
+            "record_number": "ELE-2",
+            "record_type": "Electrical",
+            "address": null,
+            "status": null,
+            "applicant": null,
+            "parcel_number": "42-18-33",
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "exact parcel"
+            ],
+            "constraints": {
+              "parcel_number": "MATCH",
+              "permit_type": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": {
+          "record_number": "BLD-1",
+          "record_type": "Commercial Alteration",
+          "address": null,
+          "status": null,
+          "applicant": null,
+          "parcel_number": "42-18-33",
+          "href_or_target": null,
+          "row_id": null,
+          "score": 1.0,
+          "match_reasons": [
+            "exact parcel",
+            "permit type"
+          ],
+          "constraints": {
+            "parcel_number": "MATCH",
+            "permit_type": "MATCH"
+          },
+          "source_page": 1,
+          "source_url": null,
+          "evidence": {}
+        },
+        "error_code": null,
+        "message": null,
+        "method": "parcel_number",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "parcel_number": "42-18-33",
+          "permit_type": "Commercial Alteration"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "parcel_number": "42-18-33",
+            "record_type": "Commercial Alteration"
+          },
+          {
+            "record_number": "ELE-2",
+            "parcel_number": "42-18-33",
+            "record_type": "Electrical"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R13_applicant_threshold_bypass",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.8,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": null,
+            "address": null,
+            "status": null,
+            "applicant": "Jane Doe",
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "applicant"
+            ],
+            "constraints": {
+              "applicant_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "applicant_name",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "applicant_name": "Jane Doe"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "applicant": "Jane Doe"
+          }
+        ],
+        "options": {
+          "min_confidence": 0.95
+        }
+      }
+    },
+    {
+      "id": "R14_missing_applicant_competitor",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.8,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": null,
+            "address": null,
+            "status": null,
+            "applicant": "Jane Doe",
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "applicant"
+            ],
+            "constraints": {
+              "applicant_name": "MATCH"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          {
+            "record_number": "BLD-2",
+            "record_type": null,
+            "address": null,
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.0,
+            "match_reasons": [],
+            "constraints": {
+              "applicant_name": "UNKNOWN"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "applicant_name",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "applicant_name": "Jane Doe"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "applicant": "Jane Doe"
+          },
+          {
+            "record_number": "BLD-2"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "R15_generic_type_not_exact",
+      "expected": {
+        "selected": null
+      },
+      "actual": {
+        "status": "AMBIGUOUS",
+        "confidence": 0.0,
+        "matches": [
+          {
+            "record_number": "BLD-1",
+            "record_type": "Commercial",
+            "address": "123 Main St",
+            "status": null,
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": null,
+            "row_id": null,
+            "score": 0.8,
+            "match_reasons": [
+              "street number",
+              "street name"
+            ],
+            "constraints": {
+              "street_number": "MATCH",
+              "street_name": "MATCH",
+              "permit_type": "CONTRADICTION"
+            },
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          }
+        ],
+        "selected": null,
+        "error_code": "ambiguous_record",
+        "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+        "method": "full_address",
+        "attempts": 1,
+        "permit": null,
+        "identity_verified": false,
+        "evidence": {},
+        "results_complete": true,
+        "browser_error": null
+      },
+      "passed": true,
+      "inputs": {
+        "request": {
+          "street_number": "123",
+          "street_name": "main st",
+          "permit_type": "Commercial Alteration"
+        },
+        "candidates": [
+          {
+            "record_number": "BLD-1",
+            "address": "123 Main St",
+            "record_type": "Commercial"
+          }
+        ],
+        "options": {}
+      }
+    },
+    {
+      "id": "A01_found_despite_opened_mismatch",
+      "expected": "non-FOUND with RECORD_MISMATCH",
+      "actual": {
+        "result": {
+          "status": "FAILED",
+          "confidence": 0.0,
+          "matches": [
+            {
+              "record_number": "BLD-1",
+              "record_type": "Commercial Alteration",
+              "address": "123 Main St",
+              "status": "In Review",
+              "applicant": "Eval User",
+              "parcel_number": null,
+              "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+              "row_id": null,
+              "score": 1.0,
+              "match_reasons": [
+                "exact record number"
+              ],
+              "constraints": {
+                "record_number": "MATCH"
+              },
+              "source_page": 1,
+              "source_url": null,
+              "evidence": {}
+            }
+          ],
+          "selected": null,
+          "error_code": "record_mismatch",
+          "message": "Opened record contradicts the requested or selected identity",
+          "method": "record_number",
+          "attempts": 1,
+          "permit": null,
+          "identity_verified": false,
+          "evidence": {
+            "url": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=BLD-2&agencyCode=NULLISLAND&IsToShowInspection=",
+            "detail_text": "Record BLD-2: Commercial Alteration\nRecord Status: In Review\nExpiration Date: 09/20/2027"
+          },
+          "results_complete": true,
+          "browser_error": null
+        },
+        "identity_verified": false,
+        "open_error": "record_mismatch: Opened record contradicts the requested or selected identity",
+        "metrics": {
+          "attempts": 1,
+          "successful": 0,
+          "exact_matches": 0,
+          "ambiguous": 0,
+          "wrong_records": 1,
+          "browser_actions": 7,
+          "retries": 0,
+          "success_rate": 0.0,
+          "exact_match_accuracy": 0.0,
+          "ambiguity_detection_rate": 0.0,
+          "wrong_record_rate": 1.0,
+          "search_retry_rate": 0.0,
+          "average_browser_actions": 7.0
+        }
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A02_direct_detail_redirect",
+      "expected": "FOUND and identity verified",
+      "actual": {
+        "result": {
+          "status": "FOUND",
+          "confidence": 1.0,
+          "matches": [
+            {
+              "record_number": "BLD-1",
+              "record_type": "Commercial Alteration",
+              "address": null,
+              "status": "In Review",
+              "applicant": null,
+              "parcel_number": null,
+              "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+              "row_id": null,
+              "score": 0.0,
+              "match_reasons": [],
+              "constraints": {},
+              "source_page": 1,
+              "source_url": null,
+              "evidence": {}
+            }
+          ],
+          "selected": {
+            "record_number": "BLD-1",
+            "record_type": "Commercial Alteration",
+            "address": null,
+            "status": "In Review",
+            "applicant": null,
+            "parcel_number": null,
+            "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+            "row_id": null,
+            "score": 0.0,
+            "match_reasons": [],
+            "constraints": {},
+            "source_page": 1,
+            "source_url": null,
+            "evidence": {}
+          },
+          "error_code": null,
+          "message": null,
+          "method": "record_number",
+          "attempts": 1,
+          "permit": {
+            "permit_id": "BLD-1",
+            "address": "",
+            "ref": {
+              "cap_id1": "REC26",
+              "cap_id2": "00000",
+              "cap_id3": "BLD-1",
+              "module": "Building",
+              "agency_code": "NULLISLAND",
+              "display_id": "BLD-1"
+            },
+            "permit_type": "Commercial Alteration",
+            "status": "In Review",
+            "status_normalized": "in_review",
+            "applicant": null,
+            "description": null,
+            "submitted_date": null,
+            "issued_date": null,
+            "expiration_date": "2027-09-20",
+            "inspections": [],
+            "schedulable_inspection_types": [],
+            "fees": [],
+            "documents": [],
+            "outstanding_requirements": [],
+            "next_action": null,
+            "sections": []
+          },
+          "identity_verified": true,
+          "evidence": {
+            "url": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+            "constraints": {
+              "record_number": "MATCH"
+            },
+            "detail_text": "Record BLD-1: Commercial Alteration\nRecord Status: In Review\nExpiration Date: 09/20/2027"
+          },
+          "results_complete": true,
+          "browser_error": null
+        },
+        "identity_verified": true,
+        "open_error": null,
+        "metrics": {
+          "attempts": 1,
+          "successful": 1,
+          "exact_matches": 0,
+          "ambiguous": 0,
+          "wrong_records": 0,
+          "browser_actions": 5,
+          "retries": 0,
+          "success_rate": 1.0,
+          "exact_match_accuracy": 0.0,
+          "ambiguity_detection_rate": 0.0,
+          "wrong_record_rate": 0.0,
+          "search_retry_rate": 0.0,
+          "average_browser_actions": 5.0
+        }
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A03_incomplete_pagination",
+      "expected": "no selected candidate while another result page is unscanned",
+      "actual": {
+        "result": {
+          "status": "INCOMPLETE",
+          "confidence": 0.0,
+          "matches": [
+            {
+              "record_number": "BLD-1",
+              "record_type": "Commercial Alteration",
+              "address": "123 Main St",
+              "status": "In Review",
+              "applicant": "Eval User",
+              "parcel_number": null,
+              "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+              "row_id": null,
+              "score": 0.8,
+              "match_reasons": [
+                "street number",
+                "street name"
+              ],
+              "constraints": {
+                "street_number": "MATCH",
+                "street_name": "MATCH"
+              },
+              "source_page": 1,
+              "source_url": null,
+              "evidence": {}
+            }
+          ],
+          "selected": null,
+          "error_code": "incomplete_results",
+          "message": "candidate coverage is incomplete",
+          "method": "full_address",
+          "attempts": 1,
+          "permit": null,
+          "identity_verified": false,
+          "evidence": {},
+          "results_complete": false,
+          "browser_error": null
+        },
+        "identity_verified": false,
+        "open_error": null,
+        "metrics": {
+          "attempts": 1,
+          "successful": 0,
+          "exact_matches": 0,
+          "ambiguous": 0,
+          "wrong_records": 0,
+          "browser_actions": 8,
+          "retries": 0,
+          "success_rate": 0.0,
+          "exact_match_accuracy": 0.0,
+          "ambiguity_detection_rate": 0.0,
+          "wrong_record_rate": 0.0,
+          "search_retry_rate": 0.0,
+          "average_browser_actions": 8.0
+        }
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A04_global_attempt_budget",
+      "expected": "at most 1 search submission",
+      "actual": {
+        "submissions": 1,
+        "trace_attempts": 1
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A05_independent_address_evidence",
+      "expected": "do not verify requested address using selected-row data as observed detail",
+      "actual": {
+        "result": {
+          "status": "FAILED",
+          "confidence": 0.0,
+          "matches": [
+            {
+              "record_number": "BLD-1",
+              "record_type": "Commercial Alteration",
+              "address": "123 Main St",
+              "status": "In Review",
+              "applicant": "Eval User",
+              "parcel_number": null,
+              "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+              "row_id": null,
+              "score": 0.8,
+              "match_reasons": [
+                "street number",
+                "street name"
+              ],
+              "constraints": {
+                "street_number": "MATCH",
+                "street_name": "MATCH"
+              },
+              "source_page": 1,
+              "source_url": null,
+              "evidence": {}
+            }
+          ],
+          "selected": null,
+          "error_code": "record_mismatch",
+          "message": "Opened record contradicts the requested or selected identity",
+          "method": "full_address",
+          "attempts": 1,
+          "permit": null,
+          "identity_verified": false,
+          "evidence": {
+            "url": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=BLD-1&agencyCode=NULLISLAND&IsToShowInspection=",
+            "detail_text": "Record BLD-1: Commercial Alteration\nRecord Status: In Review\nExpiration Date: 09/20/2027\nWork Location:\n999 Other St"
+          },
+          "results_complete": true,
+          "browser_error": null
+        },
+        "identity_verified": false,
+        "open_error": "record_mismatch: Opened record contradicts the requested or selected identity",
+        "metrics": {
+          "attempts": 1,
+          "successful": 0,
+          "exact_matches": 0,
+          "ambiguous": 0,
+          "wrong_records": 1,
+          "browser_actions": 10,
+          "retries": 0,
+          "success_rate": 0.0,
+          "exact_match_accuracy": 0.0,
+          "ambiguity_detection_rate": 0.0,
+          "wrong_record_rate": 1.0,
+          "search_retry_rate": 0.0,
+          "average_browser_actions": 10.0
+        }
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A06_stale_active_permit",
+      "expected": "failed new lookup must invalidate or explicitly scope previous permit",
+      "actual": {
+        "new_status": "INVALID",
+        "active_permit": null
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A07_uncertain_mutation_replayed_by_runner",
+      "expected": "one select, then stop for reconciliation",
+      "actual": {
+        "select_calls": [
+          {
+            "target": "selector=#ctl00_PlaceHolderMain_ddlSearchType",
+            "value": "Search by Address"
+          }
+        ],
+        "stop_reason": "outcome uncertain"
+      },
+      "passed": true,
+      "inputs": null
+    },
+    {
+      "id": "A08_wrong_request_identity_verified",
+      "expected": "never verify BLD-2 for explicit BLD-1 request",
+      "actual": {
+        "result": {
+          "status": "AMBIGUOUS",
+          "confidence": 0.0,
+          "matches": [
+            {
+              "record_number": "BLD-2",
+              "record_type": "Commercial Alteration",
+              "address": "123 Main St",
+              "status": "In Review",
+              "applicant": "Eval User",
+              "parcel_number": null,
+              "href_or_target": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?capID1=REC26&capID2=00000&capID3=BLD-2&agencyCode=NULLISLAND&IsToShowInspection=",
+              "row_id": null,
+              "score": 0.8,
+              "match_reasons": [
+                "street number",
+                "street name"
+              ],
+              "constraints": {
+                "record_number": "CONTRADICTION",
+                "street_number": "MATCH",
+                "street_name": "MATCH"
+              },
+              "source_page": 1,
+              "source_url": null,
+              "evidence": {}
+            }
+          ],
+          "selected": null,
+          "error_code": "ambiguous_record",
+          "message": "explicit constraints conflict, remain unknown, or do not identify one sufficiently supported record",
+          "method": "record_number",
+          "attempts": 1,
+          "permit": null,
+          "identity_verified": false,
+          "evidence": {},
+          "results_complete": true,
+          "browser_error": null
+        },
+        "identity_verified": false,
+        "open_error": null,
+        "metrics": {
+          "attempts": 1,
+          "successful": 0,
+          "exact_matches": 0,
+          "ambiguous": 1,
+          "wrong_records": 0,
+          "browser_actions": 5,
+          "retries": 0,
+          "success_rate": 0.0,
+          "exact_match_accuracy": 0.0,
+          "ambiguity_detection_rate": 1.0,
+          "wrong_record_rate": 0.0,
+          "search_retry_rate": 0.0,
+          "average_browser_actions": 5.0
+        }
+      },
+      "passed": true,
+      "inputs": null
+    }
+  ]
+}

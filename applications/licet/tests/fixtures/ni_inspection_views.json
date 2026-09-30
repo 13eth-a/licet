@@ -1,0 +1,17 @@
+{
+  "source": "P13 20260926T010706Z read_page observations; account/contact/navigation text removed; record header and inspection text retained",
+  "pages": [
+    {
+      "url": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=000QB&agencyCode=NULLISLAND&IsToShowInspection=",
+      "text": "Record\u00a0000000014:\u00a0\nCommercial Alteration\nRecord Status:\u00a0Submitted\nExpiration Date:\u00a001/31/2026\n",
+      "loading": [],
+      "truncated": false
+    },
+    {
+      "url": "https://aca-test.accela.com/NULLISLAND/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=000QB&agencyCode=NULLISLAND&IsToShowInspection=yes",
+      "text": "Record\u00a0000000014:\u00a0\nCommercial Alteration\nRecord Status:\u00a0Submitted\nExpiration Date:\u00a001/31/2026\n\nInspections\nUpcoming\n\u00a0\nSchedule or Request an Inspection\n\u00a0\nYou have not added any inspections.\nClick the link above to schedule or request one.\n\u00a0\nCompleted\n\u00a0\nThere are no completed inspections on this record.",
+      "loading": [],
+      "truncated": false
+    }
+  ]
+}

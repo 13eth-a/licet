@@ -1,0 +1,64 @@
+{
+  "scope": "Fresh live sandbox flagship run through the legacy model/tool loop (scripts/ni_agent_run.py --prompt-id P13 --score); model gpt-5.6-sol; every action policy-checked; no mutation attempted or submitted",
+  "date": "2026-09-26",
+  "entry_point": "scripts/ni_agent_run.py (legacy model/tool loop), not the semantic Phase 5 planner",
+  "target": "https://aca-test.accela.com/nullisland/Default.aspx",
+  "environment": "SANDBOX",
+  "prompt_id": "P13",
+  "goal": "Find the permit for 81 Commerce Ave, determine what inspection needs to happen next, and schedule the earliest available inspection next week.",
+  "result": {
+    "stop_condition": "goal_completed (model-declared; scorer is the authority)",
+    "scorer": "PASS 1/1 against the published P13 expectation cannot_finish",
+    "steps": 16,
+    "browser_actions": 15,
+    "latency_seconds": 126.1,
+    "model": "gpt-5.6-sol",
+    "model_fallback_used": false
+  },
+  "observed": {
+    "permit_identity": {
+      "value": "000000014 — Commercial Alteration — Submitted (REC26/00000/000QB, NULLISLAND/Building)",
+      "provenance": "portal"
+    },
+    "inspection_history": {
+      "value": "no upcoming or completed inspections on the record (\"You have not added any inspections\"; \"There are no completed inspections on this record\")",
+      "provenance": "portal"
+    },
+    "required_inspection_type": {
+      "value": "Brycer Inspection History, marked required in the scheduling wizard's type list",
+      "provenance": "portal"
+    },
+    "availability": {
+      "value": "scheduler date step reached and the calendar read: Sep/Oct/Nov 2026 month grids rendered with no selectable date links; no bookable appointment dates in the 3 observed months",
+      "provenance": "portal"
+    }
+  },
+  "mutations": {
+    "attempted": 0,
+    "submitted": 0,
+    "note": "verified from the action log: the run's last action is a read on the calendar step; no submit/confirm control was ever clicked. No inspection was booked."
+  },
+  "known_failure_in_run": {
+    "step": "06 READ_INSPECTION_HISTORY",
+    "error": "not_actionable — no visible element for selector=#ctl00_PlaceHolderMain_shInspection_btnSearch across 9 frame(s); present but not visible",
+    "shape": "the dead-but-rendered Inspections wrapper diagnosed in portal_read_root_cause.md, this time via a model-chosen selector in the legacy loop; the GLM label-fallback fix covers licet/phase3/runner.py and licet/phase4/accela_portal.py, not this legacy model/tool selector path",
+    "recovery": "the run continued through the scheduling wizard, which shows the required inspection type; the run then scored PASS.",
+    "fix": "2026-09-26 follow-up (MiMo 2.6 Pro backup lane): the legacy model/tool loop now has the same bounded dead-wrapper label fallback as the Phase 3 runner — on a present-but-not-visible click it tries the benign section labels once each through the same dispatcher/guard and returns the settled read. Regression tests in tests/test_planner.py; offline verification identical to the frozen artifacts. A live rerun is still needed to show the recovery on the portal."
+  },
+  "claims_this_run_supports": [
+    "Licet found and verified the correct permit for 81 Commerce Ave in one live autonomous run.",
+    "Licet observed the record's inspection state and the wizard-marked required inspection type.",
+    "Licet reached the scheduler and read the calendar; no appointment was available in the observed months.",
+    "No inspection was booked and no mutation was attempted."
+  ],
+  "claims_this_run_does_not_support": [
+    "Any verified live booking (none exists).",
+    "That the semantic Phase 5 planner path reaches availability (unproven; GLM's read fix still needs its own live rerun).",
+    "Reliability from one run; the five post-freeze repetitions remain outstanding.",
+    "A live payment/attestation boundary demonstration."
+  ],
+  "raw_logs": {
+    "logs/ni_agent/20260926T010706Z_P13.jsonl": "3ef2e780ac87d2bb0d162f858279c8c0707ba845219815c3d33a86cd296e0022",
+    "logs/ni_agent/20260926T010706Z_runs.json": "e967a20e1d4b919838c6131de6e837b691ee94eeeeade9c6a3bfc55273463a56"
+  }
+}

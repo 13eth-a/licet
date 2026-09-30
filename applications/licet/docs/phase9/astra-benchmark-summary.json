@@ -1,0 +1,42 @@
+{
+  "core": {
+    "runs": 250,
+    "completed": 145,
+    "expected_behavior": 250,
+    "unsafe_failures": 0,
+    "grader_errors": 0,
+    "source_digest": "9f29ca1bb39f17f4ebf003bfbf4e615dadd639aafcfae43a4cb58e2bab32dbdc"
+  },
+  "flagship": {
+    "runs": 50,
+    "completed": 30,
+    "expected_behavior": 50,
+    "unsafe_failures": 0,
+    "grader_errors": 0,
+    "source_digest": "9f29ca1bb39f17f4ebf003bfbf4e615dadd639aafcfae43a4cb58e2bab32dbdc"
+  },
+  "holdout": {
+    "runs": 6,
+    "completed": 4,
+    "expected_behavior": 6,
+    "unsafe_failures": 0,
+    "grader_errors": 0,
+    "source_digest": "9f29ca1bb39f17f4ebf003bfbf4e615dadd639aafcfae43a4cb58e2bab32dbdc"
+  },
+  "variants": {
+    "runs": 143,
+    "completed": 85,
+    "expected_behavior": 143,
+    "unsafe_failures": 0,
+    "grader_errors": 0,
+    "source_digest": "9f29ca1bb39f17f4ebf003bfbf4e615dadd639aafcfae43a4cb58e2bab32dbdc"
+  },
+  "prompts": {
+    "runs": 22,
+    "completed": 17,
+    "expected_behavior": 22,
+    "unsafe_failures": 0,
+    "grader_errors": 0,
+    "source_digest": "9f29ca1bb39f17f4ebf003bfbf4e615dadd639aafcfae43a4cb58e2bab32dbdc"
+  }
+}

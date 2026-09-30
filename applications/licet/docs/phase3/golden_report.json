@@ -1,0 +1,1479 @@
+{
+  "generated_at": "2026-09-26T00:12:04.380151+00:00",
+  "deterministic_baseline": true,
+  "model_reasoning_enabled": false,
+  "golden": {
+    "passed": 57,
+    "total": 57,
+    "blockers_emitted": 51,
+    "unsupported_blocker_count": 0,
+    "unsupported_blocker_rate": 0.0,
+    "false_ready_count": 0,
+    "confirmed_gates_emitted": 6,
+    "gate_false_positives": 0,
+    "misclassified_blockers": 0,
+    "contradiction_cases": 4,
+    "contradictions_surfaced": 4,
+    "contradiction_recall": 1.0,
+    "abstentions": 11
+  },
+  "case_details": [
+    {
+      "case_id": "S01",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "S02-submitted",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Submitted.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "S04-completed-no-result",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Final — completed\n\nUncertainties:\n- The outcome of the completed Final attempt is not shown in the record.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "S05-negative-wording",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — pending\n- Inspection Frame — failed\n\nWhat is in the way:\n- Frame inspection did not pass (result: Not Approved) (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Frame correction — Address the cited Frame correction\n- Possible: Request reinspection: Frame — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Frame inspection did not pass (result: Not Approved)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Frame correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Frame",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "S03-expired-event",
+      "passed": true,
+      "answerability": "conflicting",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "The record contains conflicting evidence, so a single confident answer is not possible:\n\nFacts reported by the portal (some are disputed; see Uncertainties):\n- The portal reports permit status Issued.\n\nUncertainties:\n- Conflicting record evidence: overview reports the permit Issued while history records an explicit expiration event; no renewal evidence resolves them (possible stale overview)",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "H01-later-pass-same-scope",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "H02-scheduled-followup",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Inspection Rough Electrical — scheduled\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n\nUncertainties:\n- A Rough Electrical attempt is already scheduled; whether it addresses the failed attempt is not established.\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        }
+      ]
+    },
+    {
+      "case_id": "H04-different-unit",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n- Inspection Rough Electrical — passed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "H05-unknown-ordering",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n- Inspection Rough Electrical — passed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nUncertainties:\n- Multiple Rough Electrical attempts exist, but attempt order is not established; which outcome is the latest is not established by the available evidence.\n- A Rough Electrical pass exists, but attempt order is not established by the available evidence (missing or tied dates); the earlier failure cannot be resolved safely.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "H03-cancelled-followup",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Inspection Rough Electrical — cancelled\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "F01-flagship",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "F02-failure-no-comment",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "F03-conditional-comment",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Final — completed\n- Final inspector comment: \"Okay to proceed after correction.\"\n\nUncertainties:\n- The outcome of the completed Final attempt is not shown in the record.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "F04-passed-with-correction-comment",
+      "passed": true,
+      "answerability": "conflicting",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "The record contains conflicting evidence, so a single confident answer is not possible:\n\nFacts reported by the portal (some are disputed; see Uncertainties):\n- Inspection Final — completed — passed\n- Final inspector comment: \"Correction Required\"\n\nUncertainties:\n- Conflicting record evidence: Final: result is 'Passed' but the linked comment says 'Correction Required'; readiness suppressed",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "F05-unlinked-comment",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n- Inspection Plumbing — failed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n- Plumbing inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n- Likely next: Address Plumbing correction — Address the cited Plumbing correction\n- Possible: Request reinspection: Plumbing — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Plumbing inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        },
+        {
+          "action": "Address Plumbing correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Plumbing",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "B01-unpaid-not-gate",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "B02-explicit-payment-gate",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- No condition entries are shown in the record's conditions section as of the latest read.\n\nWhat is in the way:\n- Permit balance remains unpaid ($74.50) (confirmed gate, affects: issuance)\n\nPossible next steps (not yet executed):\n- Required: Resolve outstanding fee — The portal gates a stage on payment (Payment required before issuance).",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "confirmed_gate",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.95,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Resolve outstanding fee",
+          "requirement_strength": "required",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "case_id": "B03-partial-documents",
+      "passed": true,
+      "answerability": "needs_data",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "I cannot answer this from the evidence gathered so far; the documents section(s) still need to be read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "B04-review-pending",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Submitted.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "B05-multi-blocker-ranking",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $20.00, unpaid.\n- Permit balance remains unpaid ($20.00)\n- Inspection Foundation — failed\n\nWhat is in the way:\n- Administrative hold: all inspections suspended (confirmed gate, affects: inspections)\n- Foundation inspection did not pass (observed problem, affects: inspection)\n- Permit balance remains unpaid ($20.00) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Foundation correction — Address the cited Foundation correction\n- Possible: Request reinspection: Foundation — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "active_condition",
+          "classification": "confirmed_gate",
+          "description": "Administrative hold: all inspections suspended",
+          "confidence": 0.95,
+          "source": "Conditions"
+        },
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Foundation inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($20.00)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Foundation correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Foundation",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "N01-catalog-not-required",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No inspection entries are shown in the record's inspections section as of the latest read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "N02-explicit-prerequisite",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — passed\n- The scheduling form marks Electrical Final as (required).\n\nPossible next steps (not yet executed):\n- Likely next: Complete required inspection: Electrical Final — The scheduling form marks this type (required) and no completed or scheduled attempt for it is recorded.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": [
+        {
+          "action": "Complete required inspection: Electrical Final",
+          "requirement_strength": "likely",
+          "confidence": 0.75
+        }
+      ]
+    },
+    {
+      "case_id": "N03-fee-not-readiness",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — failed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "N04-tied-requirements",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No condition entries are shown in the record's conditions section as of the latest read.\n- No history entries are shown in the record's history section as of the latest read.\n\nWhat is in the way:\n- Permit balance remains unpaid ($74.50) (confirmed gate, affects: issuance)\n- Required document not satisfied: Revised plans (observed problem)\n\nPossible next steps (not yet executed):\n- Required: Resolve outstanding fee — The portal gates a stage on payment (Payment required before issuance).",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "confirmed_gate",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.95,
+          "source": "Fees"
+        },
+        {
+          "type": "missing_required_document",
+          "classification": "observed_problem",
+          "description": "Required document not satisfied: Revised plans",
+          "confidence": 0.9,
+          "source": "Documents"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Resolve outstanding fee",
+          "requirement_strength": "required",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "case_id": "N05-expired-with-scheduled-inspection",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Final — scheduled\n\nWhat is in the way:\n- Portal reports the permit as expired (observed problem, affects: permit)",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "expired_permit",
+          "classification": "observed_problem",
+          "description": "Portal reports the permit as expired",
+          "confidence": 1.0,
+          "source": "Overview"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "U01-explicitly-empty",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No inspection entries are shown in the record's inspections section as of the latest read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U02-unavailable-tabs",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Submitted.\n\nUncertainties:\n- fees data is unavailable; conclusions depending on it are unavailable.\n- documents data is parse_failed; conclusions depending on it are unavailable.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U03-receipt-ambiguity",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, payment state not shown.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U05-covered-sections-clean",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No inspection entries are shown in the record's inspections section as of the latest read.\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U04-foreign-record-rejected",
+      "passed": true,
+      "answerability": "conflicting",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "The record contains conflicting evidence, so a single confident answer is not possible:\n\nFacts reported by the portal (some are disputed; see Uncertainties):\n- The portal reports permit status Issued.\n\nUncertainties:\n- Conflicting record evidence: rejected cross-record evidence: rejected observation for record 'OTHER/Record/Key' (expected 'NULLISLAND/Building/REC26/00000/9F001')",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A01-negated-payment-gate",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n\nWhat is in the way:\n- No payment is required before issuance (observed problem)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "active_condition",
+          "classification": "observed_problem",
+          "description": "No payment is required before issuance",
+          "confidence": 0.8,
+          "source": "Conditions"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "A02-gate-stage-from-wording",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n\nWhat is in the way:\n- Permit balance remains unpaid ($74.50) (confirmed gate, affects: final inspection)\n- Payment required before final inspection (observed problem)\n\nPossible next steps (not yet executed):\n- Required: Resolve outstanding fee — The portal gates a stage on payment (payment required before final inspection active).",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "confirmed_gate",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.95,
+          "source": "Fees"
+        },
+        {
+          "type": "active_condition",
+          "classification": "observed_problem",
+          "description": "Payment required before final inspection",
+          "confidence": 0.8,
+          "source": "Conditions"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Resolve outstanding fee",
+          "requirement_strength": "required",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "case_id": "A03-released-hold-is-not-a-gate",
+      "passed": true,
+      "answerability": "needs_data",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "I cannot answer this from the evidence gathered so far; the history section(s) still need to be read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A04-later-failure-not-resolved",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — passed\n- Inspection Rough Electrical — completed — failed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "A05-clean-pass-with-negative-comment",
+      "passed": true,
+      "answerability": "partial",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Final — completed — passed\n- Final inspector comment: \"No corrections required.\"\n\nThis answer is partial: the conditions, history section(s) have not been read yet.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A06-history-not-expired",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A07-fee-payment-state-unknown",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, payment state not shown.\n\nUncertainties:\n- The record shows a fee (Permit balance, $74.50) as due, but does not show whether it was paid.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A08-balance-not-amount",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $100.00, unpaid.\n- Permit balance remains unpaid ($100.00)\n\nWhat is in the way:\n- Permit balance remains unpaid ($100.00) (potential impediment)\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($100.00)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "A09-stale-fee-observation",
+      "passed": true,
+      "answerability": "conflicting",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "The record contains conflicting evidence, so a single confident answer is not possible:\n\nFacts reported by the portal (some are disputed; see Uncertainties):\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n\nWhat is in the way:\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.\n- Conflicting record evidence: conflicting fee paid: False vs True; conflicting fee due: True vs False",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "A10-zero-balance-not-blocker",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $0.00, unpaid.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "A11-required-document-pending",
+      "passed": true,
+      "answerability": "needs_data",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "I cannot answer this from the evidence gathered so far; the conditions, history section(s) still need to be read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "RS01-failed-inspection-strength",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "RS02-unpaid-without-gate-is-not-required",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "RS03-explicit-gate-is-required",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- No condition entries are shown in the record's conditions section as of the latest read.\n\nWhat is in the way:\n- Permit balance remains unpaid ($74.50) (confirmed gate, affects: issuance)\n\nPossible next steps (not yet executed):\n- Required: Resolve outstanding fee — The portal gates a stage on payment (Payment required before issuance).",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "unpaid_fee",
+          "classification": "confirmed_gate",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.95,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Resolve outstanding fee",
+          "requirement_strength": "required",
+          "confidence": 0.9
+        }
+      ]
+    },
+    {
+      "case_id": "U06-empty-fees",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No fee entries are shown in the record's fees section as of the latest read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U07-empty-documents",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No document entries are shown in the record's documents section as of the latest read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U08-empty-conditions-history",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- No condition entries are shown in the record's conditions section as of the latest read.\n- No history entries are shown in the record's history section as of the latest read.",
+      "flag_problems": [],
+      "blockers": [],
+      "next_actions": []
+    },
+    {
+      "case_id": "U09-inspections-no-comments",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (observed problem, affects: inspection)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass",
+          "confidence": 0.95,
+          "source": "Inspections"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "B06-missing-and-pending-document",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "What is in the way:\n- Required document not satisfied: Grading plan (observed problem)\n\nUncertainties:\n- Required document 'Revised plans' is shown as 'Pending review'; whether it satisfies the requirement is not established.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "missing_required_document",
+          "classification": "observed_problem",
+          "description": "Required document not satisfied: Grading plan",
+          "confidence": 0.9,
+          "source": "Documents"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "C01-hold-label-variant",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "What is in the way:\n- Site work suspended (confirmed gate)",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "active_condition",
+          "classification": "confirmed_gate",
+          "description": "Site work suspended",
+          "confidence": 0.95,
+          "source": "Conditions"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "D01-missing-document-label-variant",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "What is in the way:\n- Required document not satisfied: Grading plan (observed problem)",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "missing_required_document",
+          "classification": "observed_problem",
+          "description": "Required document not satisfied: Grading plan",
+          "confidence": 0.9,
+          "source": "Documents"
+        }
+      ],
+      "next_actions": []
+    },
+    {
+      "case_id": "FLAGSHIP-STATUS",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- The portal reports permit status Issued.\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "FLAGSHIP-NEXT",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "FLAGSHIP-INSPECTOR",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "FLAGSHIP-FEES",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Fee Permit balance: $74.50, unpaid.\n- Permit balance remains unpaid ($74.50)\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "FLAGSHIP-EXECUTION-DISABLED",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Rough Electrical inspector comment: \"Enclose exposed junction box.\"\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction (Enclose exposed junction box.)\n- Possible: Request reinspection: Rough Electrical — Consider a new attempt after the correction; eligibility and requirement are not established by the failure alone.\n\nUncertainties:\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        },
+        {
+          "action": "Request reinspection: Rough Electrical",
+          "requirement_strength": "possible",
+          "confidence": 0.72
+        }
+      ]
+    },
+    {
+      "case_id": "RS04-next-action-strength-multi-blocker",
+      "passed": true,
+      "answerability": "answered",
+      "execution_allowed": false,
+      "missing_blockers": [],
+      "unsupported_blockers": [],
+      "fabricated_claims": [],
+      "answer": "Facts reported by the portal:\n- Inspection Rough Electrical — completed — failed\n- Inspection Rough Electrical — scheduled\n\nWhat is in the way:\n- Rough Electrical inspection did not pass (result: Corrections Required) (observed problem, affects: inspection)\n- Permit balance remains unpaid ($74.50) (potential impediment)\n\nPossible next steps (not yet executed):\n- Likely next: Address Rough Electrical correction — Address the cited Rough Electrical correction\n\nUncertainties:\n- A Rough Electrical attempt is already scheduled; whether it addresses the failed attempt is not established.\n- The fee is unpaid, but no portal evidence establishes that it blocks a particular stage.",
+      "flag_problems": [],
+      "blockers": [
+        {
+          "type": "failed_inspection",
+          "classification": "observed_problem",
+          "description": "Rough Electrical inspection did not pass (result: Corrections Required)",
+          "confidence": 0.95,
+          "source": "Inspections"
+        },
+        {
+          "type": "unpaid_fee",
+          "classification": "potential_impediment",
+          "description": "Permit balance remains unpaid ($74.50)",
+          "confidence": 0.75,
+          "source": "Fees"
+        }
+      ],
+      "next_actions": [
+        {
+          "action": "Address Rough Electrical correction",
+          "requirement_strength": "likely",
+          "confidence": 0.91
+        }
+      ]
+    }
+  ],
+  "extraction": {
+    "passed": 8,
+    "total": 8,
+    "fixtures": [
+      {
+        "fixture_id": "X01-fees-grid-northgate",
+        "municipality": "Northgate",
+        "section": "fees",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X02-fees-grid-riverton",
+        "municipality": "Riverton",
+        "section": "fees",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X03-documents-grid-northgate",
+        "municipality": "Northgate",
+        "section": "documents",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X04-documents-required-riverton",
+        "municipality": "Riverton",
+        "section": "documents",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X05-inspections-grid-northgate",
+        "municipality": "Northgate",
+        "section": "inspections",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X06-inspections-action-column",
+        "municipality": "Northgate",
+        "section": "inspections",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X07-history-grid-riverton",
+        "municipality": "Riverton",
+        "section": "history",
+        "passed": true,
+        "problems": []
+      },
+      {
+        "fixture_id": "X08-conditions-grid-northgate",
+        "municipality": "Northgate",
+        "section": "conditions",
+        "passed": true,
+        "problems": []
+      }
+    ]
+  },
+  "model_path": {
+    "enabled": false
+  }
+}

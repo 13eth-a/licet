@@ -1,0 +1,104 @@
+{
+  "scope": "Offline inspection of pre-Phase-3 runtime; not a Phase 3 implementation score",
+  "cases": [
+    {
+      "kind": "inspection_normalization",
+      "raw": "Not Approved",
+      "expected": "failed",
+      "actual": "passed",
+      "passed": false
+    },
+    {
+      "kind": "inspection_normalization",
+      "raw": "Not Scheduled",
+      "expected": "pending",
+      "actual": "scheduled",
+      "passed": false
+    },
+    {
+      "kind": "inspection_normalization",
+      "raw": "Completed",
+      "expected": "unknown",
+      "actual": "passed",
+      "passed": false
+    },
+    {
+      "kind": "inspection_normalization",
+      "raw": "Corrections Required",
+      "expected": "failed",
+      "actual": "unknown",
+      "passed": false
+    },
+    {
+      "kind": "inspection_normalization",
+      "raw": "Partial Pass",
+      "expected": "partial",
+      "actual": "partial",
+      "passed": true
+    },
+    {
+      "kind": "permit_normalization",
+      "raw": "Not Issued",
+      "expected": "unknown",
+      "actual": "issued",
+      "passed": false
+    },
+    {
+      "kind": "permit_normalization",
+      "raw": "Unexpired",
+      "expected": "unknown",
+      "actual": "expired",
+      "passed": false
+    },
+    {
+      "kind": "permit_normalization",
+      "raw": "Inactive",
+      "expected": "unknown",
+      "actual": "issued",
+      "passed": false
+    },
+    {
+      "kind": "offered_not_required",
+      "input": "Offered Electrical Final, no requirement evidence",
+      "actual": {
+        "permit_id": "REVIEW-1",
+        "address": "",
+        "ref": null,
+        "permit_type": null,
+        "status": null,
+        "status_normalized": "unknown",
+        "applicant": null,
+        "description": null,
+        "submitted_date": null,
+        "issued_date": null,
+        "expiration_date": null,
+        "inspections": [],
+        "schedulable_inspection_types": [
+          "Electrical Final"
+        ],
+        "fees": [],
+        "documents": [],
+        "outstanding_requirements": [],
+        "next_action": {
+          "value": "schedule an inspection: Electrical Final",
+          "provenance": "derived",
+          "evidence_url": null
+        },
+        "sections": []
+      },
+      "expected": "No required inspection or scheduling recommendation from catalog alone",
+      "passed": false
+    },
+    {
+      "kind": "provenance_promotion",
+      "input": "Bare requirement string with no source",
+      "actual": {
+        "value": "Unverified inferred claim",
+        "provenance": "portal",
+        "evidence_url": null
+      },
+      "expected": "Unsupported/unattributed, not PORTAL fact",
+      "passed": false
+    }
+  ]
+}

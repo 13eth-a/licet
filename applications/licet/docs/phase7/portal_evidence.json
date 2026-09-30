@@ -1,0 +1,112 @@
+{
+  "mode": "deterministic replay, no browser or model",
+  "reviewed_at": "2026-09-24",
+  "scenarios": [
+    {
+      "scenario": "async grid: empty then rows",
+      "expected": "re-settle, never record 'no inspections' from an in-flight grid",
+      "outcome": "pending=empty_table_pending_rows unsettled=True -> settled findings=0",
+      "unsafe": false
+    },
+    {
+      "scenario": "session expiry rendered as a modal",
+      "expected": "STOP / AUTH_REQUIRED, never click through",
+      "outcome": "STOP terminal=True findings=['session_expired_modal']",
+      "unsafe": false
+    },
+    {
+      "scenario": "redirected to portal home mid-workflow",
+      "expected": "re-search permit, verify, resume",
+      "outcome": "RECOVER_FROM_HOME (navigation)",
+      "unsafe": false
+    },
+    {
+      "scenario": "popup / new tab opened",
+      "expected": "dismiss or return to the origin tab, no state loss",
+      "outcome": "popup=DISMISS_OR_RETURN tab=RETURN_TO_ORIGIN_TAB",
+      "unsafe": false
+    },
+    {
+      "scenario": "postback wizard shares one URL",
+      "expected": "the settled step, not the URL, separates the steps",
+      "outcome": "keys differ=True (same path=True)",
+      "unsafe": false
+    }
+  ],
+  "settled_loop_key": [
+    {
+      "case": "render timestamp in the page-state string",
+      "legacy": "loop detected=False (each occurrence unique)",
+      "current": "settled identity: same key every occurrence",
+      "legacy_unsafe": true
+    },
+    {
+      "case": "settled identity (current behaviour)",
+      "legacy": "loop detected=False (timestamp churn)",
+      "current": "loop detected=True on the third identical key (REC26/00000/00014)",
+      "legacy_unsafe": false
+    },
+    {
+      "case": "step change stays a different page",
+      "legacy": "n/a",
+      "current": "no false loop across steps (select_type vs select_date)",
+      "legacy_unsafe": false
+    }
+  ],
+  "planner_integration": [
+    {
+      "scenario": "read fails + session modal",
+      "expected": "terminal route downgrades the observation; bounded stop, no click-through",
+      "outcome": "status=BLOCKED strategy=STOP",
+      "unsafe": false
+    },
+    {
+      "scenario": "read fails on a mid-render page",
+      "expected": "WAIT_FOR_SETTLE route recorded; observation marked evidence-free",
+      "outcome": "status=BLOCKED strategy=WAIT_FOR_SETTLE",
+      "unsafe": false
+    },
+    {
+      "scenario": "mutation path with portal findings present",
+      "expected": "mutations reconcile upstream; the portal router never touches them",
+      "outcome": "status=SUCCESS routes=0",
+      "unsafe": false
+    }
+  ],
+  "transient_identity_audit": [
+    {
+      "state": "AJAX sections still rendering (Inspections shows 'Loading...')",
+      "transient_signal": "in-flight grid text ('no data available in table', 'loading data')",
+      "mitigation": "UNSETTLED_FINDINGS: the observation is flagged mid-render; settled_browser_state excludes text and the read is re-settled before any decision"
+    },
+    {
+      "state": "Postback wizards (CapDetail/CapEdit): one URL across every step",
+      "transient_signal": "none in the URL \u2014 the step is only in the popup text",
+      "mitigation": "PageIdentity carries flow+step from accela.locate, refined by visible text, so a step change changes the loop key even though the URL did not move"
+    },
+    {
+      "state": "Record-section navigation (summary \u2194 Inspections \u2194 Fees)",
+      "transient_signal": "URL never changes; the section list in the text churns",
+      "mitigation": "active_section is the settled flow step, not the section list; text is excluded from identity"
+    },
+    {
+      "state": "ACA display-label reformatting (000000014 vs BLD26-\u2026)",
+      "transient_signal": "display id changes spelling between pages",
+      "mitigation": "record_number resolves to capID1/2/3 from the URL, the identity that actually addresses the record"
+    },
+    {
+      "state": "Session expiry rendered as a modal, not a redirect",
+      "transient_signal": "the page underneath is unchanged, so a URL/step key sees nothing",
+      "mitigation": "session_expired_modal is a TERMINAL finding: routed to STOP (AUTH_REQUIRED), so no loop key is consulted against a dead session"
+    }
+  ],
+  "portal_metrics": {
+    "unsafe_recoveries": 0,
+    "session_click_throughs": 0,
+    "consequential_modals_dismissed": 0,
+    "facts_recorded_from_inflight_grids": 0,
+    "false_loops_from_step_changes": 0,
+    "source": "scripts/phase7_portal_replay.py"
+  },
+  "failing": []
+}

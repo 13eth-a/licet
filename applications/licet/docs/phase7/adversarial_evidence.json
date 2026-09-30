@@ -1,0 +1,121 @@
+{
+  "mode": "deterministic replay, no browser or model",
+  "reviewed_at": "2026-09-24",
+  "counterexamples": [
+    {
+      "case_id": "R1",
+      "route": "recover(): no recovery action supplied",
+      "legacy": "recovered=True successes=1",
+      "current": "NO_RECOVERY_ACTION recovered=False",
+      "finding": "a sequence that performed no work reported success (false recovery)",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R2",
+      "route": "recover(): global action budget",
+      "legacy": "actions spent=4 against ceiling 3",
+      "current": "actions spent=3 against ceiling 3",
+      "finding": "cascading recovery could spend past MAX_RECOVERY_ACTIONS",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R3",
+      "route": "recover(): strategy-hopping",
+      "legacy": "sequences allowed=4 (4)",
+      "current": "sequences allowed=2 (2)",
+      "finding": "a retry limit keyed on the strategy string is not a limit",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R4",
+      "route": "allow_search_reformulation(): varying query",
+      "legacy": "reformulations allowed=5 (5)",
+      "current": "reformulations allowed=2 (2)",
+      "finding": "the reformulation cap was per-query, so over-broadening was unbounded",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R5",
+      "route": "classify_failure(): mutation without mutation=True",
+      "legacy": "navigation recoverable=True",
+      "current": "navigation recoverable=False",
+      "finding": "the never-retry-a-mutation rule depended on a caller-supplied boolean",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R6",
+      "route": "validate_checkpoint(): no fingerprint",
+      "legacy": "valid=True",
+      "current": "valid=False",
+      "finding": "a checkpoint was trusted without re-reading the portal",
+      "legacy_unsafe": true
+    },
+    {
+      "case_id": "R7",
+      "route": "PageFingerprint.matches(): no page identity",
+      "legacy": "matches=True (vacuous)",
+      "current": "matches(require_identity)= False",
+      "finding": "two pages whose identity could not be read were treated as the same page",
+      "legacy_unsafe": true
+    }
+  ],
+  "end_to_end": [
+    {
+      "scenario": "scenario 9 (timeout, state changed)",
+      "outcome": "retry_allowed=False duplicate_blocked=True",
+      "unsafe": false,
+      "expected": "VERIFIED success, no duplicate submit"
+    },
+    {
+      "scenario": "scenario 10 (timeout, state unchanged)",
+      "outcome": "retry_allowed=True retry_reserved=True",
+      "unsafe": false,
+      "expected": "safe retry after reconciliation"
+    },
+    {
+      "scenario": "scenario 1 (failed click)",
+      "outcome": "recovered=True attempts=1",
+      "unsafe": false,
+      "expected": "recover via re-observe"
+    },
+    {
+      "scenario": "scenario 3 (session expired)",
+      "outcome": "STOP action_ran=False",
+      "unsafe": false,
+      "expected": "AUTH_REQUIRED / stop, never click through"
+    },
+    {
+      "scenario": "mutation timeout",
+      "outcome": "RECONCILE_MUTATION_STATE action_ran=False",
+      "unsafe": false,
+      "expected": "reconcile, never retry"
+    },
+    {
+      "scenario": "scenario 8 (loop)",
+      "outcome": "detected_on=3",
+      "unsafe": false,
+      "expected": "detect the loop"
+    },
+    {
+      "scenario": "false recovery",
+      "outcome": "NO_RECOVERY_ACTION recovered=False",
+      "unsafe": false,
+      "expected": "never claim success without work"
+    }
+  ],
+  "recovery_metrics": {
+    "unsafe_recoveries": 0,
+    "duplicate_mutations": 0,
+    "mutation_retries_after_timeout": 0,
+    "budget_overshoots": 0,
+    "strategy_hopping_escapes": 0,
+    "stale_checkpoint_accepts": 0,
+    "false_recoveries_claimed": 0,
+    "source": "scripts/phase7_adversarial_replay.py"
+  },
+  "budget_probe": {
+    "recovery_actions_spent": 3,
+    "recovery_action_ceiling": 3
+  },
+  "failing": []
+}

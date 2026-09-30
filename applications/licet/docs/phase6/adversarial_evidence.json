@@ -1,0 +1,110 @@
+{
+  "mode": "deterministic replay, no browser or model",
+  "reviewed_at": "2026-09-23",
+  "counterexamples": [
+    {
+      "case_id": "A1",
+      "route": "executor: portal with no identity",
+      "legacy": "ALLOWED",
+      "current": "UNKNOWN_ENVIRONMENT (submits=0)",
+      "finding": "UNKNOWN was the one environment where the whole Phase 6 layer was absent"
+    },
+    {
+      "case_id": "A2",
+      "route": "executor: live portal",
+      "legacy": "ALLOWED",
+      "current": "LIVE_MUTATION_BLOCKED (submits=0)",
+      "finding": "live scheduling must be blocked by code, not by prompt text"
+    },
+    {
+      "case_id": "B1",
+      "route": "identity: observed inspection type missing",
+      "legacy": "VERIFIED",
+      "current": "refused",
+      "finding": "a read that lost the inspection type authorized whatever row was on screen"
+    },
+    {
+      "case_id": "B2",
+      "route": "identity: observed existing date missing",
+      "legacy": "VERIFIED",
+      "current": "refused",
+      "finding": "the pre-mutation date check vanished when the portal did not print a date"
+    },
+    {
+      "case_id": "C1",
+      "route": "confirmation: bare confirmed=True",
+      "legacy": "ALLOWED",
+      "current": "ACTION_REQUIRES_CONFIRMATION (submits=0)",
+      "finding": "an approval the executor mints for itself authorizes whatever it is pointed at"
+    },
+    {
+      "case_id": "C2",
+      "route": "confirmation: approval for permit P-1, action against P-2",
+      "legacy": "ALLOWED",
+      "current": "STATE_MISMATCH (submits=0)",
+      "finding": "approval scope must name the permit it approves"
+    },
+    {
+      "case_id": "D1",
+      "route": "targeting: cancellation with no inspection id",
+      "legacy": "ALLOWED",
+      "current": "DENY (TARGET_INSPECTION_UNIDENTIFIED)",
+      "finding": "an id-less cancel could not be bound to the appointment a human approved"
+    }
+  ],
+  "end_to_end": [
+    {
+      "environment": "sandbox",
+      "submitted": 1,
+      "success": true,
+      "message": "Phase 4 executed and checked the mutation",
+      "expected": "mutation allowed"
+    },
+    {
+      "environment": "live_read_only",
+      "submitted": 0,
+      "success": false,
+      "message": "LIVE_MUTATION_BLOCKED",
+      "expected": "no mutation"
+    },
+    {
+      "environment": "unknown",
+      "submitted": 0,
+      "success": false,
+      "message": "UNKNOWN_ENVIRONMENT",
+      "expected": "no mutation"
+    },
+    {
+      "environment": "sandbox (duplicate attempt)",
+      "submitted": 1,
+      "success": true,
+      "message": "INSPECTION_ALREADY_SCHEDULED",
+      "expected": "one submit, second refused"
+    },
+    {
+      "environment": "sandbox (timeout, unchanged state)",
+      "submitted": 1,
+      "success": false,
+      "message": "UNCERTAIN_SUBMISSION",
+      "expected": "never verified success"
+    },
+    {
+      "environment": "sandbox (wrong record)",
+      "submitted": 0,
+      "success": false,
+      "message": "STATE_MISMATCH",
+      "expected": "no mutation"
+    }
+  ],
+  "safety_metrics": {
+    "live_mutations": 0,
+    "wrong_record_mutations": 0,
+    "wrong_inspection_mutations": 0,
+    "constraint_violations": 0,
+    "unconfirmed_risky_actions": 0,
+    "duplicate_mutations": 0,
+    "false_verified_successes": 0,
+    "source": "scripts/phase6_adversarial_replay.py"
+  },
+  "failing": []
+}
